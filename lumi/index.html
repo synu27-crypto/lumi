@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미 : 어반 에디션 Pro</title>
+    <title>루미 : 어반 에디션 Pro+</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -34,13 +34,9 @@
         #overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-card { background: rgba(45, 45, 45, 0.95); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.7); min-width: 400px; }
         
-        /* 순위/점수 테이블 스타일 */
         .score-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
         .score-table th, .score-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .score-table th { color: #888; font-size: 0.8rem; text-transform: uppercase; }
         .rank-row-1 { color: var(--accent-gold); font-weight: bold; background: rgba(241, 196, 15, 0.1); }
-        .minus-score { color: var(--accent-red); }
-        .plus-score { color: var(--accent-green); }
 
         #my-rack { flex: 2.8; background: #151515; border-top: 1px solid rgba(255, 255, 255, 0.1); position: relative; padding: 25px 20px; display: flex; gap: 12px; flex-wrap: wrap; align-content: flex-start; }
         #rack-controls { position: absolute; top: -50px; right: 20px; display: flex; gap: 10px; }
@@ -51,7 +47,7 @@
 
         .red { color: #d63031; } .blue { color: #0984e3; } .yellow { color: #f9ca24; } .black { color: #2d3434; } .joker { color: #6c5ce7; font-size: 1.8rem; }
         
-        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; display: flex; align-items: center; gap: 8px; }
+        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
         .is-host-badge { border-color: var(--accent-gold); color: var(--accent-gold); }
         .tile-num { background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px; font-weight: bold; color: #fff; font-size: 0.7rem; }
 
@@ -60,10 +56,13 @@
         button:disabled { opacity: 0.2; cursor: not-allowed; }
 
         #btn-start { border: 1.5px solid var(--accent-green); color: var(--accent-green); background: transparent; display: none; }
-        #btn-draw { background: var(--accent-purple); }
-        #btn-rollback { background: var(--accent-red); }
-        #btn-bgm { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem; padding: 5px 10px; }
-        #btn-bgm.playing { border-color: var(--accent-gold); color: var(--accent-gold); }
+        #btn-force-lobby { background: var(--accent-red); font-size: 0.7rem; display: none; opacity: 0.6; }
+        #btn-force-lobby:hover { opacity: 1; }
+
+        /* 🔊 볼륨 조절 UI */
+        .audio-ctrl { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; }
+        #vol-slider { width: 80px; accent-color: var(--accent-gold); cursor: pointer; }
+
         .sort-btn { font-size: 11px; color: #aaa; background: rgba(0,0,0,0.4); }
         .active-sort { border: 1px solid #fff; color: #fff; background: rgba(255,255,255,0.2); }
         #btn-reset-lobby { width: 100%; margin-top: 30px; background: var(--accent-green); font-size: 1rem; padding: 15px; }
@@ -73,23 +72,25 @@
 
 <div id="main-container">
     <div id="ui-layer">
-        <div style="flex: 1.5;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                <span style="font-weight: 900; letter-spacing: 1px;">루미</span>
-                <button id="btn-mode" onclick="toggleGameMode()" style="background:#333; font-size:11px; padding:5px 10px; display:none;">모드: 4인용</button>
-                <button id="btn-bgm" onclick="toggleBGM()">🎵 BGM: OFF</button>
+        <div style="flex: 2; display: flex; align-items: center; gap: 20px;">
+            <span style="font-weight: 900; letter-spacing: 1px; font-size: 1.2rem;">루미</span>
+            <div class="audio-ctrl">
+                <button id="btn-bgm" onclick="toggleBGM()" style="padding: 5px 10px; font-size: 0.7rem;">🎵 OFF</button>
+                <input type="range" id="vol-slider" min="0" max="1" step="0.01" value="0.2" oninput="changeVolume(this.value)">
             </div>
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         
         <div id="turn-info" style="flex: 1; text-align: center;">연결 중...</div>
 
-        <div style="flex: 1.5; display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
+        <div style="flex: 2; display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
             <span id="pool-count" style="font-size: 0.75rem; color: #555;">POOL: 0</span>
-            <button id="btn-start" onclick="startGame()">시작</button>
+            <button id="btn-mode" onclick="toggleGameMode()" style="background:#333; display:none;">4인용</button>
+            <button id="btn-force-lobby" onclick="returnToLobby()">강제 초기화</button>
+            <button id="btn-start" onclick="startGame()">게임 시작</button>
             <button id="btn-rollback" onclick="rollbackTurn()" disabled>무르기</button>
-            <button id="btn-draw" onclick="drawTile()" disabled>뽑기</button>
-            <button id="btn-end" onclick="nextTurn()" disabled>종료</button>
+            <button id="btn-draw" onclick="drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
+            <button id="btn-end" onclick="nextTurn()" disabled style="background:#444;">종료</button>
         </div>
     </div>
     
@@ -130,9 +131,20 @@
     const db = firebase.database();
 
     let audioCtx = null, bgm = document.getElementById('bgm-audio');
-    bgm.volume = 0.2;
-    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
-    function toggleBGM() { const btn = document.getElementById('btn-bgm'); if (bgm.paused) { bgm.play(); btn.innerText = "🎵 BGM: ON"; btn.classList.add('playing'); } else { bgm.pause(); btn.innerText = "🎵 BGM: OFF"; btn.classList.remove('playing'); } }
+    
+    function initAudio() { 
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+        if (audioCtx.state === 'suspended') audioCtx.resume(); 
+    }
+
+    function toggleBGM() {
+        const btn = document.getElementById('btn-bgm');
+        if (bgm.paused) { bgm.play(); btn.innerText = "🎵 ON"; btn.style.color = "var(--accent-gold)"; } 
+        else { bgm.pause(); btn.innerText = "🎵 OFF"; btn.style.color = "#fff"; }
+    }
+
+    function changeVolume(val) { bgm.volume = val; }
+
     function playSnapSound() { if (!audioCtx) return; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.frequency.setValueAtTime(600, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.05, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.1); }
     function playTurnNotifySound() { if (!audioCtx) return; const n = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(880, n); o.frequency.setValueAtTime(1100, n + 0.2); g.gain.setValueAtTime(0.1, n); g.gain.exponentialRampToValueAtTime(0.01, n + 0.5); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(n + 0.5); }
 
@@ -153,8 +165,11 @@
         const sorted = Object.entries(players).map(([n, d]) => ({ n, ...d })).sort((a, b) => (a.timestamp || Infinity) - (b.timestamp || Infinity));
         playerList = sorted.map(p => p.n);
         const isHost = (playerList[0] === myName);
+        
+        // 👑 방장 권한 버튼 가시성 제어
         document.getElementById('btn-start').style.display = isHost ? 'inline-block' : 'none';
         document.getElementById('btn-mode').style.display = isHost ? 'inline-block' : 'none';
+        document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
 
         db.ref('hands').on('value', hSnap => {
             const allHands = hSnap.val() || {};
@@ -163,12 +178,7 @@
             playerList.forEach((name, idx) => {
                 const isThisHost = (idx === 0);
                 const count = allHands[name] ? Object.keys(allHands[name]).length : 0;
-                
-                // 🚀 핵심 종료 로직: 타일이 0개가 되는 순간 즉시 끝냄
-                if (gameStatus === "playing" && count === 0) {
-                    db.ref('settings/status').set("finished");
-                }
-
+                if (gameStatus === "playing" && count === 0) db.ref('settings/status').set("finished");
                 const badge = document.createElement('span');
                 badge.className = `player-badge ${isThisHost ? 'is-host-badge' : ''}`;
                 badge.innerHTML = `${isThisHost ? '👑' : ''} ${name}${name === myName ? ' (나)' : ''} <span class="tile-num">${count}</span>`;
@@ -184,49 +194,36 @@
         const lobbyBtn = document.getElementById('btn-reset-lobby');
         if (gameStatus === "waiting") {
             overlay.style.display = "flex"; lobbyBtn.style.display = "none";
-            body.innerHTML = `<h2>준비 중</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p><div class="loader"></div>`;
+            body.innerHTML = `<h2>대기실</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p><div class="loader"></div>`;
         } else if (gameStatus === "finished") {
             overlay.style.display = "flex"; lobbyBtn.style.display = "block";
             showRankingWithScores();
         } else { overlay.style.display = "none"; }
     });
 
-    // 🏆 점수 계산 및 랭킹 표시 함수
     function showRankingWithScores() {
         db.ref('hands').once('value', s => {
             const hands = s.val() || {};
-            let scoreData = [];
-            let totalLoserPoints = 0;
-
-            // 1차 계산: 패배자 점수 합산
+            let scoreData = []; let totalLoserPoints = 0;
             playerList.forEach(name => {
-                let sum = 0;
-                const tiles = hands[name] || {};
+                let sum = 0; const tiles = hands[name] || {};
                 Object.values(tiles).forEach(t => sum += (t.num === 'J' ? 30 : Number(t.num)));
                 scoreData.push({ name, sum, isWinner: (sum === 0), finalScore: -sum });
                 if (sum > 0) totalLoserPoints += sum;
             });
-
-            // 2차 계산: 승리자 점수 할당 및 정렬
             scoreData.forEach(p => { if (p.isWinner) p.finalScore = totalLoserPoints; });
             scoreData.sort((a, b) => b.finalScore - a.finalScore);
-
-            let html = `<h2>🎮 게임 종료!</h2>`;
-            html += `<table class="score-table"><thead><tr><th>순위</th><th>플레이어</th><th>남은 타일</th><th>득점</th></tr></thead><tbody>`;
-            scoreData.forEach((p, i) => {
-                html += `<tr class="rank-row-${i+1}">
-                    <td>${i+1}</td>
-                    <td>${p.name}</td>
-                    <td>${p.isWinner ? 'DONE' : Object.keys(hands[p.name]||{}).length + '장'}</td>
-                    <td class="${p.finalScore >= 0 ? 'plus-score' : 'minus-score'}">${p.finalScore > 0 ? '+' : ''}${p.finalScore}</td>
-                </tr>`;
-            });
+            let html = `<h2>🎮 게임 결과</h2><table class="score-table"><thead><tr><th>순위</th><th>플레이어</th><th>패</th><th>점수</th></tr></thead><tbody>`;
+            scoreData.forEach((p, i) => { html += `<tr class="rank-row-${i+1}"><td>${i+1}</td><td>${p.name}</td><td>${p.isWinner?'DONE':Object.keys(hands[p.name]||{}).length+'장'}</td><td>${p.finalScore>0?'+':''}${p.finalScore}</td></tr>`; });
             html += `</tbody></table>`;
             document.getElementById('modal-body').innerHTML = html;
         });
     }
 
-    function returnToLobby() { db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); }
+    function returnToLobby() {
+        if (!confirm("모든 데이터를 초기화하고 대기실로 돌아갈까요? (방 전체 적용)")) return;
+        db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null });
+    }
 
     db.ref('currentTurn').on('value', snap => {
         currentTurn = snap.val();
@@ -252,7 +249,7 @@
     });
 
     db.ref('pool').on('value', snap => { document.getElementById('pool-count').innerText = `POOL: ${snap.numChildren()}`; });
-    db.ref('settings/gameMode').on('value', snap => { currentGameMode = snap.val() || 4; document.getElementById('btn-mode').innerText = `모드: ${currentGameMode}인용`; });
+    db.ref('settings/gameMode').on('value', snap => { currentGameMode = snap.val() || 4; document.getElementById('btn-mode').innerText = `${currentGameMode}인용`; });
     function toggleGameMode() { db.ref('settings/gameMode').set(currentGameMode === 4 ? 5 : 4); }
 
     db.ref(`hands/${myName}`).on('value', snap => {
@@ -277,7 +274,7 @@
         rackEl.querySelectorAll('.tile').forEach(el => el.remove());
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active-sort'));
         const btnId = sortMode === 'number' ? 'sort-num' : sortMode === 'color' ? 'sort-col' : 'sort-man';
-        document.getElementById(btnId).classList.add('active-sort');
+        if (document.getElementById(btnId)) document.getElementById(btnId).classList.add('active-sort');
         myHandData.forEach(t => renderTile(rackEl, t.id, t, true));
     }
 
