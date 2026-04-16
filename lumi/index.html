@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 </title>
+    <title>루미 : 어반 에디션</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -58,11 +58,14 @@
         #btn-start { border: 1.5px solid var(--accent-green); color: var(--accent-green); background: transparent; display: none; }
         #btn-draw { background: var(--accent-purple); }
         #btn-rollback { background: var(--accent-red); }
+        
+        /* 🔊 BGM 버튼 스타일 */
+        #btn-bgm { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem; padding: 5px 10px; }
+        #btn-bgm.playing { border-color: var(--accent-gold); color: var(--accent-gold); }
+
         .sort-btn { font-size: 11px; color: #aaa; background: rgba(0,0,0,0.4); }
         .active-sort { border: 1px solid #fff; color: #fff; background: rgba(255,255,255,0.2); }
-        
         #btn-reset-lobby { width: 100%; margin-top: 20px; background: var(--accent-green); font-size: 1rem; padding: 15px; }
-        #btn-force-reset { background: #333; font-size: 10px; padding: 5px 10px; margin-left: 10px; color: #666; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -73,7 +76,7 @@
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                 <span style="font-weight: 900; letter-spacing: 1px;">루미</span>
                 <button id="btn-mode" onclick="toggleGameMode()" style="background:#333; font-size:11px; padding:5px 10px; display:none;">모드: 4인용</button>
-                <button id="btn-force-reset" onclick="returnToLobby()" style="display:none;">강제 리셋</button>
+                <button id="btn-bgm" onclick="toggleBGM()">🎵 BGM: OFF</button>
             </div>
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
@@ -92,8 +95,7 @@
     <div id="game-board" ondrop="dropToBoard(event)" ondragover="allowDrop(event)">
         <div id="overlay-layer">
             <div class="modal-card">
-                <div id="modal-body">
-                    </div>
+                <div id="modal-body"></div>
                 <button id="btn-reset-lobby" onclick="returnToLobby()" style="display:none;">대기실로 돌아가기</button>
             </div>
         </div>
@@ -107,6 +109,10 @@
         </div>
     </div>
 </div>
+
+<audio id="bgm-audio" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg">
+</audio>
 
 <script>
     const firebaseConfig = {
@@ -123,7 +129,27 @@
     const db = firebase.database();
 
     let audioCtx = null;
-    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+    let bgm = document.getElementById('bgm-audio');
+    bgm.volume = 0.3; // 배경음악 볼륨 설정 (0.0 ~ 1.0)
+
+    function initAudio() { 
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+        if (audioCtx.state === 'suspended') audioCtx.resume(); 
+    }
+
+    function toggleBGM() {
+        const btn = document.getElementById('btn-bgm');
+        if (bgm.paused) {
+            bgm.play();
+            btn.innerText = "🎵 BGM: ON";
+            btn.classList.add('playing');
+        } else {
+            bgm.pause();
+            btn.innerText = "🎵 BGM: OFF";
+            btn.classList.remove('playing');
+        }
+    }
+
     function playSnapSound() { if (!audioCtx) return; const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
     function playTurnNotifySound() { if (!audioCtx) return; const now = audioCtx.currentTime; const osc = audioCtx.createOscillator(); const g = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); osc.frequency.setValueAtTime(1100, now + 0.2); g.gain.setValueAtTime(0.1, now); g.gain.exponentialRampToValueAtTime(0.01, now + 0.5); osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(now + 0.5); }
 
@@ -146,7 +172,6 @@
         const isHost = (playerList[0] === myName);
         document.getElementById('btn-start').style.display = isHost ? 'inline-block' : 'none';
         document.getElementById('btn-mode').style.display = isHost ? 'inline-block' : 'none';
-        document.getElementById('btn-force-reset').style.display = isHost ? 'inline-block' : 'none';
 
         db.ref('hands').on('value', hSnap => {
             const allHands = hSnap.val() || {};
@@ -169,15 +194,12 @@
         const overlay = document.getElementById('overlay-layer');
         const body = document.getElementById('modal-body');
         const lobbyBtn = document.getElementById('btn-reset-lobby');
-        
         if (gameStatus === "waiting") {
             overlay.style.display = "flex";
             lobbyBtn.style.display = "none";
             body.innerHTML = `<h2>준비 중</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p><div class="loader"></div>`;
         } else if (gameStatus === "finished") {
-            overlay.style.display = "flex";
-            lobbyBtn.style.display = "block"; // 🚀 즉시 버튼 활성화
-            showRanking();
+            overlay.style.display = "flex"; lobbyBtn.style.display = "block"; showRanking();
         } else { overlay.style.display = "none"; }
     });
 
@@ -192,13 +214,8 @@
     }
 
     function returnToLobby() {
-        if (!confirm("모든 데이터를 초기화하고 대기실로 돌아갈까요?")) return;
-        db.ref('/').update({
-            "settings/status": "waiting",
-            "board": null,
-            "hands": null,
-            "pool": null
-        });
+        if (!confirm("대기실로 돌아갈까요?")) return;
+        db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null });
     }
 
     db.ref('currentTurn').on('value', snap => {
@@ -295,8 +312,7 @@
     function startGame() {
         if (!confirm("시작할까요?")) return;
         db.ref('settings/status').set("preparing");
-        myHandData = [];
-        db.ref('board').remove(); db.ref('hands').remove(); 
+        myHandData = []; db.ref('board').remove(); db.ref('hands').remove(); 
         let pool = []; const co = ['red', 'blue', 'yellow', 'black'], sets = currentGameMode === 5 ? 3 : 2;
         co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); } });
         for(let i=0; i<(currentGameMode === 5 ? 4 : 2); i++) pool.push({ num: 'J', color: 'joker' });
