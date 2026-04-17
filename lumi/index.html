@@ -11,7 +11,7 @@
         :root {
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.95); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #27ae60; --accent-gold: #f1c40f; --accent-red: #e74c3c;
-            --chat-bg: rgba(25, 25, 25, 0.9); --turn-blue: #3498db;
+            --chat-bg: rgba(25, 25, 25, 0.95); --turn-blue: #3498db;
         }
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; overflow: hidden; transition: box-shadow 0.3s; }
         
@@ -28,15 +28,15 @@
         #game-board { flex: 7; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; transition: filter 0.3s; }
         #game-board.not-my-turn { pointer-events: none; filter: grayscale(0.6) brightness(0.7); }
 
-        /* 💬 채팅창 UI - 위치 및 레이어 대폭 수정 */
-        #chat-wrapper { position: fixed; bottom: 28%; right: 20px; width: 300px; z-index: 900; display: flex; flex-direction: column; pointer-events: none; }
-        #chat-box { height: 250px; background: var(--chat-bg); backdrop-filter: blur(15px); border-radius: 15px 15px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 12px; pointer-events: auto; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* 💬 채팅 UI 레이어 최상단 고정 */
+        #chat-wrapper { position: fixed; bottom: 25px; right: 25px; width: 320px; z-index: 2000; display: flex; flex-direction: column; pointer-events: none; }
+        #chat-box { height: 280px; background: var(--chat-bg); backdrop-filter: blur(15px); border-radius: 15px 15px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 15px; pointer-events: auto; display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
         #chat-box div { margin-bottom: 8px; font-size: 0.85rem; line-height: 1.5; word-break: break-all; }
         .chat-name { font-weight: bold; color: var(--accent-gold); margin-right: 6px; }
-        .chat-me { color: #fff; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; }
+        .chat-me { color: #fff; background: rgba(255,255,255,0.12); padding: 2px 8px; border-radius: 6px; }
         #chat-input-container { display: flex; background: #1a1a1a; border-radius: 0 0 15px 15px; border: 1px solid rgba(255,255,255,0.15); border-top: none; pointer-events: auto; display: none; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 12px; color: #fff; outline: none; font-size: 0.85rem; }
-        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; pointer-events: auto; font-weight: bold; font-size: 0.8rem; box-shadow: 0 5px 15px rgba(0,0,0,0.4); transition: transform 0.2s; }
+        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 12px 24px; border-radius: 30px; cursor: pointer; pointer-events: auto; font-weight: bold; font-size: 0.85rem; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transition: transform 0.2s; }
         #chat-toggle:hover { transform: scale(1.05); }
 
         #overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
@@ -113,6 +113,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // 🛡️ 안전하게 텍스트를 업데이트하는 함수
+    function safeUpdateText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+    }
+
     let audioCtx = null, bgm = document.getElementById('bgm-audio');
     function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
     function toggleBGM() { const b = document.getElementById('btn-bgm'); if (bgm.paused) { bgm.play(); b.innerText = "🎵 ON"; b.style.color = "var(--accent-gold)"; } else { bgm.pause(); b.innerText = "🎵 OFF"; b.style.color = "#fff"; } }
@@ -124,7 +130,7 @@
     let playerList = [], currentTurn = "", lastTurn = "", sortMode = 'color', currentGameMode = 4, myHandData = [], gameStatus = "waiting", boardTiles = {};
     let snapshotBoard = null, snapshotHand = null;
 
-    db.ref(".info/connected").on("value", (snap) => {
+    db.ref(".info/connected").on("value", snap => {
         if (snap.val() === true) {
             const myRef = db.ref('players/' + myName);
             myRef.once('value', s => { if (!s.exists()) myRef.set({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP }); });
@@ -137,11 +143,14 @@
         const sorted = Object.entries(players).map(([n, d]) => ({ n, ...d })).sort((a, b) => (a.timestamp || Infinity) - (b.timestamp || Infinity));
         playerList = sorted.map(p => p.n);
         const isHost = (playerList[0] === myName);
-        document.getElementById('btn-start').style.display = isHost ? 'inline-block' : 'none';
-        document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
+        
+        const bStart = document.getElementById('btn-start'), bForce = document.getElementById('btn-force-lobby');
+        if (bStart) bStart.style.display = isHost ? 'inline-block' : 'none';
+        if (bForce) bForce.style.display = isHost ? 'inline-block' : 'none';
 
         db.ref('hands').on('value', hSnap => {
             const allHands = hSnap.val() || {}, listEl = document.getElementById('player-list-container');
+            if (!listEl) return;
             listEl.innerHTML = '';
             playerList.forEach((name, idx) => {
                 const count = allHands[name] ? Object.keys(allHands[name]).length : 0;
@@ -154,18 +163,20 @@
         });
     });
 
-    // 💬 채팅 시스템 로직 (강화됨)
     function toggleChat() {
         const box = document.getElementById('chat-box'), input = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle');
+        if (!box || !input) return;
         const isOpen = (box.style.display === 'block');
         box.style.display = isOpen ? 'none' : 'block';
         input.style.display = isOpen ? 'none' : 'flex';
         btn.innerText = isOpen ? '💬 채팅 열기' : '❌ 채팅 닫기';
         if (!isOpen) { box.scrollTop = box.scrollHeight; document.getElementById('chat-input').focus(); }
     }
-    function sendChat() { const input = document.getElementById('chat-input'); if (!input.value.trim()) return; db.ref('chat').push({ name: myName, msg: input.value.trim(), time: Date.now() }); input.value = ''; }
+    function sendChat() { const input = document.getElementById('chat-input'); if (!input || !input.value.trim()) return; db.ref('chat').push({ name: myName, msg: input.value.trim(), time: Date.now() }); input.value = ''; }
     db.ref('chat').limitToLast(50).on('child_added', snap => {
-        const data = snap.val(), box = document.getElementById('chat-box'), div = document.createElement('div');
+        const data = snap.val(), box = document.getElementById('chat-box');
+        if (!box) return;
+        const div = document.createElement('div');
         div.innerHTML = `<span class="chat-name">${data.name}:</span><span class="${data.name===myName?'chat-me':''}">${data.msg}</span>`;
         box.appendChild(div); box.scrollTop = box.scrollHeight;
     });
@@ -173,6 +184,7 @@
     db.ref('settings/status').on('value', snap => {
         gameStatus = snap.val() || "waiting";
         const overlay = document.getElementById('overlay-layer'), body = document.getElementById('modal-body'), lobbyBtn = document.getElementById('btn-reset-lobby');
+        if (!overlay || !body) return;
         if (gameStatus === "waiting") { overlay.style.display = "flex"; lobbyBtn.style.display = "none"; body.innerHTML = `<h2>대기실</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p>`; }
         else if (gameStatus === "finished") { overlay.style.display = "flex"; lobbyBtn.style.display = "block"; showRanking(); }
         else { overlay.style.display = "none"; }
@@ -188,7 +200,7 @@
             scoreData.forEach(p => { if (p.isW) p.fs = total; }); scoreData.sort((a,b) => b.fs - a.fs);
             let html = `<h2>🎮 게임 결과</h2><table class="score-table">`;
             scoreData.forEach((p, i) => { html += `<tr class="${i===0?'rank-row-1':''}"><td>${i+1}위</td><td>${p.n}</td><td>${p.fs>0?'+':''}${p.fs}점</td></tr>`; });
-            body.innerHTML = html + `</table>`;
+            const mb = document.getElementById('modal-body'); if(mb) mb.innerHTML = html + `</table>`;
         });
     }
 
@@ -199,15 +211,17 @@
         if (isMy && lastTurn !== myName) { playTurnNotifySound(); document.body.classList.add('is-my-turn-frame'); takeSnapshot(); }
         else if (!isMy) document.body.classList.remove('is-my-turn-frame');
         lastTurn = currentTurn;
-        document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-        document.getElementById('btn-draw').disabled = !isMy; document.getElementById('btn-end').disabled = !isMy; document.getElementById('btn-rollback').disabled = !isMy;
-        document.getElementById('turn-info').innerHTML = isMy ? `<span style='color:var(--turn-blue); font-weight:bold;'>내 차례!</span>` : `<span>차례: ${currentTurn || '-'}</span>`;
+        const gb = document.getElementById('game-board'); if(gb) gb.classList.toggle('not-my-turn', !isMy);
+        const bDraw = document.getElementById('btn-draw'), bEnd = document.getElementById('btn-end'), bRoll = document.getElementById('btn-rollback');
+        if(bDraw) bDraw.disabled = !isMy; if(bEnd) bEnd.disabled = !isMy; if(bRoll) bRoll.disabled = !isMy;
+        const tInfo = document.getElementById('turn-info');
+        if(tInfo) tInfo.innerHTML = isMy ? `<span style='color:var(--turn-blue); font-weight:bold;'>내 차례!</span>` : `<span>차례: ${currentTurn || '-'}</span>`;
     });
 
     function takeSnapshot() { db.ref('board').once('value', s => snapshotBoard = s.val() || {}); db.ref(`hands/${myName}`).once('value', s => snapshotHand = s.val() || {}); }
     function rollbackTurn() { if (confirm("무를까요?")) { if (snapshotBoard) db.ref('board').set(snapshotBoard); if (snapshotHand) db.ref(`hands/${myName}`).set(snapshotHand); playSnapSound(); } }
-    db.ref('board').on('value', snap => { const boardEl = document.getElementById('game-board'); boardEl.querySelectorAll('.tile').forEach(t => t.remove()); boardTiles = snap.val() || {}; for (let id in boardTiles) renderTile(boardEl, id, boardTiles[id], false); });
-    db.ref('pool').on('value', snap => document.getElementById('pool-count').innerText = `POOL: ${snap.numChildren()}`);
+    db.ref('board').on('value', snap => { const boardEl = document.getElementById('game-board'); if(!boardEl) return; boardEl.querySelectorAll('.tile').forEach(t => t.remove()); boardTiles = snap.val() || {}; for (let id in boardTiles) renderTile(boardEl, id, boardTiles[id], false); });
+    db.ref('pool').on('value', snap => safeUpdateText('pool-count', `POOL: ${snap.numChildren()}`));
 
     db.ref(`hands/${myName}`).on('value', snap => {
         const newData = snap.val() || {}, newIds = Object.keys(newData);
@@ -226,7 +240,8 @@
         });
     }
     function renderRack() {
-        const rackEl = document.getElementById('my-rack'); rackEl.querySelectorAll('.tile').forEach(el => el.remove());
+        const rackEl = document.getElementById('my-rack'); if(!rackEl) return;
+        rackEl.querySelectorAll('.tile').forEach(el => el.remove());
         const btnId = sortMode === 'number' ? 'sort-num' : sortMode === 'color' ? 'sort-col' : 'sort-man';
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active-sort', b.id === btnId));
         myHandData.forEach(t => renderTile(rackEl, t.id, t, true));
