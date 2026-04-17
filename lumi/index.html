@@ -19,7 +19,6 @@
         #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; }
         #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.6); }
 
-        /* 타일 스타일 (겹침 방지 포함) */
         .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; cursor: grab; }
         #game-board .tile { position: absolute; }
         #my-rack .tile { position: relative; left: auto !important; top: auto !important; flex-shrink: 0; }
@@ -88,6 +87,24 @@
 <script>
     let db, myName, playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
     let isRegistered = false, initialBoardState = {};
+
+    // --- 오디오 효과음 함수 ---
+    function playTileSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        } catch(e) { console.error("Audio error", e); }
+    }
 
     // --- 방장 결정 로직 ---
     function getHostName() {
@@ -180,8 +197,14 @@
     window.handleTurnEnd = function() {
         const v = validateBoard(); if (!v.valid) return alert(v.msg);
         if (!isRegistered) {
-            let pts = 0; Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => pts += (t.num === 'J' ? 30 : Number(t.num)));
-            if (pts < 30) return alert(`등록 점수 부족! (${pts}/30)`);
+            let pts = 0; 
+            // 보드에 새로 내려진 타일(initialBoardState에 없던 것)들만 계산
+            Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => {
+                pts += (t.num === 'J' ? 30 : Number(t.num));
+            });
+            if (pts < 30) {
+                return alert(`⚠️ 등록 실패! (현재 점수: ${pts})\n처음에는 숫자 합계가 30점 이상인 세트를 내려놓아야 합니다.`);
+            }
             db.ref('players/' + myName).update({ registered: true });
         }
         if (myHandData.length === 0) db.ref('settings/status').set("finished");
@@ -211,8 +234,15 @@
         let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2;
         let snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
         const inHand = myHandData.find(t => t.id === id);
-        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
-        else { db.ref('board/' + id).update({ x: snapX, y: snapY }); }
+        if (inHand) { 
+            db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); 
+            db.ref('hands/' + myName + '/' + id).remove(); 
+            playTileSound();
+        }
+        else { 
+            db.ref('board/' + id).update({ x: snapX, y: snapY }); 
+            playTileSound();
+        }
     };
 
     window.dropOnRack = function(e) {
@@ -244,7 +274,6 @@
             const hostName = getHostName();
             const isHost = (myName === hostName);
             
-            // 방장 버튼 실시간 제어
             document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
             document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
 
