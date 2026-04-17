@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 : 어반 에디션 Pro+ Ver 20.4</title>
+    <title>루미 : 어반 에디션 Pro+ Ver 20.5</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -72,7 +72,6 @@
         button:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
-        .is-reg-badge { border-color: var(--accent-green) !important; color: var(--accent-green) !important; }
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; box-shadow: 0 0 15px rgba(52, 152, 219, 0.4); }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
         
@@ -104,9 +103,9 @@
         </div>
         <div id="turn-info" style="text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--turn-blue); flex: 0.4;">연결 중...</div>
         <div style="display: flex; align-items: center; gap: 8px; flex: 1.3; justify-content: flex-end;">
-            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
-            <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">턴 넘기기</button>
-            <button id="btn-start" onclick="window.startGame()" style="background:var(--accent-green); color:#000; display:none;">시작</button>
+            <button id="btn-force-lobby" onclick="returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
+            <button id="btn-force-next" onclick="forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">턴 넘기기</button>
+            <button id="btn-start" onclick="startGame()" style="background:var(--accent-green); color:#000; display:none;">시작</button>
             <span id="pool-badge">POOL: --</span>
             <button id="btn-rollback" onclick="rollbackTurn()" disabled style="background:#555;">무르기</button>
             <button id="btn-draw" onclick="drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
@@ -139,39 +138,54 @@
 <audio id="bgm-audio" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg"></audio>
 
 <script>
-    // 🚀 모든 핵심 기능을 window 객체에 전역으로 연결 (작동 보장)
+    // 🚀 모든 핵심 변수와 함수를 최상단 전역 스코프로 배치하여 접근 보장
+    let db, myName, myJoinTime, audioCtx, bgm;
+    let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal", isSpectating = false;
+    let isRegistered = false, initialBoardState = {}, initialHandState = {}, registrationPoints = 0, isProcessingTurn = false;
+
+    // 🔊 오디오 로직
+    function playSfx(type) {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if (type === 'tile') { osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+        else if (type === 'turn') { osc.type = 'triangle'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+    }
+
+    function toggleBGM() { if (bgm.paused) { bgm.play(); document.getElementById('btn-bgm').innerText = "🎵 ON"; } else { bgm.pause(); document.getElementById('btn-bgm').innerText = "🎵 OFF"; } }
+    function changeVolume(v) { if(bgm) bgm.volume = v; }
+
+    // 턴 관리 로직
+    function announceTurn(name) {
+        const announcer = document.getElementById('turn-announcer');
+        if (!announcer) return; announcer.innerText = `${name}님의 차례입니다!`;
+        announcer.style.display = 'block'; announcer.style.animation = 'none'; announcer.offsetHeight;
+        announcer.style.animation = 'turn-popup 2s ease forwards';
+        playSfx('turn'); setTimeout(() => announcer.style.display = 'none', 2000);
+    }
+
+    // 🚀 버튼 및 모드 선택 함수 (전역)
+    function setGameMode(mode) { db.ref('settings/gameMode').set(mode); }
+    function toggleSpectate() { db.ref('players/' + myName).update({ spectating: !isSpectating }); }
+    function forceNextTurn() { if(confirm("차례를 강제로 넘길까요?")) window.nextTurnAction(); }
+    function returnToLobby() {
+        if(!confirm("초기화할까요?")) return;
+        playerList.forEach(p => { db.ref('players/' + p).update({ registered: false }); if(p === myName) window.sessionStorage.setItem('lumi-reg', 'false'); });
+        db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/activePlayers": null, "settings/gameMode": "normal" });
+    }
+
     window.onload = function() {
-        const myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
+        myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
         window.sessionStorage.setItem('lumi-nick', myName);
-        let myJoinTime = window.sessionStorage.getItem('lumi-join-time');
+        myJoinTime = window.sessionStorage.getItem('lumi-join-time');
+        bgm = document.getElementById('bgm-audio');
 
         const firebaseConfig = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e", storageBucket: "lumi-b373e.firebasestorage.app", messagingSenderId: "171246043706", appId: "1:171246043706:web:3733e35f0af044974b2b03", measurementId: "G-Q9F1532V40" };
-        firebase.initializeApp(firebaseConfig); const db = firebase.database();
+        firebase.initializeApp(firebaseConfig); db = firebase.database();
         const UI = { set: (id, h) => { const el = document.getElementById(id); if (el) el.innerHTML = h; }, text: (id, t) => { const el = document.getElementById(id); if (el) el.innerText = t; }, show: (id, d = 'block') => { const el = document.getElementById(id); if (el) el.style.display = d; }, hide: (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; }, disable: (id, b) => { const el = document.getElementById(id); if (el) el.disabled = b; } };
 
-        let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal", isSpectating = false;
-        let isRegistered = false, initialBoardState = {}, initialHandState = {}, registrationPoints = 0, isProcessingTurn = false;
-        let audioCtx = null, bgm = document.getElementById('bgm-audio');
+        window.initAudio = function() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); };
 
-        // 🔊 효과음
-        function playSfx(type) {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            if (type === 'tile') { osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
-            else if (type === 'turn') { osc.type = 'triangle'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
-        }
-
-        // 턴 알림
-        function announceTurn(name) {
-            const announcer = document.getElementById('turn-announcer');
-            if (!announcer) return; announcer.innerText = `${name}님의 차례입니다!`;
-            announcer.style.display = 'block'; announcer.style.animation = 'none'; announcer.offsetHeight;
-            announcer.style.animation = 'turn-popup 2s ease forwards';
-            playSfx('turn'); setTimeout(() => announcer.style.display = 'none', 2000);
-        }
-
-        // 접속 및 세션 유지
         db.ref(".info/connected").on("value", snap => {
             if (snap.val()) {
                 const myRef = db.ref('players/' + myName);
@@ -189,7 +203,7 @@
 
         db.ref('pool').on('value', snap => UI.text('pool-badge', "POOL: " + (snap.exists() ? Object.keys(snap.val()).length : 0)));
         db.ref('settings/activePlayers').on('value', snap => { activePlayers = snap.val() || []; });
-        db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || "normal"; if (gameStatus === "waiting") renderLobby(); });
+        db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || "normal"; if (gameStatus === "waiting") renderLobbyUI(); });
 
         db.ref('players').on('value', pSnap => {
             const players = pSnap.val() || {};
@@ -197,13 +211,13 @@
             isRegistered = players[myName]?.registered || false;
             isSpectating = players[myName]?.spectating || false;
             window.sessionStorage.setItem('lumi-reg', isRegistered);
-            
             const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
             const isHost = (myName === hostName);
+
             if (isHost) { UI.show('btn-start', 'inline-block'); UI.show('btn-force-next', 'inline-block'); UI.show('btn-force-lobby', 'inline-block'); } 
             else { UI.hide('btn-start'); UI.hide('btn-force-next'); UI.hide('btn-force-lobby'); }
             
-            if (gameStatus === "waiting") renderLobby();
+            if (gameStatus === "waiting") renderLobbyUI();
             
             db.ref('hands').on('value', hSnap => {
                 const allHands = hSnap.val() || {}, listEl = document.getElementById('player-list-container');
@@ -214,48 +228,45 @@
                     const badge = document.createElement('span'); 
                     badge.className = `player-badge ${isHostIcon ? 'is-host-badge' : ''} ${reg ? 'is-reg-badge' : ''} ${isTurn ? 'active-turn-badge' : ''}`;
                     if (!isActive && gameStatus === 'playing') badge.style.opacity = "0.5";
-                    badge.innerHTML = `${isHostIcon ? '👑' : ''} ${name} ${isActive ? `<span class="tile-count">${count}</span>` : pSpectating ? '<small>(관전중)</small>' : '<small>(대기중)</small>'}`;
+                    badge.innerHTML = `${isHostIcon ? '👑' : ''} ${name} ${isActive ? `<span class="tile-count">${count}</span>` : pSpectating ? '<small>(관전)</small>' : '<small>(대기)</small>'}`;
                     listEl.appendChild(badge);
                 });
             });
         });
 
-        // 🚀 전역 함수 정의 (버튼 작동 보장)
-        window.setGameMode = function(mode) { db.ref('settings/gameMode').set(mode); };
-        window.toggleSpectate = function() { db.ref('players/' + myName).update({ spectating: !isSpectating }); };
-        window.forceNextTurn = function() { if(confirm("턴을 넘길까요?")) window.nextTurn(); };
-        window.returnToLobby = function() {
-            if(!confirm("초기화할까요?")) return;
-            playerList.forEach(p => { db.ref('players/' + p).update({ registered: false }); if(p === myName) window.sessionStorage.setItem('lumi-reg', 'false'); });
-            db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/activePlayers": null, "settings/gameMode": "normal" });
-        };
-
-        function renderLobby() {
+        function renderLobbyUI() {
             const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
             const isHost = (myName === hostName);
             UI.show('overlay-layer', 'flex');
             let lobbyHtml = `<h2>대기실</h2><p>${hostName}님이 시작하기를 기다리고 있습니다.</p>`;
             if (isHost) {
                 lobbyHtml += `<div style="margin:20px 0;">
-                    <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="window.setGameMode('normal')">4인용 (106장)</button>
-                    <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="window.setGameMode('expert')">5인용 (160장)</button>
+                    <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="setGameMode('normal')">4인용 (106장)</button>
+                    <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="setGameMode('expert')">5인용 (160장)</button>
                 </div>`;
             }
-            lobbyHtml += `<button class="spectate-btn ${isSpectating?'active':''}" onclick="window.toggleSpectate()">${isSpectating ? '🎮 게임 참여하기' : '👁️ 관전자로 남기'}</button>`;
+            lobbyHtml += `<button class="spectate-btn ${isSpectating?'active':''}" onclick="toggleSpectate()">${isSpectating ? '🎮 게임 참여하기' : '👁️ 관전자로 남기'}</button>`;
             UI.set('modal-body', lobbyHtml);
         }
 
-        // BGM 및 SFX 초기화
-        window.initAudio = function() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); };
-        window.toggleBGM = function() { if (bgm.paused) { bgm.play(); UI.text('btn-bgm', "🎵 ON"); } else { bgm.pause(); UI.text('btn-bgm', "🎵 OFF"); } };
-        window.changeVolume = function(v) { bgm.volume = v; };
+        db.ref('settings/status').on('value', snap => {
+            gameStatus = snap.val() || "waiting";
+            if (gameStatus === "waiting") renderLobbyUI();
+            else if (gameStatus === "finished") { UI.show('overlay-layer', 'flex'); showRanking(); }
+            else UI.hide('overlay-layer');
+        });
 
-        // 채팅
-        window.toggleChat = function() {
-            const box = document.getElementById('chat-box'), inp = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle');
-            const open = box.style.display === 'block'; box.style.display = open ? 'none' : 'block'; inp.style.display = open ? 'none' : 'flex';
-            btn.innerText = open ? '💬 채팅' : '❌ 닫기'; if (!open) { box.scrollTop = box.scrollHeight; document.getElementById('chat-input').focus(); }
-        };
+        db.ref('currentTurn').on('value', snap => {
+            const newTurn = snap.val();
+            if (newTurn && currentTurn !== newTurn && gameStatus === "playing") announceTurn(newTurn);
+            currentTurn = newTurn; isProcessingTurn = false;
+            const isMy = (currentTurn === myName);
+            if (isMy) document.body.classList.add('is-my-turn-frame'); else document.body.classList.remove('is-my-turn-frame');
+            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
+            UI.disable('btn-draw', !isMy); UI.disable('btn-end', !isMy); UI.disable('btn-rollback', !isMy);
+            UI.set('turn-info', isMy ? `내 차례입니다!` : `차례: ${currentTurn || '-'}`);
+        });
+
         window.sendChat = function() { 
             const i = document.getElementById('chat-input'), cp = document.getElementById('chat-color-picker');
             if (!i.value.trim()) return; db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value }); i.value = ''; 
@@ -267,68 +278,50 @@
             box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
 
-        db.ref('settings/status').on('value', snap => {
-            gameStatus = snap.val() || "waiting";
-            if (gameStatus === "waiting") renderLobby();
-            else if (gameStatus === "finished") { UI.show('overlay-layer', 'flex'); showRanking(); }
-            else UI.hide('overlay-layer');
-        });
-
-        db.ref('currentTurn').on('value', snap => {
-            const newTurn = snap.val();
-            if (newTurn && currentTurn !== newTurn && gameStatus === "playing") announceTurn(newTurn);
-            currentTurn = newTurn; isProcessingTurn = false;
-            const isMy = (currentTurn === myName);
-            if (isMy) { document.body.classList.add('is-my-turn-frame'); takeTurnSnapshot(); } 
-            else { document.body.classList.remove('is-my-turn-frame'); }
-            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-            UI.disable('btn-draw', !isMy); UI.disable('btn-end', !isMy); UI.disable('btn-rollback', !isMy);
-            UI.set('turn-info', isMy ? `내 차례입니다!` : `차례: ${currentTurn || '-'}`);
-        });
-
-        function takeTurnSnapshot() {
-            db.ref('board').once('value', s => { initialBoardState = JSON.parse(JSON.stringify(s.val() || {})); updateRegPoints(); });
-            db.ref(`hands/${myName}`).once('value', s => { initialHandState = JSON.parse(JSON.stringify(s.val() || {})); });
-        }
-        window.rollbackTurn = function() { if (!confirm("모든 동작을 무를까요?")) return; registrationPoints = 0; db.ref('board').set(initialBoardState); db.ref(`hands/${myName}`).set(initialHandState); updateRegPoints(); };
-
-        function renderTile(parent, id, data, isRack) {
-            const div = document.createElement('div');
-            const onBoard = !isRack, isMineInTurn = onBoard && !initialBoardState[id], isLocked = onBoard && !isMineInTurn && !isRegistered;
-            div.className = "tile " + data.color + (isRack ? " rack-tile" : "") + (isLocked ? " locked" : "");
-            div.innerText = data.num; div.id = id; div.draggable = !isLocked;
-            if (onBoard) { div.style.left = data.x + 'px'; div.style.top = data.y + 'px'; }
-            div.ondragstart = (e) => { if (isLocked || (onBoard && currentTurn !== myName)) return e.preventDefault(); e.dataTransfer.setData("text/plain", id); };
-            parent.appendChild(div);
-        }
-
-        function updateRegPoints() {
-            if (isRegistered) { UI.show('reg-info', 'block'); UI.set('reg-info', `<span style="color:var(--accent-green)">등록 완료</span> | 내 패: ${myHandData.length}장`); return; }
-            const newTiles = Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]);
-            let pts = 0; newTiles.forEach(([id, t]) => { pts += (t.num === 'J' ? 10 : Number(t.num)); });
-            registrationPoints = pts; UI.show('reg-info', 'block');
-            UI.set('reg-info', `등록 점수: ${pts}/30 | 내 패: ${myHandData.length}장`);
-        }
-
-        window.dropOnBoard = function(e) {
-            e.preventDefault(); if (currentTurn !== myName) return;
-            const id = e.dataTransfer.getData("text/plain"), rect = document.getElementById('game-board').getBoundingClientRect();
-            let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
-            const tileInHand = myHandData.find(t => t.id === id);
-            if (tileInHand) { db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); playSfx('tile'); }
-            else if (boardTiles[id]) { if (!isRegistered && initialBoardState[id]) return; db.ref('board/' + id).update({ x: snapX, y: snapY }); playSfx('tile'); }
+        window.toggleChat = function() {
+            const box = document.getElementById('chat-box'), inp = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle');
+            const open = box.style.display === 'block'; box.style.display = open ? 'none' : 'block'; inp.style.display = open ? 'none' : 'flex';
+            btn.innerText = open ? '💬 채팅' : '❌ 닫기'; if (!open) { box.scrollTop = box.scrollHeight; document.getElementById('chat-input').focus(); }
         };
-        window.dropOnRack = function(e) {
-            e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
-            if (!isRegistered && initialBoardState[id]) return; 
-            db.ref('board/' + id).once('value', s => { if (s.exists() && currentTurn === myName) { db.ref('hands/' + myName + '/' + id).set({ num: s.val().num, color: s.val().color }); db.ref('board/' + id).remove(); playSfx('tile'); } });
+
+        window.startGame = function() {
+            if (!confirm("게임을 시작할까요?")) return;
+            db.ref('players').once('value', pSnap => {
+                const players = pSnap.val() || {};
+                const nonSpectators = Object.entries(players).filter(([n, d]) => !d.spectating).map(([n, d]) => n);
+                if (nonSpectators.length < 2) return alert("참여자가 최소 2명은 있어야 합니다!");
+                db.ref('/').update({ "settings/status": "preparing", "board": null, "hands": null, "settings/activePlayers": nonSpectators });
+                nonSpectators.forEach(p => { db.ref('players/' + p).update({ registered: false }); if(p === myName) window.sessionStorage.setItem('lumi-reg', 'false'); });
+                let pool = []; const co = ['red', 'blue', 'yellow', 'black'];
+                const setsCount = (gameMode === 'expert') ? 3 : 2; const jokerCount = (gameMode === 'expert') ? 4 : 2;
+                co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<setsCount; j++) pool.push({ num: i, color: c }); } });
+                for(let k=0; k<jokerCount; k++) pool.push({ num: 'J', color: 'joker' });
+                pool.sort(() => Math.random() - 0.5); db.ref('currentTurn').set(nonSpectators[0]);
+                const ups = {}; nonSpectators.forEach(p => { for(let i=0; i<14; i++) { const t = pool.pop(), id = 'tile_' + Math.random().toString(36).substr(2,9); ups['hands/' + p + '/' + id] = t; } });
+                db.ref('/').update({ ...ups, pool: Object.assign({}, pool), "settings/status": "playing" });
+            });
         };
+
+        window.nextTurnAction = function() {
+            if (isProcessingTurn) return; isProcessingTurn = true;
+            db.ref('settings/activePlayers').once('value', snap => {
+                const list = snap.val() || []; if (list.length < 2) { isProcessingTurn = false; return; }
+                const idx = list.indexOf(currentTurn); const nextIdx = (idx === -1) ? 0 : (idx + 1) % list.length;
+                db.ref('currentTurn').set(list[nextIdx]);
+            });
+        };
+
+        window.drawTile = function() {
+            if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("판에 낸 타일을 회수해야 뽑을 수 있습니다.");
+            db.ref('pool').limitToFirst(1).once('value', s => { if (!s.exists()) return; const key = Object.keys(s.val())[0]; db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]); db.ref('pool/' + key).remove(); window.nextTurnAction(); });
+        };
+
         window.handleTurnEnd = function() {
             const newCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
             if (newCount === 0) return alert("패를 내지 않으려면 '뽑기'를 누르세요.");
             if (!validateBoard()) return alert("조합 규칙 위반입니다!");
             if (!isRegistered) { if (registrationPoints < 30) return alert("등록 점수 30점이 부족합니다!"); db.ref('players/' + myName).update({ registered: true }); isRegistered = true; window.sessionStorage.setItem('lumi-reg', 'true'); }
-            if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurn();
+            if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
         };
 
         function validateBoard() {
@@ -344,53 +337,68 @@
             } return true;
         }
 
-        window.nextTurn = function() {
-            if (isProcessingTurn) return; isProcessingTurn = true;
-            db.ref('settings/activePlayers').once('value', snap => {
-                const list = snap.val() || []; if (list.length < 2) { isProcessingTurn = false; return; }
-                const idx = list.indexOf(currentTurn); const nextIdx = (idx === -1) ? 0 : (idx + 1) % list.length;
-                db.ref('currentTurn').set(list[nextIdx]);
+        db.ref('board').on('value', snap => { 
+            const bEl = document.getElementById('game-board'); if(!bEl) return; bEl.querySelectorAll('.tile').forEach(t => t.remove()); 
+            boardTiles = snap.val() || {}; for (let id in boardTiles) {
+                const data = boardTiles[id]; const div = document.createElement('div');
+                const onBoard = true, isMineInTurn = !initialBoardState[id], isLocked = !isMineInTurn && !isRegistered;
+                div.className = "tile " + data.color + (isLocked ? " locked" : "");
+                div.innerText = data.num; div.id = id; div.draggable = !isLocked;
+                div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
+                div.ondragstart = (e) => { if (isLocked || currentTurn !== myName) return e.preventDefault(); e.dataTransfer.setData("text/plain", id); };
+                bEl.appendChild(div);
+            }
+            if (currentTurn === myName) updateRegPoints();
+        });
+
+        db.ref('hands/' + myName).on('value', snap => { 
+            myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val })); 
+            if(sortMode!=='manual') applyAutoSort(); renderRackUI(); 
+            if (currentTurn === myName) updateRegPoints(); 
+        });
+
+        function renderRackUI() {
+            const rEl = document.getElementById('my-rack'); if(!rEl) return; rEl.querySelectorAll('.tile').forEach(el => el.remove());
+            myHandData.forEach(t => {
+                const div = document.createElement('div'); div.className = "tile " + t.color + " rack-tile";
+                div.innerText = t.num; div.id = t.id; div.draggable = true;
+                div.ondragstart = (e) => { if (currentTurn !== myName) return e.preventDefault(); e.dataTransfer.setData("text/plain", t.id); };
+                rEl.appendChild(div);
             });
+        }
+        
+        window.setSortMode = function(m) { sortMode = m; applyAutoSort(); renderRackUI(); };
+        function applyAutoSort() { const co = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 }; myHandData.sort((a, b) => { const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); return sortMode === 'color' ? (co[a.color] - co[b.color] || vA - vB) : (vA - vB || co[a.color] - co[b.color]); }); }
+
+        window.dropOnBoard = function(e) {
+            e.preventDefault(); if (currentTurn !== myName) return;
+            const id = e.dataTransfer.getData("text/plain"), rect = document.getElementById('game-board').getBoundingClientRect();
+            let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+            const tileInHand = myHandData.find(t => t.id === id);
+            if (tileInHand) { db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); playSfx('tile'); }
+            else if (boardTiles[id]) { if (!isRegistered && initialBoardState[id]) return; db.ref('board/' + id).update({ x: snapX, y: snapY }); playSfx('tile'); }
         };
 
-        window.startGame = function() {
-            if (!confirm("게임을 시작할까요?")) return;
-            db.ref('players').once('value', pSnap => {
-                const players = pSnap.val() || {};
-                const nonSpectators = Object.entries(players).filter(([n, d]) => !d.spectating).map(([n, d]) => n);
-                if (nonSpectators.length < 2) return alert("참여자가 최소 2명은 있어야 합니다!");
-                db.ref('/').update({ "settings/status": "preparing", "board": null, "hands": null, "settings/activePlayers": nonSpectators });
-                nonSpectators.forEach(p => { db.ref('players/' + p).update({ registered: false }); if(p === myName) window.sessionStorage.setItem('lumi-reg', 'false'); });
-                let pool = []; const co = ['red', 'blue', 'yellow', 'black'];
-                const setsCount = (gameMode === 'expert') ? 3 : 2;
-                const jokerCount = (gameMode === 'expert') ? 4 : 2;
-                co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<setsCount; j++) pool.push({ num: i, color: c }); } });
-                for(let k=0; k<jokerCount; k++) pool.push({ num: 'J', color: 'joker' });
-                pool.sort(() => Math.random() - 0.5); db.ref('currentTurn').set(nonSpectators[0]);
-                const ups = {}; nonSpectators.forEach(p => { for(let i=0; i<14; i++) { const t = pool.pop(), id = 'tile_' + Math.random().toString(36).substr(2,9); ups['hands/' + p + '/' + id] = t; } });
-                db.ref('/').update({ ...ups, pool: Object.assign({}, pool), "settings/status": "playing" });
-            });
+        document.getElementById('my-rack').ondrop = function(e) {
+            e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
+            if (!isRegistered && initialBoardState[id]) return; 
+            db.ref('board/' + id).once('value', s => { if (s.exists() && currentTurn === myName) { db.ref('hands/' + myName + '/' + id).set({ num: s.val().num, color: s.val().color }); db.ref('board/' + id).remove(); playSfx('tile'); } });
         };
-
-        window.drawTile = function() {
-            if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("판에 낸 타일을 회수해야 뽑을 수 있습니다.");
-            db.ref('pool').limitToFirst(1).once('value', s => { if (!s.exists()) return; const key = Object.keys(s.val())[0]; db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]); db.ref('pool/' + key).remove(); window.nextTurn(); });
-        };
-
+        
         function showRanking() {
             db.ref('hands').once('value', s => {
                 const h = s.val() || {}; let res = activePlayers.map(n => { let sum = 0; Object.values(h[n]||{}).forEach(t => sum += (t.num === 'J' ? 30 : Number(t.num))); return { n, sum }; }).sort((a,b) => a.sum - b.sum);
                 let html = `<h2>🎮 게임 결과</h2><table style="width:100%">`;
                 res.forEach((p, i) => html += `<tr style="${i===0?'color:var(--accent-gold)':''}"><td>${i+1}위</td><td>${p.n}</td><td>${p.sum}점</td></tr>`);
-                html += `</table><button onclick="window.returnToLobby()" style="margin-top:20px; background:var(--accent-green); width:100%;">대기실로</button>`;
+                html += `</table><button onclick="returnToLobby()" style="margin-top:20px; background:var(--accent-green); width:100%;">대기실로</button>`;
                 UI.set('modal-body', html);
             });
         }
-        db.ref('board').on('value', snap => { const bEl = document.getElementById('game-board'); if(!bEl) return; bEl.querySelectorAll('.tile').forEach(t => t.remove()); boardTiles = snap.val() || {}; for (let id in boardTiles) renderTile(bEl, id, boardTiles[id], false); if (currentTurn === myName) updateRegPoints(); });
-        db.ref('hands/' + myName).on('value', snap => { myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val })); if(sortMode!=='manual') applyAutoSort(); renderRack(); if (currentTurn === myName) updateRegPoints(); });
-        window.setSortMode = function(m) { sortMode = m; applyAutoSort(); renderRack(); };
-        function applyAutoSort() { const co = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 }; myHandData.sort((a, b) => { const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); return sortMode === 'color' ? (co[a.color] - co[b.color] || vA - vB) : (vA - vB || co[a.color] - co[b.color]); }); }
-        function renderRack() { const rEl = document.getElementById('my-rack'); if(!rEl) return; rEl.querySelectorAll('.tile').forEach(el => el.remove()); myHandData.forEach(t => renderTile(rEl, t.id, t, true)); }
+
+        function takeTurnSnapshot() {
+            db.ref('board').once('value', s => { initialBoardState = JSON.parse(JSON.stringify(s.val() || {})); updateRegPoints(); });
+            db.ref(`hands/${myName}`).once('value', s => { initialHandState = JSON.parse(JSON.stringify(s.val() || {})); });
+        }
     };
 </script>
 </body>
