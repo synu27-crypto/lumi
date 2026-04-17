@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 : 어반 에디션 Pro+ Ver 18.5</title>
+    <title>루미 : 어반 에디션 Pro+ Ver 18.6</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -21,18 +21,21 @@
         body.is-my-turn-frame { animation: pulse-border 1.5s infinite; }
 
         #main-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
-        #ui-layer { height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 500; }
+        
+        /* 상단 UI 레이어 안정화 */
+        #ui-layer { height: 60px; min-height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 500; gap: 10px; }
         
         #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; transition: opacity 0.3s; }
         #game-board.not-my-turn { pointer-events: none; opacity: 0.8; filter: brightness(0.8); }
 
-        .audio-ctrl { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-left: 10px; }
+        .audio-ctrl { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
         #vol-slider { width: 50px; accent-color: var(--accent-gold); cursor: pointer; height: 4px; }
         #btn-bgm { background: transparent; border: none; font-size: 0.65rem; color: #fff; cursor: pointer; font-weight: bold; padding: 0; }
 
         #reg-info { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 8px 25px; border-radius: 30px; border: 2px solid var(--accent-gold); color: var(--accent-gold); font-weight: bold; font-size: 0.85rem; z-index: 800; display: none; }
 
-        .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify(content: center; align-items: center; font-weight: 800; font-size: 1.3rem; position: absolute; cursor: grab; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; }
+        /* 타일 디자인 (오타 수정 완료) */
+        .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; position: absolute; cursor: grab; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; }
         .tile.rack-tile { position: relative !important; left: auto !important; top: auto !important; flex-shrink: 0; }
         .tile.locked { filter: brightness(0.6); cursor: not-allowed; border: 1px dashed #666; }
         
@@ -50,10 +53,10 @@
         #chat-color-picker { width: 24px; height: 24px; border: none; background: none; cursor: pointer; padding: 0; }
         #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; pointer-events: auto; font-weight: bold; margin-top: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        #my-rack { height: 210px; background: #151515; border-top: 1px solid rgba(255, 255, 255, 0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; }
-        #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify(content: flex-end; gap: 8px; z-index: 700; background: #151515; padding-bottom: 10px; }
+        #my-rack { height: 210px; min-height: 210px; background: #151515; border-top: 2px solid rgba(255, 255, 255, 0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; }
+        #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; z-index: 700; background: #151515; padding-bottom: 10px; }
         
-        button { padding: 6px 14px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 6px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; }
+        button { padding: 6px 14px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 6px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; white-space: nowrap; }
         button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
         button:disabled { opacity: 0.3; cursor: not-allowed; }
 
@@ -61,10 +64,10 @@
         .is-reg-badge { border-color: var(--accent-green) !important; color: var(--accent-green) !important; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
         
-        /* 🚀 주머니 개수 배지 (위치 이동 및 스타일 수정) */
-        #pool-badge { background: rgba(157, 80, 187, 0.2); border: 1.5px solid var(--accent-purple); color: var(--accent-purple); padding: 5px 12px; border-radius: 6px; font-weight: 900; font-size: 0.75rem; display: inline-flex; align-items: center; }
+        /* 주머니 배지 위치 최적화 */
+        #pool-badge { background: rgba(157, 80, 187, 0.1); border: 1.5px solid var(--accent-purple); color: var(--accent-purple); padding: 5px 12px; border-radius: 6px; font-weight: 900; font-size: 0.75rem; display: inline-flex; align-items: center; white-space: nowrap; }
 
-        #overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(15px); display: flex; justify(content: center; align-items: center; z-index: 1000; }
+        #overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-card { background: rgba(45, 45, 45, 0.95); padding: 30px; border-radius: 24px; text-align: center; min-width: 350px; border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
@@ -72,20 +75,20 @@
 
 <div id="main-container">
     <div id="ui-layer">
-        <div style="flex: 2.5; display: flex; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
             <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미</span>
             <div class="audio-ctrl">
                 <button id="btn-bgm" onclick="toggleBGM()">🎵 OFF</button>
                 <input type="range" id="vol-slider" min="0" max="1" step="0.01" value="0.2" oninput="changeVolume(this.value)">
             </div>
-            <div id="player-list-container" style="display: flex; gap: 8px; margin-left: 15px;"></div>
+            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
-        <div id="turn-info" style="flex: 1; text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--turn-blue);">연결 중...</div>
-        <div style="flex: 2.5; display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+        
+        <div id="turn-info" style="text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--turn-blue); flex: 0.5;">연결 중...</div>
+        
+        <div style="display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;">
             <button id="btn-start" onclick="startGame()" style="background:var(--accent-green); color:#000; display:none;">시작</button>
-            
             <span id="pool-badge">POOL: --</span>
-            
             <button id="btn-rollback" onclick="rollbackTurn()" disabled style="background:#555;">무르기</button>
             <button id="btn-draw" onclick="drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
             <button id="btn-end" onclick="handleTurnEnd()" disabled style="background:#444;">종료</button>
@@ -109,9 +112,9 @@
 
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="dropOnRack(event)">
         <div id="rack-controls">
-            <button onclick="setSortMode('number')">777 숫자순</button>
-            <button onclick="setSortMode('color')">123 색상순</button>
-            <button onclick="setSortMode('manual')">🖐 수동정렬</button>
+            <button onclick="setSortMode('number')">777 숫자</button>
+            <button onclick="setSortMode('color')">123 색상</button>
+            <button onclick="setSortMode('manual')">🖐 수동</button>
         </div>
     </div>
 </div>
@@ -128,12 +131,6 @@
         let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {};
         let isRegistered = false, initialBoardState = {}, initialHandState = {}, registrationPoints = 0;
         let audioCtx = null, bgm = document.getElementById('bgm-audio');
-
-        function getNicknameColor(name) {
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            return `hsl(${Math.abs(hash) % 360}, 75%, 75%)`;
-        }
 
         window.initAudio = function() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); };
         window.toggleBGM = function() { if (bgm.paused) { bgm.play(); UI.text('btn-bgm', "🎵 ON"); } else { bgm.pause(); UI.text('btn-bgm', "🎵 OFF"); } };
@@ -164,15 +161,13 @@
 
         window.toggleChat = function() {
             const box = document.getElementById('chat-box'), inp = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle');
-            const open = box.style.display === 'flex' || box.style.display === 'block';
-            box.style.display = open ? 'none' : 'block'; inp.style.display = open ? 'none' : 'flex';
+            const open = box.style.display === 'block'; box.style.display = open ? 'none' : 'block'; inp.style.display = open ? 'none' : 'flex';
             btn.innerText = open ? '💬 채팅' : '❌ 닫기'; if (!open) { box.scrollTop = box.scrollHeight; document.getElementById('chat-input').focus(); }
         };
         window.sendChat = function() { 
             const i = document.getElementById('chat-input'), cp = document.getElementById('chat-color-picker');
             if (!i.value.trim()) return; 
-            db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value }); 
-            i.value = ''; 
+            db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value }); i.value = ''; 
         };
         db.ref('chat').limitToLast(20).on('child_added', snap => {
             const d = snap.val(), box = document.getElementById('chat-box'); if (!box) return;
@@ -217,8 +212,7 @@
             if (isRegistered) { UI.show('reg-info', 'block'); UI.set('reg-info', `<span style="color:var(--accent-green)">등록 완료</span> | 내 패: ${myHandData.length}장`); return; }
             const newTiles = Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]);
             let pts = 0; newTiles.forEach(([id, t]) => { pts += (t.num === 'J' ? 10 : Number(t.num)); });
-            registrationPoints = pts; UI.show('reg-info', 'block');
-            UI.set('reg-info', `등록 점수: ${pts}/30 | 내 패: ${myHandData.length}장`);
+            registrationPoints = pts; UI.show('reg-info', 'block'); UI.set('reg-info', `등록 점수: ${pts}/30 | 내 패: ${myHandData.length}장`);
         }
 
         window.dropOnBoard = function(e) {
