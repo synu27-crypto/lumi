@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 : 어반 에디션 Pro+ Ver 18.9</title>
+    <title>루미 : 어반 에디션 Pro+ Ver 19.0</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -14,11 +14,27 @@
         }
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; overflow: hidden; user-select: none; }
         
+        /* 🚨 테두리 반짝임 */
         @keyframes pulse-border {
             0%, 100% { box-shadow: inset 0 0 20px rgba(52, 152, 219, 0.3); }
             50% { box-shadow: inset 0 0 60px rgba(52, 152, 219, 0.6); }
         }
         body.is-my-turn-frame { animation: pulse-border 1.5s infinite; }
+
+        /* 🚀 턴 알림 애니메이션 */
+        @keyframes turn-popup {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+        }
+        #turn-announcer {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85); color: var(--turn-blue);
+            padding: 20px 50px; border-radius: 50px; font-size: 2rem; font-weight: 900;
+            z-index: 10000; pointer-events: none; border: 3px solid var(--turn-blue);
+            box-shadow: 0 0 50px rgba(52, 152, 219, 0.5); display: none;
+        }
 
         #main-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
         #ui-layer { height: 60px; min-height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 500; gap: 10px; }
@@ -57,8 +73,9 @@
         button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
         button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; transition: opacity 0.3s; }
+        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; }
         .is-reg-badge { border-color: var(--accent-green) !important; color: var(--accent-green) !important; }
+        .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; transform: scale(1.1); box-shadow: 0 0 15px rgba(52, 152, 219, 0.4); z-index: 100; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
         
         #pool-badge { background: rgba(157, 80, 187, 0.1); border: 1.5px solid var(--accent-purple); color: var(--accent-purple); padding: 5px 12px; border-radius: 6px; font-weight: 900; font-size: 0.75rem; display: inline-flex; align-items: center; white-space: nowrap; }
@@ -69,9 +86,11 @@
 </head>
 <body onclick="if(window.initAudio) window.initAudio()">
 
+<div id="turn-announcer"></div>
+
 <div id="main-container">
     <div id="ui-layer">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1.2;">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1.3;">
             <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미</span>
             <div class="audio-ctrl">
                 <button id="btn-bgm" onclick="toggleBGM()">🎵 OFF</button>
@@ -80,9 +99,9 @@
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         
-        <div id="turn-info" style="text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--turn-blue); flex: 0.6;">연결 중...</div>
+        <div id="turn-info" style="text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--turn-blue); flex: 0.4;">연결 중...</div>
         
-        <div style="display: flex; align-items: center; gap: 8px; flex: 1.2; justify-content: flex-end;">
+        <div style="display: flex; align-items: center; gap: 8px; flex: 1.3; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
             <button id="btn-force-next" onclick="forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">턴 넘기기</button>
             <button id="btn-start" onclick="startGame()" style="background:var(--accent-green); color:#000; display:none;">시작</button>
@@ -99,7 +118,7 @@
             <div id="chat-box"></div>
             <div id="chat-input-container">
                 <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) sendChat()">
-                <input type="color" id="chat-color-picker" value="#f1c40f" title="채팅 색상">
+                <input type="color" id="chat-color-picker" value="#f1c40f">
             </div>
             <button id="chat-toggle" onclick="toggleChat()">💬 채팅</button>
         </div>
@@ -125,8 +144,20 @@
         const UI = { set: (id, h) => { const el = document.getElementById(id); if (el) el.innerHTML = h; }, text: (id, t) => { const el = document.getElementById(id); if (el) el.innerText = t; }, show: (id, d = 'block') => { const el = document.getElementById(id); if (el) el.style.display = d; }, hide: (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; }, disable: (id, b) => { const el = document.getElementById(id); if (el) el.disabled = b; } };
 
         let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {};
-        let isRegistered = false, initialBoardState = {}, registrationPoints = 0;
+        let isRegistered = false, initialBoardState = {}, initialHandState = {}, registrationPoints = 0;
         let audioCtx = null, bgm = document.getElementById('bgm-audio');
+
+        // 🚀 턴 알림 표시 함수
+        function announceTurn(name) {
+            const announcer = document.getElementById('turn-announcer');
+            if (!announcer) return;
+            announcer.innerText = `${name}님의 차례입니다!`;
+            announcer.style.display = 'block';
+            announcer.style.animation = 'none';
+            announcer.offsetHeight; // Reflow
+            announcer.style.animation = 'turn-popup 2s ease forwards';
+            setTimeout(() => announcer.style.display = 'none', 2000);
+        }
 
         db.ref(".info/connected").on("value", snap => {
             if (snap.val()) {
@@ -146,28 +177,23 @@
             const players = pSnap.val() || {};
             playerList = Object.entries(players).map(([n, d]) => ({ n, ...d })).sort((a, b) => (a.timestamp || Infinity) - (b.timestamp || Infinity)).map(p => p.n);
             isRegistered = players[myName]?.registered || false;
-            
-            // 🚀 계헌 방장 우선순위 로직
             const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
             const isHost = (myName === hostName);
 
             if (isHost) { UI.show('btn-start', 'inline-block'); UI.show('btn-force-next', 'inline-block'); UI.show('btn-force-lobby', 'inline-block'); } 
             else { UI.hide('btn-start'); UI.hide('btn-force-next'); UI.hide('btn-force-lobby'); }
 
-            if (gameStatus === "playing" && activePlayers.length >= 2) {
-                const onlineActives = activePlayers.filter(p => players[p]);
-                if (onlineActives.length < 2) db.ref('settings/status').set("finished");
-            }
-            
             db.ref('hands').on('value', hSnap => {
                 const allHands = hSnap.val() || {}, listEl = document.getElementById('player-list-container');
                 if (!listEl) return; listEl.innerHTML = '';
-                playerList.forEach((name, idx) => {
+                playerList.forEach((name) => {
                     const isActive = activePlayers.includes(name), reg = players[name]?.registered, count = allHands[name] ? Object.keys(allHands[name]).length : 0;
-                    const isThisPersonHost = (name === hostName);
-                    const badge = document.createElement('span'); badge.className = `player-badge ${isThisPersonHost ? 'is-host-badge' : ''} ${reg ? 'is-reg-badge' : ''}`;
+                    const isTurn = (name === currentTurn);
+                    const isHostIcon = (name === hostName);
+                    const badge = document.createElement('span'); 
+                    badge.className = `player-badge ${isHostIcon ? 'is-host-badge' : ''} ${reg ? 'is-reg-badge' : ''} ${isTurn ? 'active-turn-badge' : ''}`;
                     if (!isActive && gameStatus === 'playing') badge.style.opacity = "0.5";
-                    badge.innerHTML = `${isThisPersonHost ? '👑' : ''} ${name} ${isActive ? `<span class="tile-count">${count}</span>` : '<small>(관전)</small>'}`;
+                    badge.innerHTML = `${isHostIcon ? '👑' : ''} ${name} ${isActive ? `<span class="tile-count">${count}</span>` : '<small>(관전)</small>'}`;
                     listEl.appendChild(badge);
                 });
             });
@@ -191,8 +217,9 @@
         };
         db.ref('chat').limitToLast(20).on('child_added', snap => {
             const d = snap.val(), box = document.getElementById('chat-box'); if (!box) return;
+            function getColor(n) { let h=0; for(let i=0; i<n.length; i++) h=n.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360},75%,75%)`; }
             const div = document.createElement('div');
-            div.innerHTML = `<span style="color:${d.color || '#f1c40f'}; font-weight:bold;">${d.name}:</span> <span style="color:#fff;">${d.msg}</span>`;
+            div.innerHTML = `<span style="color:${d.color || getColor(d.name)}; font-weight:bold;">${d.name}:</span> <span style="color:#fff;">${d.msg}</span>`;
             box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
 
@@ -203,10 +230,13 @@
             else UI.hide('overlay-layer');
         });
 
+        // 🚀 차례 변경 감지 및 알림 트리거
         db.ref('currentTurn').on('value', snap => {
-            currentTurn = snap.val(); const isMy = (currentTurn === myName);
-            if (isMy) { document.body.classList.add('is-my-turn-frame'); takeTurnSnapshot(); } 
-            else { document.body.classList.remove('is-my-turn-frame'); UI.hide('reg-info'); }
+            const newTurn = snap.val();
+            if (newTurn && currentTurn !== newTurn && gameStatus === "playing") announceTurn(newTurn);
+            currentTurn = newTurn;
+            const isMy = (currentTurn === myName);
+            if (isMy) document.body.classList.add('is-my-turn-frame'); else document.body.classList.remove('is-my-turn-frame');
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
             UI.disable('btn-draw', !isMy); UI.disable('btn-end', !isMy); UI.disable('btn-rollback', !isMy);
             UI.set('turn-info', isMy ? `내 차례입니다!` : `차례: ${currentTurn || '-'}`);
