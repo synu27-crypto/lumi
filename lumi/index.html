@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미큐브 : 어반 에디션 Ver 23.1</title>
+    <title>루미큐브 : 어반 에디션 Ver 23.2</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -121,7 +121,6 @@
     let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal", isSpectating = false;
     let isRegistered = false, initialBoardState = {}, registrationPoints = 0;
 
-    // --- 로비 UI 렌더링 함수 ---
     window.renderLobbyUI = function() {
         const modalBody = document.getElementById('modal-body');
         const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
@@ -145,7 +144,7 @@
 
         html += `
             <button class="spectate-btn ${isSpectating ? 'active' : ''}" onclick="window.toggleSpectate()">
-                ${isSpectating ? '관전 취소 (플레이어로 참여)' : '관전 모드로 전환'}
+                ${isSpectating ? '관전 취소' : '관전 모드로 참여'}
             </button>
         `;
         modalBody.innerHTML = html;
@@ -157,20 +156,14 @@
     window.changeVolume = function(v) { if(bgm) bgm.volume = v; };
     window.forceNextTurn = function() { if(confirm("강제 턴 넘기기?")) window.nextTurnAction(); };
 
-    // --- [중요] 게임 시작 함수 (경로 충돌 수정) ---
     window.startGame = function() {
         db.ref('players').once('value', pSnap => {
             const players = pSnap.val() || {};
             const nonSpectators = Object.entries(players).filter(([n, d]) => !d.spectating).map(([n, d]) => n);
             
-            // 인원 체크 (테스트 시 주의)
-            if (nonSpectators.length < 2) {
-                alert("참여자가 최소 2명 이상이어야 합니다! (창을 두 개 띄워보세요)");
-                return;
-            }
+            if (nonSpectators.length < 2) return alert("참여자가 최소 2명 이상이어야 합니다! (창을 두 개 띄워 테스트하세요)");
 
-            let pool = []; 
-            const colors = ['red', 'blue', 'yellow', 'black'];
+            let pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
             const sets = (gameMode === 'expert') ? 3 : 2;
             const jokers = (gameMode === 'expert') ? 4 : 2;
             
@@ -179,36 +172,30 @@
             pool.sort(() => Math.random() - 0.5);
 
             const updates = {};
-            // 전체 게임 상태 업데이트
-            updates['settings/status'] = "playing";
-            updates['board'] = {}; // 기존 보드 삭제
+            updates['board'] = {}; 
             updates['pool'] = Object.assign({}, pool);
             updates['currentTurn'] = nonSpectators[0];
             updates['settings/activePlayers'] = nonSpectators;
 
-            // 각 플레이어 손패 배분 (충돌 방지를 위해 path 직접 지정)
             nonSpectators.forEach(p => {
-                // hands/플레이어 경로를 먼저 밀어버림 (별도 처리 권장)
                 db.ref(`hands/${p}`).remove(); 
-                
                 for(let i=0; i<14; i++) {
-                    const t = pool.pop(); 
-                    const id = 'tile_' + Math.random().toString(36).substr(2, 9);
+                    const t = pool.pop(); const id = 'tile_' + Math.random().toString(36).substr(2, 9);
                     updates[`hands/${p}/${id}`] = t;
                 }
                 updates[`players/${p}/registered`] = false;
                 updates[`players/${p}/tileCount`] = 14;
             });
 
-            // 원자적 업데이트 실행
-            db.ref('/').update(updates)
-                .then(() => console.log("Game started!"))
-                .catch(err => alert("시작 중 에러: " + err.message));
+            // 상태를 마지막에 변경하여 리스너 충돌 방지
+            updates['settings/status'] = "playing";
+
+            db.ref('/').update(updates).catch(err => alert("에러: " + err.message));
         });
     }
 
     window.returnToLobby = function() {
-        if(!confirm("진행 중인 게임을 초기화하고 대기실로 이동할까요?")) return;
+        if(!confirm("진행 중인 게임을 초기화할까요?")) return;
         db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/activePlayers": null });
     };
 
@@ -232,17 +219,12 @@
             }
         });
 
-        // 상태 리스너들
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             const overlay = document.getElementById('overlay-layer');
-            if (gameStatus === "playing") { 
-                overlay.style.display = 'none'; 
-            } else if (gameStatus === "finished") { 
-                overlay.style.display = 'flex'; window.showRanking(); 
-            } else { 
-                overlay.style.display = 'flex'; renderLobbyUI(); 
-            }
+            if (gameStatus === "playing") overlay.style.display = 'none';
+            else if (gameStatus === "finished") { overlay.style.display = 'flex'; window.showRanking(); }
+            else { overlay.style.display = 'flex'; renderLobbyUI(); }
         });
 
         db.ref('settings/gameMode').on('value', snap => {
@@ -315,7 +297,7 @@
                 rEl.appendChild(div);
             });
             db.ref('players/' + myName).update({ tileCount: myHandData.length });
-            if (myHandData.length === 0 && gameStatus === "playing") db.ref('settings/status').set("finished");
+            // 승리 조건 체크를 여기서 제거했습니다. (순간적인 0개 감지 방지)
         });
 
         db.ref('chat').limitToLast(20).on('child_added', snap => {
@@ -326,7 +308,6 @@
         });
     };
 
-    // --- 게임 액션들 ---
     window.nextTurnAction = function() {
         if (activePlayers.length < 2) return;
         const nextIdx = (activePlayers.indexOf(currentTurn) + 1) % activePlayers.length;
@@ -344,6 +325,12 @@
     };
 
     window.handleTurnEnd = function() {
+        // [수정] 종료 시점에 패가 0개인지 확인 (승리 조건)
+        if (myHandData.length === 0) {
+            db.ref('settings/status').set("finished");
+            return;
+        }
+
         if (!isRegistered) {
             let pts = 0; 
             Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => {
