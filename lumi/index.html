@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 : 어반 에디션 Pro+ Ver 19.1</title>
+    <title>루미 : 어반 에디션 Pro+ Ver 19.2</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -71,9 +71,9 @@
         button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
         button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; }
+        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
         .is-reg-badge { border-color: var(--accent-green) !important; color: var(--accent-green) !important; }
-        .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; transform: scale(1.1); box-shadow: 0 0 15px rgba(52, 152, 219, 0.4); z-index: 100; }
+        .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; box-shadow: 0 0 15px rgba(52, 152, 219, 0.4); }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
         
         #pool-badge { background: rgba(157, 80, 187, 0.1); border: 1.5px solid var(--accent-purple); color: var(--accent-purple); padding: 5px 12px; border-radius: 6px; font-weight: 900; font-size: 0.75rem; display: inline-flex; align-items: center; white-space: nowrap; }
@@ -96,9 +96,7 @@
             </div>
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
-        
         <div id="turn-info" style="text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--turn-blue); flex: 0.4;">연결 중...</div>
-        
         <div style="display: flex; align-items: center; gap: 8px; flex: 1.3; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
             <button id="btn-force-next" onclick="forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">턴 넘기기</button>
@@ -109,26 +107,17 @@
             <button id="btn-end" onclick="handleTurnEnd()" disabled style="background:#444;">종료</button>
         </div>
     </div>
-    
     <div id="game-board" ondragover="event.preventDefault()" ondrop="dropOnBoard(event)">
         <div id="reg-info">등록 점수 계산 중...</div>
         <div id="chat-wrapper">
             <div id="chat-box"></div>
-            <div id="chat-input-container">
-                <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) sendChat()">
-                <input type="color" id="chat-color-picker" value="#f1c40f">
-            </div>
+            <div id="chat-input-container"><input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) sendChat()"><input type="color" id="chat-color-picker" value="#f1c40f"></div>
             <button id="chat-toggle" onclick="toggleChat()">💬 채팅</button>
         </div>
         <div id="overlay-layer"><div class="modal-card" id="modal-body"><h2>준비 중...</h2></div></div>
     </div>
-
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="dropOnRack(event)">
-        <div id="rack-controls">
-            <button onclick="setSortMode('number')">777 숫자</button>
-            <button onclick="setSortMode('color')">123 색상</button>
-            <button onclick="setSortMode('manual')">🖐 수동</button>
-        </div>
+        <div id="rack-controls"><button onclick="setSortMode('number')">777 숫자</button><button onclick="setSortMode('color')">123 색상</button><button onclick="setSortMode('manual')">🖐 수동</button></div>
     </div>
 </div>
 
@@ -142,44 +131,23 @@
         const UI = { set: (id, h) => { const el = document.getElementById(id); if (el) el.innerHTML = h; }, text: (id, t) => { const el = document.getElementById(id); if (el) el.innerText = t; }, show: (id, d = 'block') => { const el = document.getElementById(id); if (el) el.style.display = d; }, hide: (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; }, disable: (id, b) => { const el = document.getElementById(id); if (el) el.disabled = b; } };
 
         let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {};
-        let isRegistered = false, initialBoardState = {}, initialHandState = {}, registrationPoints = 0;
+        let isRegistered = false, initialBoardState = {}, initialHandState = {}, registrationPoints = 0, isProcessingTurn = false;
         let audioCtx = null, bgm = document.getElementById('bgm-audio');
 
-        // 🚀 효과음 재생 엔진
         function playSfx(type) {
             if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            if (type === 'tile') { // 딸깍 (착수음)
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'turn') { // 띠링 (알림음)
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            }
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            if (type === 'tile') { osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else if (type === 'turn') { osc.type = 'triangle'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); osc.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
         }
 
         function announceTurn(name) {
             const announcer = document.getElementById('turn-announcer');
-            if (!announcer) return;
-            announcer.innerText = `${name}님의 차례입니다!`;
-            announcer.style.display = 'block';
-            announcer.style.animation = 'none';
-            announcer.offsetHeight;
+            if (!announcer) return; announcer.innerText = `${name}님의 차례입니다!`;
+            announcer.style.display = 'block'; announcer.style.animation = 'none'; announcer.offsetHeight;
             announcer.style.animation = 'turn-popup 2s ease forwards';
-            playSfx('turn'); // 🚀 턴 바뀔 때 소리 재생
-            setTimeout(() => announcer.style.display = 'none', 2000);
+            playSfx('turn'); setTimeout(() => announcer.style.display = 'none', 2000);
         }
 
         db.ref(".info/connected").on("value", snap => {
@@ -202,10 +170,10 @@
             isRegistered = players[myName]?.registered || false;
             const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
             const isHost = (myName === hostName);
-
             if (isHost) { UI.show('btn-start', 'inline-block'); UI.show('btn-force-next', 'inline-block'); UI.show('btn-force-lobby', 'inline-block'); } 
             else { UI.hide('btn-start'); UI.hide('btn-force-next'); UI.hide('btn-force-lobby'); }
-
+            if (gameStatus === "playing" && activePlayers.length >= 2 && activePlayers.filter(p => players[p]).length < 2) db.ref('settings/status').set("finished");
+            
             db.ref('hands').on('value', hSnap => {
                 const allHands = hSnap.val() || {}, listEl = document.getElementById('player-list-container');
                 if (!listEl) return; listEl.innerHTML = '';
@@ -235,14 +203,12 @@
         };
         window.sendChat = function() { 
             const i = document.getElementById('chat-input'), cp = document.getElementById('chat-color-picker');
-            if (!i.value.trim()) return; 
-            db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value }); i.value = ''; 
+            if (!i.value.trim()) return; db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value }); i.value = ''; 
         };
         db.ref('chat').limitToLast(20).on('child_added', snap => {
             const d = snap.val(), box = document.getElementById('chat-box'); if (!box) return;
             function getColor(n) { let h=0; for(let i=0; i<n.length; i++) h=n.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360},75%,75%)`; }
-            const div = document.createElement('div');
-            div.innerHTML = `<span style="color:${d.color || getColor(d.name)}; font-weight:bold;">${d.name}:</span> <span style="color:#fff;">${d.msg}</span>`;
+            const div = document.createElement('div'); div.innerHTML = `<span style="color:${d.color || getColor(d.name)}; font-weight:bold;">${d.name}:</span> <span style="color:#fff;">${d.msg}</span>`;
             box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
 
@@ -256,7 +222,7 @@
         db.ref('currentTurn').on('value', snap => {
             const newTurn = snap.val();
             if (newTurn && currentTurn !== newTurn && gameStatus === "playing") announceTurn(newTurn);
-            currentTurn = newTurn;
+            currentTurn = newTurn; isProcessingTurn = false; // 🚀 턴 수신 완료 시 처리 잠금 해제
             const isMy = (currentTurn === myName);
             if (isMy) document.body.classList.add('is-my-turn-frame'); else document.body.classList.remove('is-my-turn-frame');
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
@@ -284,8 +250,7 @@
             if (isRegistered) { UI.show('reg-info', 'block'); UI.set('reg-info', `<span style="color:var(--accent-green)">등록 완료</span> | 내 패: ${myHandData.length}장`); return; }
             const newTiles = Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]);
             let pts = 0; newTiles.forEach(([id, t]) => { pts += (t.num === 'J' ? 10 : Number(t.num)); });
-            registrationPoints = pts; UI.show('reg-info', 'block');
-            UI.set('reg-info', `등록 점수: ${pts}/30 | 내 패: ${myHandData.length}장`);
+            registrationPoints = pts; UI.show('reg-info', 'block'); UI.set('reg-info', `등록 점수: ${pts}/30 | 내 패: ${myHandData.length}장`);
         }
 
         window.dropOnBoard = function(e) {
@@ -293,14 +258,8 @@
             const id = e.dataTransfer.getData("text/plain"), rect = document.getElementById('game-board').getBoundingClientRect();
             let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
             const tileInHand = myHandData.find(t => t.id === id);
-            if (tileInHand) { 
-                db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); 
-                db.ref('hands/' + myName + '/' + id).remove();
-                playSfx('tile'); // 🚀 타일 내려놓을 때 소리
-            } else if (boardTiles[id]) {
-                db.ref('board/' + id).update({ x: snapX, y: snapY });
-                playSfx('tile'); // 🚀 타일 옮길 때 소리
-            }
+            if (tileInHand) { db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); playSfx('tile'); }
+            else if (boardTiles[id]) { db.ref('board/' + id).update({ x: snapX, y: snapY }); playSfx('tile'); }
         };
         window.dropOnRack = function(e) {
             e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
@@ -318,40 +277,37 @@
         function validateBoard() {
             const groups = []; const rows = {};
             Object.values(boardTiles).forEach(t => { const y = Math.round(t.y / 75); if (!rows[y]) rows[y] = []; rows[y].push(t); });
-            for (let y in rows) {
-                const row = rows[y].sort((a, b) => a.x - b.x); let cur = [row[0]];
-                for (let i = 1; i < row.length; i++) { if (row[i].x - row[i-1].x <= 60) cur.push(row[i]); else { groups.push(cur); cur = [row[i]]; } }
-                groups.push(cur);
-            }
+            for (let y in rows) { const row = rows[y].sort((a, b) => a.x - b.x); let cur = [row[0]]; for (let i = 1; i < row.length; i++) { if (row[i].x - row[i-1].x <= 60) cur.push(row[i]); else { groups.push(cur); cur = [row[i]]; } } groups.push(cur); }
             if (!isRegistered) { for (let id in initialBoardState) { const now = boardTiles[id]; if (!now || now.x !== initialBoardState[id].x || now.y !== initialBoardState[id].y) return false; } }
             for (let g of groups) {
-                if (g.length < 3) return false;
-                const nz = g.filter(t => t.num !== 'J'); if (nz.length === 0) continue;
+                if (g.length < 3) return false; const nz = g.filter(t => t.num !== 'J'); if (nz.length === 0) continue;
                 const isG = nz.every(t => t.num === nz[0].num), isR = nz.every(t => t.color === nz[0].color);
                 if (isG) { const cls = nz.map(t => t.color); if (new Set(cls).size !== cls.length || g.length > 4) return false; }
-                else if (isR) {
-                    const s = g.map(t => t.num === 'J' ? -1 : Number(t.num)).sort((a, b) => a - b);
-                    let jk = s.filter(v => v === -1).length, nums = s.filter(v => v !== -1);
-                    for (let i=0; i<nums.length-1; i++) { const d = nums[i+1]-nums[i]; if (d===0) return false; jk -= (d-1); }
-                    if (jk < 0) return false;
-                } else return false;
-            }
-            return true;
+                else if (isR) { const s = g.map(t => t.num === 'J' ? -1 : Number(t.num)).sort((a, b) => a - b); let jk = s.filter(v => v === -1).length, nums = s.filter(v => v !== -1); for (let i=0; i<nums.length-1; i++) { const d = nums[i+1]-nums[i]; if (d===0) return false; jk -= (d-1); } if (jk < 0) return false; } else return false;
+            } return true;
         }
 
-        window.nextTurn = function() { 
-            if (activePlayers.length === 0) return;
-            const idx = (activePlayers.indexOf(currentTurn) + 1) % activePlayers.length; 
-            db.ref('currentTurn').set(activePlayers[idx]); 
+        // 🚀 턴 전환 알고리즘 강화 (서버 데이터 직접 조회)
+        window.nextTurn = function() {
+            if (isProcessingTurn) return; // ✅ 중복 실행 방지
+            isProcessingTurn = true;
+            db.ref('settings/activePlayers').once('value', snap => {
+                const list = snap.val() || [];
+                if (list.length < 2) { isProcessingTurn = false; return; }
+                const idx = list.indexOf(currentTurn);
+                const nextIdx = (idx === -1) ? 0 : (idx + 1) % list.length;
+                db.ref('currentTurn').set(list[nextIdx]);
+            });
         };
+
         window.startGame = function() {
             if (!confirm("게임을 시작할까요?")) return;
             db.ref('/').update({ "settings/status": "preparing", "board": null, "hands": null, "settings/activePlayers": playerList });
             playerList.forEach(p => db.ref('players/' + p).update({ registered: false }));
             let pool = []; const co = ['red', 'blue', 'yellow', 'black'];
             co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<2; j++) pool.push({ num: i, color: c }); } });
-            pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
-            pool.sort(() => Math.random() - 0.5); db.ref('currentTurn').set(playerList[0]);
+            pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' }); pool.sort(() => Math.random() - 0.5); 
+            db.ref('currentTurn').set(playerList[0]);
             const ups = {}; activePlayers.forEach(p => { for(let i=0; i<14; i++) { const t = pool.pop(), id = 'tile_' + Math.random().toString(36).substr(2,9); ups['hands/' + p + '/' + id] = t; } });
             db.ref('/').update({ ...ups, pool: Object.assign({}, pool), "settings/status": "playing" });
         };
