@@ -76,7 +76,7 @@
         </div>
     </div>
     
-    <div id="game-board" ondragover="e => e.preventDefault()" ondrop="dropOnBoard(event)">
+    <div id="game-board" ondragover="event.preventDefault()" ondrop="dropOnBoard(event)">
         <div id="chat-wrapper">
             <div id="chat-box"></div>
             <div id="chat-input-container"><input type="text" id="chat-input" placeholder="메시지..." style="flex:1; background:transparent; border:none; padding:8px; color:#fff; font-size:0.8rem;" onkeypress="if(event.keyCode==13) sendChat()"></div>
@@ -87,7 +87,7 @@
         </div>
     </div>
 
-    <div id="my-rack" ondragover="e => e.preventDefault()" ondrop="dropOnRack(event)">
+    <div id="my-rack" ondragover="event.preventDefault()" ondrop="dropOnRack(event)">
         <div id="rack-controls">
             <button id="sort-num" onclick="setSortMode('number')">777 숫자순</button>
             <button id="sort-col" onclick="setSortMode('color')">123 색상순</button>
@@ -171,7 +171,6 @@
         UI.set('turn-info', isMy ? `<span style='color:var(--turn-blue)'>내 차례입니다!</span>` : `차례: ${currentTurn || '-'}`);
     });
 
-    // 🎯 마우스 드래그 앤 드롭 전용 로직
     function renderTile(parent, id, data, isRack) {
         const div = document.createElement('div'); div.className = `tile ${data.color} ${isRack ? 'rack-tile' : ''}`;
         div.innerText = data.num; div.id = id; div.draggable = true;
@@ -211,7 +210,6 @@
         });
     }
 
-    // 세트 검증 알고리즘 (간략화)
     function validateBoard() {
         const groups = []; const rows = {};
         Object.values(boardTiles).forEach(t => { const y = Math.round(t.y / 75); if (!rows[y]) rows[y] = []; rows[y].push(t); });
