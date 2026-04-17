@@ -12,7 +12,7 @@
         :root {
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.95); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #27ae60; --accent-gold: #f1c40f; --accent-red: #e74c3c;
-            --chat-bg: rgba(25, 25, 25, 0.95);
+            --chat-bg: rgba(25, 25, 25, 0.95); --turn-blue: #3498db;
         }
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; overflow: hidden; user-select: none; }
         
@@ -28,9 +28,8 @@
         #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; }
         #game-board.not-my-turn { pointer-events: none; filter: grayscale(0.6) brightness(0.7); }
 
-        #reg-info { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 8px 20px; border-radius: 30px; border: 1.5px solid var(--accent-gold); color: var(--accent-gold); font-weight: bold; font-size: 0.85rem; z-index: 800; display: none; }
+        #reg-info { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 8px 25px; border-radius: 30px; border: 1.5px solid var(--accent-gold); color: var(--accent-gold); font-weight: bold; font-size: 0.85rem; z-index: 800; display: none; }
 
-        /* 🎨 타일 색상 절대 보장 */
         .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.2rem; position: absolute; cursor: grab; border: 1px solid #d1d1d1; box-shadow: 0 4px 8px rgba(0,0,0,0.4); z-index: 10; }
         .tile.rack-tile { position: relative !important; left: auto !important; top: auto !important; flex-shrink: 0; }
         .tile.locked { filter: grayscale(1) opacity(0.4); cursor: not-allowed; }
@@ -53,6 +52,8 @@
         button:disabled { opacity: 0.3; cursor: not-allowed; }
         .active-sort { border: 1px solid #fff; background: rgba(255,255,255,0.2); color: var(--accent-gold); }
         .player-badge { background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.7rem; display: flex; align-items: center; gap: 5px; }
+        .is-reg-badge { border-color: var(--accent-green) !important; color: var(--accent-green) !important; }
+        .tile-count { background: #fff; color: #000; padding: 1px 5px; border-radius: 4px; font-weight: 900; margin-left: 5px; font-size: 0.65rem; }
 
         #overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-card { background: rgba(45, 45, 45, 0.95); padding: 30px; border-radius: 20px; text-align: center; min-width: 350px; }
@@ -71,7 +72,7 @@
             <div id="player-list-container" style="display: flex; gap: 6px;"></div>
         </div>
         <div style="flex: 1.2; text-align: center;">
-            <div id="turn-info" style="font-size: 0.75rem; font-weight: bold;">연결 중...</div>
+            <div id="turn-info" style="font-size: 0.75rem; font-weight: bold;">대기 중...</div>
             <button id="btn-force-next" onclick="forceNextTurn()" style="font-size: 8px; background: var(--accent-gold); color: #000; display: none;">턴 넘기기</button>
         </div>
         <div style="flex: 2; display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
@@ -107,7 +108,6 @@
 <audio id="bgm-audio" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg"></audio>
 
 <script>
-    // 🛡️ 모든 로직을 window.onload로 감싸서 타이밍 문제 해결
     window.onload = function() {
         const myName = prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
         
@@ -149,29 +149,36 @@
             }
         });
 
-        db.ref('players').on('value', snap => {
-            const players = snap.val() || {};
+        // 👥 플레이어 리스트 및 패 개수 실시간 표시
+        db.ref('players').on('value', pSnap => {
+            const players = pSnap.val() || {};
             playerList = Object.entries(players).map(([n, d]) => ({ n, ...d })).sort((a, b) => (a.timestamp || Infinity) - (b.timestamp || Infinity)).map(p => p.n);
             const isHost = (playerList[0] === myName);
             isRegistered = players[myName]?.registered || false;
 
-            if (gameStatus === "playing" && playerList.length < 2) db.ref('settings/status').set("finished");
+            if (gameStatus === "playing" && playerList.length >= 2 && playerList.length < 2) { 
+                // 1:1 상황에서 한 명 나가면 종료 (테스트를 위해 플레이어 2명 이상일 때만 작동하도록 조건 강화)
+                db.ref('settings/status').set("finished"); 
+            }
 
             if (isHost) { UI.show('btn-start', 'inline-block'); UI.show('btn-force-lobby', 'inline-block'); UI.show('btn-force-next', 'inline-block'); } 
             else { UI.hide('btn-start'); UI.hide('btn-force-lobby'); UI.hide('btn-force-next'); }
 
-            const listEl = document.getElementById('player-list-container');
-            if (listEl) {
+            db.ref('hands').on('value', hSnap => {
+                const allHands = hSnap.val() || {};
+                const listEl = document.getElementById('player-list-container');
+                if (!listEl) return;
                 listEl.innerHTML = '';
                 playerList.forEach((name, idx) => {
                     const reg = players[name]?.registered;
+                    const hData = allHands[name] || {};
+                    const count = Object.keys(hData).length;
                     const badge = document.createElement('span');
-                    badge.className = `player-badge ${idx === 0 ? 'is-host-badge' : ''}`;
-                    if(reg) badge.style.borderColor = "var(--accent-green)";
-                    badge.innerHTML = `${idx === 0 ? '👑' : ''} ${name}`;
+                    badge.className = `player-badge ${idx === 0 ? 'is-host-badge' : ''} ${reg ? 'is-reg-badge' : ''}`;
+                    badge.innerHTML = `${idx === 0 ? '👑' : ''} ${name} <span class="tile-count">${count}</span>`;
                     listEl.appendChild(badge);
                 });
-            }
+            });
         });
 
         window.toggleChat = function() {
@@ -219,7 +226,7 @@
             const onBoard = !isRack;
             const isMineInTurn = onBoard && !initialBoardState[id]; 
             const isLocked = onBoard && !isMineInTurn && !isRegistered;
-            div.className = "tile " + data.color + (isRack ? " rack-tile" : "") + (isLocked ? " locked" : "");
+            div.className = `tile ${data.color} ${isRack ? 'rack-tile' : ''} ${isLocked ? 'locked' : ''}`;
             div.innerText = data.num; div.id = id; div.draggable = !isLocked;
             if (onBoard) { div.style.left = data.x + 'px'; div.style.top = data.y + 'px'; }
             div.ondragstart = (e) => { if (isLocked || (onBoard && currentTurn !== myName)) return e.preventDefault(); e.dataTransfer.setData("text/plain", id); };
@@ -285,8 +292,20 @@
         window.handleTurnEnd = function() {
             if (!validateBoard()) return alert("조합 규칙 위반!");
             const newCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
-            if (!isRegistered && newCount > 0) { if (registrationPoints < 30) return alert("30점 미달!"); db.ref('players/' + myName).update({ registered: true }); isRegistered = true; }
-            if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurn();
+            
+            // 🚀 등록 로직
+            if (!isRegistered && newCount > 0) {
+                if (registrationPoints < 30) return alert("30점 미달!");
+                db.ref('players/' + myName).update({ registered: true });
+                isRegistered = true;
+            }
+            
+            // 🏆 진짜 승리 판정: 내 손패가 0개일 때만 우승!
+            if (myHandData.length === 0) {
+                db.ref('settings/status').set("finished");
+            } else {
+                window.nextTurn();
+            }
         };
 
         window.nextTurn = function() { const idx = (playerList.indexOf(currentTurn) + 1) % playerList.length; db.ref('currentTurn').set(playerList[idx]); };
