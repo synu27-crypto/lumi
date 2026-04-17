@@ -11,7 +11,7 @@
         :root {
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.95); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #27ae60; --accent-gold: #f1c40f; --accent-red: #e74c3c;
-            --turn-blue: #3498db;
+            --chat-bg: rgba(20, 20, 20, 0.8);
         }
 
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; overflow: hidden; transition: box-shadow 0.3s; }
@@ -24,40 +24,31 @@
         body.is-my-turn-frame { animation: pulse-border 1.5s infinite; }
 
         #ui-layer { padding: 12px 24px; background: var(--panel-bg); backdrop-filter: blur(20px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 500; }
-        #main-container { display: flex; flex-direction: column; height: 100vh; }
-        
+        #main-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
         #game-board { flex: 7; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; transition: filter 0.3s; }
         #game-board.not-my-turn { pointer-events: none; filter: grayscale(0.7) brightness(0.7); opacity: 0.8; }
 
+        /* 💬 채팅창 UI 스타일 */
+        #chat-wrapper { position: absolute; bottom: 30%; right: 20px; width: 280px; z-index: 800; display: flex; flex-direction: column; pointer-events: none; }
+        #chat-box { height: 200px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.1); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; }
+        #chat-box div { margin-bottom: 6px; font-size: 0.85rem; line-height: 1.4; word-break: break-all; }
+        .chat-name { font-weight: bold; color: var(--accent-gold); margin-right: 5px; }
+        .chat-me { color: #fff; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; }
+        #chat-input-container { display: flex; background: #252525; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.1); border-top: none; pointer-events: auto; display: none; }
+        #chat-input { flex: 1; background: transparent; border: none; padding: 10px; color: #fff; font-size: 0.85rem; outline: none; }
+        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; cursor: pointer; pointer-events: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
         #overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-card { background: rgba(45, 45, 45, 0.95); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.7); min-width: 400px; }
-        
-        .score-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-        .score-table th, .score-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-
         #my-rack { flex: 2.8; background: #151515; border-top: 1px solid rgba(255, 255, 255, 0.1); position: relative; padding: 25px 20px; display: flex; gap: 12px; flex-wrap: wrap; align-content: flex-start; z-index: 600; }
         #rack-controls { position: absolute; top: -50px; right: 20px; display: flex; gap: 10px; }
-        
-        .tile { width: 48px; height: 70px; background: var(--tile-bg); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.4rem; position: absolute; cursor: grab; user-select: none; border: 1px solid #d1d1d1; box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 -3px 0 rgba(0,0,0,0.1); transition: left 0.2s, top 0.2s, transform 0.1s; z-index: 10; }
-        .tile:active { transform: scale(1.1); cursor: grabbing; z-index: 999 !important; }
-        .rack-tile { position: static !important; transition: none !important; }
-
+        .tile { width: 48px; height: 70px; background: var(--tile-bg); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.4rem; position: absolute; cursor: grab; user-select: none; border: 1px solid #d1d1d1; box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: left 0.2s, top 0.2s, transform 0.1s; z-index: 10; }
         .red { color: #d63031; } .blue { color: #0984e3; } .yellow { color: #f9ca24; } .black { color: #2d3434; } .joker { color: #6c5ce7; font-size: 1.8rem; }
-        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
-        .is-host-badge { border-color: var(--accent-gold); color: var(--accent-gold); }
-        .tile-num { background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px; font-weight: bold; color: #fff; font-size: 0.7rem; }
-
         button { padding: 10px 18px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border-radius: 10px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; }
         button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
-        button:disabled { opacity: 0.2; cursor: not-allowed; }
-
         #btn-start { border: 1.5px solid var(--accent-green); color: var(--accent-green); background: transparent; display: none; }
-        #btn-force-lobby { background: var(--accent-red); font-size: 0.7rem; display: none; opacity: 0.6; }
         .audio-ctrl { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; }
         #vol-slider { width: 80px; accent-color: var(--accent-gold); cursor: pointer; }
-        .sort-btn { font-size: 11px; color: #aaa; background: rgba(0,0,0,0.4); }
-        .active-sort { border: 1px solid #fff; color: #fff; background: rgba(255,255,255,0.2); }
-        #btn-reset-lobby { width: 100%; margin-top: 30px; background: var(--accent-green); font-size: 1rem; padding: 15px; }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -74,19 +65,25 @@
         </div>
         <div id="turn-info" style="flex: 1; text-align: center;">연결 중...</div>
         <div style="flex: 2; display: flex; align-items: center; gap: 10px; justify-content: flex-end;">
-            <span id="pool-count" style="font-size: 0.75rem; color: #555;">POOL: 0</span>
-            <button id="btn-mode" onclick="toggleGameMode()" style="background:#333; display:none;">4인용</button>
-            <button id="btn-force-lobby" onclick="returnToLobby()">강제 초기화</button>
+            <button id="btn-force-lobby" onclick="returnToLobby()" style="background:var(--accent-red); font-size:0.7rem; display:none;">강제 초기화</button>
             <button id="btn-start" onclick="startGame()">게임 시작</button>
             <button id="btn-rollback" onclick="rollbackTurn()" disabled>무르기</button>
             <button id="btn-draw" onclick="drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
-            <button id="btn-end" onclick="nextTurn()" disabled style="background:#444;">종료</button>
+            <button id="btn-end" onclick="nextTurn()" disabled>종료</button>
         </div>
     </div>
     
     <div id="game-board" ondrop="dropToBoard(event)" ondragover="allowDrop(event)">
+        <div id="chat-wrapper">
+            <div id="chat-box"></div>
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="메시지 입력..." onkeypress="if(event.keyCode==13) sendChat()">
+            </div>
+            <button id="chat-toggle" onclick="toggleChat()">💬 채팅 열기</button>
+        </div>
+
         <div id="overlay-layer">
-            <div class="modal-card"><div id="modal-body"></div><button id="btn-reset-lobby" onclick="returnToLobby()" style="display:none;">대기실로 돌아가기</button></div>
+            <div class="modal-card"><div id="modal-body"></div><button id="btn-reset-lobby" onclick="returnToLobby()" style="display:none; width:100%; margin-top:30px; background:var(--accent-green);">대기실로 돌아가기</button></div>
         </div>
     </div>
 
@@ -123,9 +120,9 @@
     function playTurnNotifySound() { if (!audioCtx) return; const n = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(880, n); o.frequency.setValueAtTime(1100, n + 0.2); g.gain.setValueAtTime(0.1, n); g.gain.exponentialRampToValueAtTime(0.01, n + 0.5); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(n + 0.5); }
 
     const myName = prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
-    let playerList = [], currentTurn = "", lastTurn = "", sortMode = 'color', currentGameMode = 4, myHandData = [], gameStatus = "waiting";
-    let snapshotBoard = null, snapshotHand = null, boardTiles = {};
+    let playerList = [], currentTurn = "", lastTurn = "", sortMode = 'color', currentGameMode = 4, myHandData = [], gameStatus = "waiting", boardTiles = {};
 
+    // 🕒 접속 및 재접속 로직
     db.ref(".info/connected").on("value", (snap) => {
         if (snap.val() === true) {
             const myRef = db.ref('players/' + myName);
@@ -134,99 +131,92 @@
         }
     });
 
+    // 👥 참가자 및 게임 상태 감시
     db.ref('players').on('value', snap => {
         const players = snap.val() || {};
         const sorted = Object.entries(players).map(([n, d]) => ({ n, ...d })).sort((a, b) => (a.timestamp || Infinity) - (b.timestamp || Infinity));
         playerList = sorted.map(p => p.n);
         const isHost = (playerList[0] === myName);
         document.getElementById('btn-start').style.display = isHost ? 'inline-block' : 'none';
-        document.getElementById('btn-mode').style.display = isHost ? 'inline-block' : 'none';
         document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
 
         db.ref('hands').on('value', hSnap => {
-            const allHands = hSnap.val() || {};
-            const listEl = document.getElementById('player-list-container');
+            const allHands = hSnap.val() || {}, listEl = document.getElementById('player-list-container');
             listEl.innerHTML = '';
-            
             playerList.forEach((name, idx) => {
-                const isThisHost = (idx === 0);
-                const handData = allHands[name];
-                const count = handData ? Object.keys(handData).length : 0;
-                
-                // 🚀 승리 판독기 강화: 'playing' 상태고, 이전에 타일이 있었다가(myHandData) 지금 0이 되었을 때만
-                if (gameStatus === "playing" && count === 0 && myHandData.length > 5) {
-                    db.ref('settings/status').set("finished");
-                }
-
+                const count = allHands[name] ? Object.keys(allHands[name]).length : 0;
+                if (gameStatus === "playing" && count === 0 && myHandData.length > 5) db.ref('settings/status').set("finished");
                 const badge = document.createElement('span');
-                badge.className = `player-badge ${isThisHost ? 'is-host-badge' : ''}`;
-                badge.innerHTML = `${isThisHost ? '👑' : ''} ${name}${name === myName ? ' (나)' : ''} <span class="tile-num">${count}</span>`;
+                badge.className = `player-badge ${idx === 0 ? 'is-host-badge' : ''}`;
+                badge.innerHTML = `${idx === 0 ? '👑' : ''} ${name}${name === myName ? ' (나)' : ''} <span class="tile-num">${count}</span>`;
                 listEl.appendChild(badge);
             });
         });
     });
 
+    // 💬 채팅 시스템 로직
+    function toggleChat() {
+        const box = document.getElementById('chat-box'), input = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle');
+        const isOpen = box.style.display === 'block';
+        box.style.display = isOpen ? 'none' : 'block';
+        input.style.display = isOpen ? 'none' : 'flex';
+        btn.innerText = isOpen ? '💬 채팅 열기' : '❌ 채팅 닫기';
+        if (!isOpen) box.scrollTop = box.scrollHeight;
+    }
+
+    function sendChat() {
+        const input = document.getElementById('chat-input');
+        if (!input.value.trim()) return;
+        db.ref('chat').push({ name: myName, msg: input.value.trim(), time: Date.now() });
+        input.value = '';
+    }
+
+    db.ref('chat').limitToLast(30).on('child_added', snap => {
+        const data = snap.val(), box = document.getElementById('chat-box');
+        const div = document.createElement('div');
+        div.innerHTML = `<span class="chat-name">${data.name}:</span><span class="${data.name===myName?'chat-me':''}">${data.msg}</span>`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    });
+
     db.ref('settings/status').on('value', snap => {
         gameStatus = snap.val() || "waiting";
-        const overlay = document.getElementById('overlay-layer');
-        const body = document.getElementById('modal-body');
-        const lobbyBtn = document.getElementById('btn-reset-lobby');
-        if (gameStatus === "waiting") { overlay.style.display = "flex"; lobbyBtn.style.display = "none"; body.innerHTML = `<h2>대기실</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p><div class="loader"></div>`; }
-        else if (gameStatus === "finished") { overlay.style.display = "flex"; lobbyBtn.style.display = "block"; showRankingWithScores(); }
+        const overlay = document.getElementById('overlay-layer'), body = document.getElementById('modal-body'), lobbyBtn = document.getElementById('btn-reset-lobby');
+        if (gameStatus === "waiting") { overlay.style.display = "flex"; lobbyBtn.style.display = "none"; body.innerHTML = `<h2>대기실</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p>`; }
+        else if (gameStatus === "finished") { overlay.style.display = "flex"; lobbyBtn.style.display = "block"; showRanking(); }
         else { overlay.style.display = "none"; }
     });
 
-    function showRankingWithScores() {
+    function showRanking() {
         db.ref('hands').once('value', s => {
-            const hands = s.val() || {};
-            let scoreData = []; let totalLoserPoints = 0;
-            playerList.forEach(name => {
-                let sum = 0; const tiles = hands[name] || {};
-                Object.values(tiles).forEach(t => sum += (t.num === 'J' ? 30 : Number(t.num)));
-                scoreData.push({ name, sum, isWinner: (sum === 0), finalScore: -sum });
-                if (sum > 0) totalLoserPoints += sum;
+            const hands = s.val() || {}; let scoreData = []; let total = 0;
+            playerList.forEach(n => {
+                let sum = 0; Object.values(hands[n]||{}).forEach(t => sum += (t.num === 'J' ? 30 : Number(t.num)));
+                scoreData.push({ n, sum, isW: (sum === 0), fs: -sum }); if (sum > 0) total += sum;
             });
-            scoreData.forEach(p => { if (p.isWinner) p.finalScore = totalLoserPoints; });
-            scoreData.sort((a, b) => b.finalScore - a.finalScore);
-            let html = `<h2>🎮 게임 결과</h2><table class="score-table"><thead><tr><th>순위</th><th>플레이어</th><th>패</th><th>점수</th></tr></thead><tbody>`;
-            scoreData.forEach((p, i) => { html += `<tr class="rank-row-${i+1}"><td>${i+1}</td><td>${p.name}</td><td>${p.isWinner?'DONE':Object.keys(hands[p.name]||{}).length+'장'}</td><td>${p.finalScore>0?'+':''}${p.finalScore}</td></tr>`; });
-            html += `</tbody></table>`; document.getElementById('modal-body').innerHTML = html;
+            scoreData.forEach(p => { if (p.isW) p.fs = total; }); scoreData.sort((a,b) => b.fs - a.fs);
+            let html = `<h2>🎮 게임 결과</h2><table style="width:100%; border-collapse:collapse; margin-top:20px;">`;
+            scoreData.forEach((p, i) => { html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.1); ${i===0?'color:var(--accent-gold)':''}"> <td style="padding:10px">${i+1}위</td><td style="padding:10px">${p.n}</td><td style="padding:10px">${p.fs>0?'+':''}${p.fs}점</td> </tr>`; });
+            body.innerHTML = html + `</table>`;
         });
     }
 
-    // 🚀 원자적 초기화 로직 (Atomic Lobby Reset)
-    function returnToLobby() {
-        if (!confirm("대기실로 돌아갈까요?")) return;
-        db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null });
-    }
+    function returnToLobby() { if (confirm("대기실로 갈까요?")) { db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "chat": null }); document.getElementById('chat-box').innerHTML = ''; } }
 
     db.ref('currentTurn').on('value', snap => {
-        currentTurn = snap.val();
-        const isMy = (currentTurn === myName);
+        currentTurn = snap.val(); const isMy = (currentTurn === myName);
         if (isMy && lastTurn !== myName) { playTurnNotifySound(); document.body.classList.add('is-my-turn-frame'); takeSnapshot(); }
         else if (!isMy) document.body.classList.remove('is-my-turn-frame');
         lastTurn = currentTurn;
         document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-        document.getElementById('btn-draw').disabled = !isMy;
-        document.getElementById('btn-end').disabled = !isMy;
-        document.getElementById('btn-rollback').disabled = !isMy;
-        const info = document.getElementById('turn-info');
-        info.innerHTML = isMy ? "<span style='color:var(--turn-blue); font-weight:bold;'>내 차례입니다!</span>" : `<span>차례: ${currentTurn || '-'}</span>`;
+        document.getElementById('btn-draw').disabled = !isMy; document.getElementById('btn-end').disabled = !isMy; document.getElementById('btn-rollback').disabled = !isMy;
+        document.getElementById('turn-info').innerHTML = isMy ? "<span style='color:#3498db; font-weight:bold;'>내 차례입니다!</span>" : `<span>차례: ${currentTurn || '-'}</span>`;
     });
 
-    function takeSnapshot() { db.ref('board').once('value', s => { snapshotBoard = s.val() || {}; }); db.ref(`hands/${myName}`).once('value', s => { snapshotHand = s.val() || {}; }); }
-    function rollbackTurn() { if (!confirm("무를까요?")) return; if (snapshotBoard) db.ref('board').set(snapshotBoard); if (snapshotHand) db.ref(`hands/${myName}`).set(snapshotHand); playSnapSound(); }
-
-    db.ref('board').on('value', snap => {
-        const boardEl = document.getElementById('game-board');
-        boardEl.querySelectorAll('.tile').forEach(t => t.remove());
-        boardTiles = snap.val() || {};
-        for (let id in boardTiles) renderTile(boardEl, id, boardTiles[id], false);
-    });
-
-    db.ref('pool').on('value', snap => { document.getElementById('pool-count').innerText = `POOL: ${snap.numChildren()}`; });
-    db.ref('settings/gameMode').on('value', snap => { currentGameMode = snap.val() || 4; document.getElementById('btn-mode').innerText = `${currentGameMode}인용`; });
-    function toggleGameMode() { db.ref('settings/gameMode').set(currentGameMode === 4 ? 5 : 4); }
+    function takeSnapshot() { db.ref('board').once('value', s => snapshotBoard = s.val() || {}); db.ref(`hands/${myName}`).once('value', s => snapshotHand = s.val() || {}); }
+    function rollbackTurn() { if (confirm("무를까요?")) { if (snapshotBoard) db.ref('board').set(snapshotBoard); if (snapshotHand) db.ref(`hands/${myName}`).set(snapshotHand); playSnapSound(); } }
+    db.ref('board').on('value', snap => { const boardEl = document.getElementById('game-board'); boardEl.querySelectorAll('.tile').forEach(t => t.remove()); boardTiles = snap.val() || {}; for (let id in boardTiles) renderTile(boardEl, id, boardTiles[id], false); });
+    db.ref('pool').on('value', snap => document.getElementById('pool-count').innerText = `POOL: ${snap.numChildren()}`);
 
     db.ref(`hands/${myName}`).on('value', snap => {
         const newData = snap.val() || {}, newIds = Object.keys(newData);
@@ -246,8 +236,7 @@
     }
 
     function renderRack() {
-        const rackEl = document.getElementById('my-rack');
-        rackEl.querySelectorAll('.tile').forEach(el => el.remove());
+        const rackEl = document.getElementById('my-rack'); rackEl.querySelectorAll('.tile').forEach(el => el.remove());
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active-sort'));
         const btnId = sortMode === 'number' ? 'sort-num' : sortMode === 'color' ? 'sort-col' : 'sort-man';
         if (document.getElementById(btnId)) document.getElementById(btnId).classList.add('active-sort');
@@ -255,14 +244,9 @@
     }
 
     function renderTile(parent, id, data, isRack) {
-        const div = document.createElement('div');
-        div.className = `tile ${data.color} ${isRack ? 'rack-tile' : ''}`;
-        div.innerText = data.num; div.id = id; div.draggable = true;
+        const div = document.createElement('div'); div.className = `tile ${data.color} ${isRack ? 'rack-tile' : ''}`; div.innerText = data.num; div.id = id; div.draggable = true;
         if (!isRack) { div.style.left = data.x + 'px'; div.style.top = data.y + 'px'; }
-        div.ondragstart = (e) => { 
-            if (!isRack && currentTurn !== myName) return e.preventDefault();
-            e.dataTransfer.setData("text", e.target.id); setTimeout(() => e.target.style.opacity = "0.4", 0); 
-        };
+        div.ondragstart = (e) => { if (!isRack && currentTurn !== myName) return e.preventDefault(); e.dataTransfer.setData("text", e.target.id); setTimeout(() => e.target.style.opacity = "0.4", 0); };
         div.ondragend = (e) => e.target.style.opacity = "1";
         parent.appendChild(div);
     }
@@ -290,29 +274,23 @@
         sortMode = 'manual'; const fIdx = myHandData.findIndex(t => t.id === dId);
         if (fIdx === -1) return; const item = myHandData.splice(fIdx, 1)[0];
         if (target && target.id !== dId) myHandData.splice(myHandData.findIndex(t => t.id === target.id), 0, item);
-        else myHandData.push(item);
-        renderRack();
+        else myHandData.push(item); renderRack();
     }
 
     function startGame() {
         if (!confirm("시작할까요?")) return;
-        db.ref('settings/status').set("preparing");
-        myHandData = []; db.ref('board').remove(); db.ref('hands').remove(); 
+        db.ref('settings/status').set("preparing"); myHandData = []; db.ref('board').remove(); db.ref('hands').remove(); db.ref('chat').remove();
         let pool = []; const co = ['red', 'blue', 'yellow', 'black'], sets = currentGameMode === 5 ? 3 : 2;
         co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); } });
         for(let i=0; i<(currentGameMode === 5 ? 4 : 2); i++) pool.push({ num: 'J', color: 'joker' });
-        pool.sort(() => Math.random() - 0.5);
-        db.ref('currentTurn').set(playerList[0]);
-        const ups = {}; playerList.forEach(p => { for(let i=0; i<14; i++) { const t = pool.pop(); const id = 'tile_' + Math.random().toString(36).substr(2,9); ups[`hands/${p}/${id}`] = t; } });
-        const pObj = {}; pool.forEach((t, i) => pObj['p'+i] = t);
-        db.ref('/').update({ ...ups, pool: pObj, "settings/status": "playing" });
+        pool.sort(() => Math.random() - 0.5); db.ref('currentTurn').set(playerList[0]);
+        const ups = {}; playerList.forEach(p => { for(let i=0; i<14; i++) { const t = pool.pop(), id = 'tile_' + Math.random().toString(36).substr(2,9); ups[`hands/${p}/${id}`] = t; } });
+        db.ref('/').update({ ...ups, pool: Object.assign({}, pool), "settings/status": "playing" });
     }
     function drawTile() {
         db.ref('pool').limitToFirst(1).once('value', s => {
-            if (!s.exists()) return alert("타일 없음");
-            const key = Object.keys(s.val())[0];
-            db.ref(`hands/${myName}/tile_${Date.now()}`).set(s.val()[key]);
-            db.ref(`pool/${key}`).remove();
+            if (!s.exists()) return alert("타일 없음"); const key = Object.keys(s.val())[0];
+            db.ref(`hands/${myName}/tile_${Date.now()}`).set(s.val()[key]); db.ref(`pool/${key}`).remove();
             nextTurn(); playSnapSound();
         });
     }
