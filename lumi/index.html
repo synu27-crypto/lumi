@@ -71,6 +71,8 @@
         <div style="flex: 2; display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="returnToLobby()" style="background:var(--accent-red); font-size:9px; display:none;">초기화</button>
             <button id="btn-start" onclick="startGame()" style="background:var(--accent-green); color:#000; display:none;">시작</button>
+            
+            <button id="btn-rollback" onclick="rollbackTurn()" disabled style="background:#555;">무르기</button>
             <button id="btn-draw" onclick="drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
             <button id="btn-end" onclick="handleTurnEnd()" disabled style="background:#444;">종료</button>
         </div>
@@ -124,7 +126,7 @@
 
     const myName = prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
     let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {};
-    let isRegistered = false, initialBoardState = {}, registrationPoints = 0;
+    let isRegistered = false, initialBoardState = {}, initialHandState = {}, registrationPoints = 0;
 
     db.ref(".info/connected").on("value", snap => {
         if (snap.val()) {
@@ -167,23 +169,35 @@
         currentTurn = snap.val(); const isMy = (currentTurn === myName);
         if (isMy) { 
             document.body.classList.add('is-my-turn-frame'); 
-            // 턴 시작 시 보드 상태 저장 (등록 체크용)
-            db.ref('board').once('value', s => { initialBoardState = s.val() || {}; updateRegPoints(); });
+            takeTurnSnapshot(); // 턴 시작 시 상태 저장
         } else { 
             document.body.classList.remove('is-my-turn-frame'); 
             UI.hide('reg-info');
         }
         document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-        UI.disable('btn-draw', !isMy); UI.disable('btn-end', !isMy);
+        UI.disable('btn-draw', !isMy); UI.disable('btn-end', !isMy); UI.disable('btn-rollback', !isMy);
         UI.set('turn-info', isMy ? `<span style='color:var(--turn-blue)'>내 차례입니다!</span>` : `차례: ${currentTurn || '-'}`);
     });
+
+    function takeTurnSnapshot() {
+        db.ref('board').once('value', s => { initialBoardState = s.val() || {}; updateRegPoints(); });
+        db.ref(`hands/${myName}`).once('value', s => { initialHandState = s.val() || {}; });
+    }
+
+    // 🚀 무르기 기능 구현
+    function rollbackTurn() {
+        if (!confirm("이번 턴에 한 동작을 모두 무를까요?")) return;
+        db.ref('board').set(initialBoardState);
+        db.ref(`hands/${myName}`).set(initialHandState);
+        registrationPoints = 0;
+        updateRegPoints();
+        playSnap();
+    }
 
     function renderTile(parent, id, data, isRack) {
         const div = document.createElement('div');
         const onBoard = !isRack;
-        const isMineInTurn = onBoard && !initialBoardState[id]; // 이번 턴에 내가 내놓은 것
-        
-        // 🔒 등록 전 타일 잠금: 보드에 원래 있던 타일이고 내가 아직 등록 안 했다면 드래그 불가
+        const isMineInTurn = onBoard && !initialBoardState[id]; 
         const isLocked = onBoard && !isMineInTurn && !isRegistered;
         
         div.className = `tile ${data.color} ${isRack ? 'rack-tile' : ''} ${isLocked ? 'locked' : ''}`;
@@ -199,13 +213,9 @@
 
     function updateRegPoints() {
         if (isRegistered) return UI.hide('reg-info');
-        
         const newTiles = Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]);
         let points = 0;
-        newTiles.forEach(([id, t]) => {
-            if (t.num === 'J') points += 10; // 조커 기본 10점 (임시)
-            else points += Number(t.num);
-        });
+        newTiles.forEach(([id, t]) => { points += (t.num === 'J' ? 10 : Number(t.num)); });
         registrationPoints = points;
         UI.show('reg-info', 'block');
         UI.text('reg-info', `현재 등록 점수: ${points} / 30`);
@@ -231,9 +241,7 @@
 
     function dropOnRack(e) {
         e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
-        // 등록 전에는 내가 방금 내놓은 타일만 다시 회수 가능
         if (!isRegistered && initialBoardState[id]) return; 
-        
         db.ref(`board/${id}`).once('value', s => {
             if (s.exists() && currentTurn === myName) {
                 db.ref(`hands/${myName}/${id}`).set({ num: s.val().num, color: s.val().color });
@@ -250,22 +258,16 @@
             for (let i = 1; i < row.length; i++) { if (row[i].x - row[i-1].x <= 60) cur.push(row[i]); else { groups.push(cur); cur = [row[i]]; } }
             groups.push(cur);
         }
-
-        // 등록 전이라면: 내가 이번 턴에 만든 세트들이 완벽한지, 그리고 그것들만 있는지 확인
         if (!isRegistered) {
             const myNewTilesCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
-            if (myNewTilesCount === 0) return true; // 아무것도 안 내면 패스 (하지만 드로우해야함)
-
-            // 등록 시에는 기존 타일을 건드리면 안 됨
+            if (myNewTilesCount === 0) return true;
             for (let id in initialBoardState) {
                 const now = boardTiles[id];
                 if (!now || now.x !== initialBoardState[id].x || now.y !== initialBoardState[id].y) {
-                    alert("등록 전에는 기존 타일을 건드릴 수 없습니다!");
-                    return false;
+                    alert("등록 전에는 기존 타일을 건드릴 수 없습니다!"); return false;
                 }
             }
         }
-
         for (let g of groups) {
             if (g.length < 3) return false;
             const nz = g.filter(t => t.num !== 'J'); if (nz.length === 0) continue;
@@ -283,20 +285,14 @@
 
     function handleTurnEnd() {
         if (!validateBoard()) return alert("조합이 규칙에 맞지 않습니다!");
-        
         const newTilesCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
-        
         if (!isRegistered && newTilesCount > 0) {
             if (registrationPoints < 30) return alert("등록 점수가 부족합니다! (최소 30점)");
             db.ref(`players/${myName}`).update({ registered: true });
-            alert("축하합니다! 등록되었습니다.");
         }
-
         if (myHandData.length === 0 && (isRegistered || registrationPoints >= 30)) {
             db.ref('settings/status').set("finished");
-        } else {
-            nextTurn();
-        }
+        } else { nextTurn(); }
     }
 
     function nextTurn() { const idx = (playerList.indexOf(currentTurn) + 1) % playerList.length; db.ref('currentTurn').set(playerList[idx]); }
@@ -313,7 +309,7 @@
         db.ref('/').update({ ...ups, pool: Object.assign({}, pool), "settings/status": "playing" });
     }
     function drawTile() {
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("판에 낸 타일이 있으면 뽑을 수 없습니다. 타일을 회수하세요.");
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("판에 낸 타일이 있으면 뽑을 수 없습니다.");
         db.ref('pool').limitToFirst(1).once('value', s => {
             if (!s.exists()) return alert("타일 없음"); const key = Object.keys(s.val())[0];
             db.ref(`hands/${myName}/tile_${Date.now()}`).set(s.val()[key]); db.ref(`pool/${key}`).remove(); nextTurn();
