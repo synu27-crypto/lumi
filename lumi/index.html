@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미큐브</title>
+    <title>루미 : 어반 에디션 Pro+ Ver 19.8</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -140,6 +140,9 @@
         const myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
         window.sessionStorage.setItem('lumi-nick', myName);
 
+        // 🚀 세션 유지용 타임스탬프 관리
+        let myJoinTime = window.sessionStorage.getItem('lumi-join-time');
+
         const firebaseConfig = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e", storageBucket: "lumi-b373e.firebasestorage.app", messagingSenderId: "171246043706", appId: "1:171246043706:web:3733e35f0af044974b2b03", measurementId: "G-Q9F1532V40" };
         firebase.initializeApp(firebaseConfig); const db = firebase.database();
         const UI = { set: (id, h) => { const el = document.getElementById(id); if (el) el.innerHTML = h; }, text: (id, t) => { const el = document.getElementById(id); if (el) el.innerText = t; }, show: (id, d = 'block') => { const el = document.getElementById(id); if (el) el.style.display = d; }, hide: (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; }, disable: (id, b) => { const el = document.getElementById(id); if (el) el.disabled = b; } };
@@ -164,13 +167,33 @@
             playSfx('turn'); setTimeout(() => announcer.style.display = 'none', 2000);
         }
 
+        // 🚀 새로고침 방어 접속 로직
         db.ref(".info/connected").on("value", snap => {
             if (snap.val()) {
                 const myRef = db.ref('players/' + myName);
                 myRef.onDisconnect().remove();
+                
                 myRef.once('value', s => {
-                    if (!s.exists()) myRef.set({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP, registered: false });
-                    else myRef.update({ joined: true });
+                    const existingData = s.val();
+                    // 브라우저 세션에 저장된 등록 여부 확인
+                    const sessionReg = window.sessionStorage.getItem('lumi-reg') === 'true';
+                    
+                    if (!existingData) {
+                        // 완전히 처음이거나 sessionStorage 정보 활용
+                        const timeToSet = myJoinTime ? parseInt(myJoinTime) : firebase.database.ServerValue.TIMESTAMP;
+                        myRef.set({ joined: true, timestamp: timeToSet, registered: sessionReg });
+                        
+                        // 서버에서 확정된 timestamp를 다시 sessionStorage에 저장 (가입 시간 고정)
+                        if (!myJoinTime) {
+                            myRef.once('value', news => {
+                                myJoinTime = news.val().timestamp;
+                                window.sessionStorage.setItem('lumi-join-time', myJoinTime);
+                            });
+                        }
+                    } else {
+                        // 이미 존재하면 상태만 갱신
+                        myRef.update({ joined: true, registered: sessionReg || existingData.registered });
+                    }
                 });
             }
         });
@@ -182,7 +205,11 @@
         db.ref('players').on('value', pSnap => {
             const players = pSnap.val() || {};
             playerList = Object.entries(players).map(([n, d]) => ({ n, ...d })).sort((a, b) => (a.timestamp || Infinity) - (b.timestamp || Infinity)).map(p => p.n);
+            
+            // 등록 상태 서버와 동기화 및 세션 저장
             isRegistered = players[myName]?.registered || false;
+            window.sessionStorage.setItem('lumi-reg', isRegistered);
+
             const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
             const isHost = (myName === hostName);
             if (isHost) { UI.show('btn-start', 'inline-block'); UI.show('btn-force-next', 'inline-block'); UI.show('btn-force-lobby', 'inline-block'); } 
@@ -210,6 +237,11 @@
         window.forceNextTurn = function() { if(confirm("턴을 넘길까요?")) window.nextTurn(); };
         window.returnToLobby = function() {
             if(!confirm("초기화할까요?")) return;
+            // 리셋 시 등록 상태도 초기화할지 선택 (새 게임을 위해 등록 상태 초기화)
+            playerList.forEach(p => {
+                db.ref('players/' + p).update({ registered: false });
+                if(p === myName) window.sessionStorage.setItem('lumi-reg', 'false');
+            });
             db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/activePlayers": null, "settings/gameMode": "normal" });
         };
 
@@ -290,8 +322,14 @@
             const id = e.dataTransfer.getData("text/plain"), rect = document.getElementById('game-board').getBoundingClientRect();
             let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
             const tileInHand = myHandData.find(t => t.id === id);
-            if (tileInHand) { db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); playSfx('tile'); }
-            else if (boardTiles[id]) { if (!isRegistered && initialBoardState[id]) return; db.ref('board/' + id).update({ x: snapX, y: snapY }); playSfx('tile'); }
+            if (tileInHand) { 
+                db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); 
+                db.ref('hands/' + myName + '/' + id).remove(); playSfx('tile'); 
+            }
+            else if (boardTiles[id]) { 
+                if (!isRegistered && initialBoardState[id]) return; 
+                db.ref('board/' + id).update({ x: snapX, y: snapY }); playSfx('tile'); 
+            }
         };
         window.dropOnRack = function(e) {
             e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
@@ -302,7 +340,12 @@
             const newCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
             if (newCount === 0) return alert("패를 내지 않으려면 '뽑기'를 누르세요.");
             if (!validateBoard()) return alert("조합 규칙 위반입니다!");
-            if (!isRegistered) { if (registrationPoints < 30) return alert("등록 점수 30점이 부족합니다!"); db.ref('players/' + myName).update({ registered: true }); isRegistered = true; }
+            if (!isRegistered) { 
+                if (registrationPoints < 30) return alert("등록 점수 30점이 부족합니다!"); 
+                db.ref('players/' + myName).update({ registered: true }); 
+                isRegistered = true;
+                window.sessionStorage.setItem('lumi-reg', 'true');
+            }
             if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurn();
         };
 
@@ -331,7 +374,10 @@
         window.startGame = function() {
             if (!confirm("게임을 시작할까요?")) return;
             db.ref('/').update({ "settings/status": "preparing", "board": null, "hands": null, "settings/activePlayers": playerList });
-            playerList.forEach(p => db.ref('players/' + p).update({ registered: false }));
+            playerList.forEach(p => {
+                db.ref('players/' + p).update({ registered: false });
+                if(p === myName) window.sessionStorage.setItem('lumi-reg', 'false');
+            });
             let pool = []; const co = ['red', 'blue', 'yellow', 'black'];
             const setsCount = (gameMode === 'expert') ? 3 : 2;
             const jokerCount = (gameMode === 'expert') ? 4 : 2;
