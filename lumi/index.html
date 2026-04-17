@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 : 어반 에디션 Pro+ Ver 19.7</title>
+    <title>루미 : 어반 에디션 Pro+ Ver 20.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -48,8 +48,6 @@
 
         .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; position: absolute; cursor: grab; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; }
         .tile.rack-tile { position: relative !important; left: auto !important; top: auto !important; flex-shrink: 0; }
-        
-        /* 🚀 등록 전 잠금 상태 시각화 강화 */
         .tile.locked { filter: grayscale(0.8) brightness(0.5); cursor: not-allowed !important; border: 1px dashed #444; opacity: 0.6; }
         
         .red { color: #d63031 !important; border-bottom: 4px solid #d63031 !important; }
@@ -172,7 +170,7 @@
                 myRef.onDisconnect().remove();
                 myRef.once('value', s => {
                     if (!s.exists()) myRef.set({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP, registered: false });
-                    else myRef.update({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP });
+                    else myRef.update({ joined: true });
                 });
             }
         });
@@ -235,9 +233,10 @@
             gameStatus = snap.val() || "waiting";
             if (gameStatus === "waiting") {
                 const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
+                const isHost = (myName === hostName);
                 UI.show('overlay-layer', 'flex');
                 let lobbyHtml = `<h2>대기실</h2><p>${hostName}님이 시작하기를 기다리고 있습니다.</p>`;
-                if (myName === hostName) {
+                if (isHost) {
                     lobbyHtml += `<div style="margin:20px 0;">
                         <div class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="setGameMode('normal')">4인용 (106장)</div>
                         <div class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="setGameMode('expert')">5인용 (160장)</div>
@@ -270,24 +269,11 @@
 
         function renderTile(parent, id, data, isRack) {
             const div = document.createElement('div');
-            const onBoard = !isRack;
-            const isMineInTurn = onBoard && !initialBoardState[id];
-            // 🚀 핵심 수정: 등록 전이면서 turn 시작 시 판에 이미 있던 타일은 'locked' 처리
-            const isLocked = onBoard && !isMineInTurn && !isRegistered;
-            
+            const onBoard = !isRack, isMineInTurn = onBoard && !initialBoardState[id], isLocked = onBoard && !isMineInTurn && !isRegistered;
             div.className = "tile " + data.color + (isRack ? " rack-tile" : "") + (isLocked ? " locked" : "");
-            div.innerText = data.num; div.id = id;
-            
-            // 🚀 잠긴 타일은 draggable 자체를 false로 설정하여 브라우저 수준에서 차단
-            div.draggable = !isLocked;
-            
+            div.innerText = data.num; div.id = id; div.draggable = !isLocked;
             if (onBoard) { div.style.left = data.x + 'px'; div.style.top = data.y + 'px'; }
-            
-            div.ondragstart = (e) => { 
-                // 🚀 이중 보안: locked 상태면 드래그 시작 거부
-                if (isLocked || (onBoard && currentTurn !== myName)) return e.preventDefault(); 
-                e.dataTransfer.setData("text/plain", id); 
-            };
+            div.ondragstart = (e) => { if (isLocked || (onBoard && currentTurn !== myName)) return e.preventDefault(); e.dataTransfer.setData("text/plain", id); };
             parent.appendChild(div);
         }
 
@@ -303,28 +289,15 @@
             e.preventDefault(); if (currentTurn !== myName) return;
             const id = e.dataTransfer.getData("text/plain"), rect = document.getElementById('game-board').getBoundingClientRect();
             let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
-            
             const tileInHand = myHandData.find(t => t.id === id);
-            
-            if (tileInHand) { 
-                db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); 
-                db.ref('hands/' + myName + '/' + id).remove(); playSfx('tile'); 
-            }
-            else if (boardTiles[id]) {
-                // 🚀 이중 보안: 드롭 시점에서도 등록 안 된 사람이 기존 타일(initialBoardState에 있던 것)을 옮기려 하면 거부
-                if (!isRegistered && initialBoardState[id]) return;
-                
-                db.ref('board/' + id).update({ x: snapX, y: snapY }); playSfx('tile'); 
-            }
+            if (tileInHand) { db.ref('board/' + id).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); playSfx('tile'); }
+            else if (boardTiles[id]) { if (!isRegistered && initialBoardState[id]) return; db.ref('board/' + id).update({ x: snapX, y: snapY }); playSfx('tile'); }
         };
-
         window.dropOnRack = function(e) {
             e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
-            // 🚀 등록 전에는 기존 타일을 거치대로 가져올 수 없음
             if (!isRegistered && initialBoardState[id]) return; 
             db.ref('board/' + id).once('value', s => { if (s.exists() && currentTurn === myName) { db.ref('hands/' + myName + '/' + id).set({ num: s.val().num, color: s.val().color }); db.ref('board/' + id).remove(); playSfx('tile'); } });
         };
-
         window.handleTurnEnd = function() {
             const newCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
             if (newCount === 0) return alert("패를 내지 않으려면 '뽑기'를 누르세요.");
@@ -372,7 +345,6 @@
             if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("판에 낸 타일을 회수해야 뽑을 수 있습니다.");
             db.ref('pool').limitToFirst(1).once('value', s => { if (!s.exists()) return; const key = Object.keys(s.val())[0]; db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]); db.ref('pool/' + key).remove(); window.nextTurn(); });
         };
-
         function showRanking() {
             db.ref('hands').once('value', s => {
                 const h = s.val() || {}; let res = activePlayers.map(n => { let sum = 0; Object.values(h[n]||{}).forEach(t => sum += (t.num === 'J' ? 30 : Number(t.num))); return { n, sum }; }).sort((a,b) => a.sum - b.sum);
