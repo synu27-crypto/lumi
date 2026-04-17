@@ -27,6 +27,8 @@
         #game-board { flex: 7; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; transition: filter 0.3s; }
         #game-board.not-my-turn { pointer-events: none; filter: grayscale(0.6) brightness(0.7); }
 
+        #reg-info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); padding: 8px 20px; border-radius: 30px; border: 1px solid var(--accent-gold); color: var(--accent-gold); font-weight: bold; font-size: 0.9rem; z-index: 800; display: none; }
+
         .audio-ctrl { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px 12px; border-radius: 20px; }
         #vol-slider { width: 60px; accent-color: var(--accent-gold); cursor: pointer; height: 4px; }
         #btn-bgm { background: transparent; border: none; font-size: 0.7rem; color: #fff; cursor: pointer; font-weight: bold; }
@@ -39,17 +41,15 @@
         
         .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.2rem; position: absolute; cursor: grab; border: 1px solid #d1d1d1; box-shadow: 0 4px 8px rgba(0,0,0,0.4); z-index: 10; }
         .tile.rack-tile { position: relative !important; left: auto !important; top: auto !important; flex-shrink: 0; }
+        .tile.locked { filter: grayscale(1) opacity(0.5); cursor: not-allowed; }
+        
         .red { color: #d63031; } .blue { color: #0984e3; } .yellow { color: #f9ca24; } .black { color: #2d3434; } .joker { color: #6c5ce7; }
         
-        button { padding: 6px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 6px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; }
+        button { padding: 6px 12px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border-radius: 6px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; }
         button:disabled { opacity: 0.3; cursor: not-allowed; }
         .active-sort { border: 1px solid #fff; background: rgba(255,255,255,0.2); color: var(--accent-gold); }
         .player-badge { background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.7rem; display: flex; align-items: center; gap: 5px; }
-
-        #chat-wrapper { position: fixed; bottom: 30%; right: 20px; width: 260px; z-index: 2000; display: flex; flex-direction: column; pointer-events: none; }
-        #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; }
-        #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; }
-        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; pointer-events: auto; font-size: 0.75rem; font-weight: bold; }
+        .is-reg-badge { border-color: var(--accent-green); color: var(--accent-green); }
     </style>
 </head>
 <body onclick="initAudio()">
@@ -77,11 +77,7 @@
     </div>
     
     <div id="game-board" ondragover="event.preventDefault()" ondrop="dropOnBoard(event)">
-        <div id="chat-wrapper">
-            <div id="chat-box"></div>
-            <div id="chat-input-container"><input type="text" id="chat-input" placeholder="메시지..." style="flex:1; background:transparent; border:none; padding:8px; color:#fff; font-size:0.8rem;" onkeypress="if(event.keyCode==13) sendChat()"></div>
-            <button id="chat-toggle" onclick="toggleChat()">💬 채팅</button>
-        </div>
+        <div id="reg-info">등록 점수 계산 중...</div>
         <div id="overlay-layer">
             <div class="modal-card"><div id="modal-body"></div><button id="btn-reset-lobby" onclick="returnToLobby()" style="display:none; width:100%; margin-top:20px; background:var(--accent-green);">대기실로 돌아가기</button></div>
         </div>
@@ -128,11 +124,12 @@
 
     const myName = prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
     let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {};
+    let isRegistered = false, initialBoardState = {}, registrationPoints = 0;
 
     db.ref(".info/connected").on("value", snap => {
         if (snap.val()) {
             const myRef = db.ref('players/' + myName);
-            myRef.once('value', s => { if (!s.exists()) myRef.set({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP }); });
+            myRef.once('value', s => { if (!s.exists()) myRef.set({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP, registered: false }); });
             myRef.onDisconnect().remove();
         }
     });
@@ -141,19 +138,22 @@
         const players = snap.val() || {};
         playerList = Object.entries(players).map(([n, d]) => ({ n, ...d })).sort((a, b) => (a.timestamp || Infinity) - (b.timestamp || Infinity)).map(p => p.n);
         const isHost = (playerList[0] === myName);
-        if (isHost) { UI.show('btn-start'); UI.show('btn-force-lobby'); UI.show('btn-force-next'); } else { UI.hide('btn-start'); UI.hide('btn-force-lobby'); UI.hide('btn-force-next'); }
+        isRegistered = players[myName]?.registered || false;
 
-        db.ref('hands').on('value', hSnap => {
-            const allHands = hSnap.val() || {}, listEl = document.getElementById('player-list-container');
-            if (!listEl) return; listEl.innerHTML = '';
+        if (isHost) { UI.show('btn-start'); UI.show('btn-force-lobby'); UI.show('btn-force-next'); } 
+        else { UI.hide('btn-start'); UI.hide('btn-force-lobby'); UI.hide('btn-force-next'); }
+
+        const listEl = document.getElementById('player-list-container');
+        if (listEl) {
+            listEl.innerHTML = '';
             playerList.forEach((name, idx) => {
-                const count = allHands[name] ? Object.keys(allHands[name]).length : 0;
+                const reg = players[name]?.registered;
                 const badge = document.createElement('span');
-                badge.className = `player-badge ${idx === 0 ? 'is-host-badge' : ''}`;
-                badge.innerHTML = `${idx === 0 ? '👑' : ''} ${name}${name === myName ? ' (나)' : ''} <span style="background:rgba(255,255,255,0.2); padding:1px 4px; border-radius:3px">${count}</span>`;
+                badge.className = `player-badge ${idx === 0 ? 'is-host-badge' : ''} ${reg ? 'is-reg-badge' : ''}`;
+                badge.innerHTML = `${idx === 0 ? '👑' : ''} ${name}${reg ? ' (등록됨)' : ''}`;
                 listEl.appendChild(badge);
             });
-        });
+        }
     });
 
     db.ref('settings/status').on('value', snap => {
@@ -165,47 +165,79 @@
 
     db.ref('currentTurn').on('value', snap => {
         currentTurn = snap.val(); const isMy = (currentTurn === myName);
-        if (isMy) { document.body.classList.add('is-my-turn-frame'); } else { document.body.classList.remove('is-my-turn-frame'); }
+        if (isMy) { 
+            document.body.classList.add('is-my-turn-frame'); 
+            // 턴 시작 시 보드 상태 저장 (등록 체크용)
+            db.ref('board').once('value', s => { initialBoardState = s.val() || {}; updateRegPoints(); });
+        } else { 
+            document.body.classList.remove('is-my-turn-frame'); 
+            UI.hide('reg-info');
+        }
         document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
         UI.disable('btn-draw', !isMy); UI.disable('btn-end', !isMy);
         UI.set('turn-info', isMy ? `<span style='color:var(--turn-blue)'>내 차례입니다!</span>` : `차례: ${currentTurn || '-'}`);
     });
 
     function renderTile(parent, id, data, isRack) {
-        const div = document.createElement('div'); div.className = `tile ${data.color} ${isRack ? 'rack-tile' : ''}`;
-        div.innerText = data.num; div.id = id; div.draggable = true;
-        if (!isRack) { div.style.left = data.x + 'px'; div.style.top = data.y + 'px'; }
+        const div = document.createElement('div');
+        const onBoard = !isRack;
+        const isMineInTurn = onBoard && !initialBoardState[id]; // 이번 턴에 내가 내놓은 것
+        
+        // 🔒 등록 전 타일 잠금: 보드에 원래 있던 타일이고 내가 아직 등록 안 했다면 드래그 불가
+        const isLocked = onBoard && !isMineInTurn && !isRegistered;
+        
+        div.className = `tile ${data.color} ${isRack ? 'rack-tile' : ''} ${isLocked ? 'locked' : ''}`;
+        div.innerText = data.num; div.id = id; div.draggable = !isLocked;
+        
+        if (onBoard) { div.style.left = data.x + 'px'; div.style.top = data.y + 'px'; }
         div.ondragstart = (e) => { 
-            if (!isRack && currentTurn !== myName) return e.preventDefault();
+            if (isLocked || (onBoard && currentTurn !== myName)) return e.preventDefault();
             e.dataTransfer.setData("text/plain", id);
         };
         parent.appendChild(div);
+    }
+
+    function updateRegPoints() {
+        if (isRegistered) return UI.hide('reg-info');
+        
+        const newTiles = Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]);
+        let points = 0;
+        newTiles.forEach(([id, t]) => {
+            if (t.num === 'J') points += 10; // 조커 기본 10점 (임시)
+            else points += Number(t.num);
+        });
+        registrationPoints = points;
+        UI.show('reg-info', 'block');
+        UI.text('reg-info', `현재 등록 점수: ${points} / 30`);
     }
 
     function dropOnBoard(e) {
         e.preventDefault(); if (currentTurn !== myName) return;
         const id = e.dataTransfer.getData("text/plain");
         const rect = document.getElementById('game-board').getBoundingClientRect();
-        const x = e.clientX - rect.left - 22;
-        const y = e.clientY - rect.top - 32;
+        const x = e.clientX - rect.left - 22; const y = e.clientY - rect.top - 32;
         let snapX = Math.round(x / 50) * 50 + 2, snapY = Math.round(y / 75) * 75 + 2;
         
-        const tile = myHandData.find(t => t.id === id) || boardTiles[id];
-        if (tile) {
-            db.ref(`board/${id}`).set({ num: tile.num, color: tile.color, x: snapX, y: snapY });
-            db.ref(`hands/${myName}/${id}`).remove();
-            playSnap();
+        const tileInHand = myHandData.find(t => t.id === id);
+        const tileOnBoard = boardTiles[id];
+        
+        if (tileInHand) {
+            db.ref(`board/${id}`).set({ num: tileInHand.num, color: tileInHand.color, x: snapX, y: snapY });
+            db.ref(`hands/${myName}/${id}`).remove(); playSnap();
+        } else if (tileOnBoard) {
+            db.ref(`board/${id}`).update({ x: snapX, y: snapY }); playSnap();
         }
     }
 
     function dropOnRack(e) {
-        e.preventDefault();
-        const id = e.dataTransfer.getData("text/plain");
+        e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
+        // 등록 전에는 내가 방금 내놓은 타일만 다시 회수 가능
+        if (!isRegistered && initialBoardState[id]) return; 
+        
         db.ref(`board/${id}`).once('value', s => {
             if (s.exists() && currentTurn === myName) {
                 db.ref(`hands/${myName}/${id}`).set({ num: s.val().num, color: s.val().color });
-                db.ref(`board/${id}`).remove();
-                playSnap();
+                db.ref(`board/${id}`).remove(); playSnap();
             }
         });
     }
@@ -218,6 +250,22 @@
             for (let i = 1; i < row.length; i++) { if (row[i].x - row[i-1].x <= 60) cur.push(row[i]); else { groups.push(cur); cur = [row[i]]; } }
             groups.push(cur);
         }
+
+        // 등록 전이라면: 내가 이번 턴에 만든 세트들이 완벽한지, 그리고 그것들만 있는지 확인
+        if (!isRegistered) {
+            const myNewTilesCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
+            if (myNewTilesCount === 0) return true; // 아무것도 안 내면 패스 (하지만 드로우해야함)
+
+            // 등록 시에는 기존 타일을 건드리면 안 됨
+            for (let id in initialBoardState) {
+                const now = boardTiles[id];
+                if (!now || now.x !== initialBoardState[id].x || now.y !== initialBoardState[id].y) {
+                    alert("등록 전에는 기존 타일을 건드릴 수 없습니다!");
+                    return false;
+                }
+            }
+        }
+
         for (let g of groups) {
             if (g.length < 3) return false;
             const nz = g.filter(t => t.num !== 'J'); if (nz.length === 0) continue;
@@ -234,14 +282,29 @@
     }
 
     function handleTurnEnd() {
-        if (!validateBoard()) return alert("조합이 규칙에 맞지 않습니다! (3장 이상의 그룹/연속 필수)");
-        if (myHandData.length === 0) db.ref('settings/status').set("finished"); else nextTurn();
+        if (!validateBoard()) return alert("조합이 규칙에 맞지 않습니다!");
+        
+        const newTilesCount = Object.keys(boardTiles).length - Object.keys(initialBoardState).length;
+        
+        if (!isRegistered && newTilesCount > 0) {
+            if (registrationPoints < 30) return alert("등록 점수가 부족합니다! (최소 30점)");
+            db.ref(`players/${myName}`).update({ registered: true });
+            alert("축하합니다! 등록되었습니다.");
+        }
+
+        if (myHandData.length === 0 && (isRegistered || registrationPoints >= 30)) {
+            db.ref('settings/status').set("finished");
+        } else {
+            nextTurn();
+        }
     }
+
     function nextTurn() { const idx = (playerList.indexOf(currentTurn) + 1) % playerList.length; db.ref('currentTurn').set(playerList[idx]); }
     function forceNextTurn() { if(confirm("강제로 턴을 넘길까요?")) nextTurn(); }
     function startGame() {
         if (!confirm("게임을 시작할까요?")) return;
         db.ref('settings/status').set("preparing"); myHandData = []; db.ref('board').remove(); db.ref('hands').remove(); 
+        playerList.forEach(p => db.ref(`players/${p}`).update({ registered: false }));
         let pool = []; const co = ['red', 'blue', 'yellow', 'black'];
         co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<2; j++) pool.push({ num: i, color: c }); } });
         pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
@@ -250,6 +313,7 @@
         db.ref('/').update({ ...ups, pool: Object.assign({}, pool), "settings/status": "playing" });
     }
     function drawTile() {
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("판에 낸 타일이 있으면 뽑을 수 없습니다. 타일을 회수하세요.");
         db.ref('pool').limitToFirst(1).once('value', s => {
             if (!s.exists()) return alert("타일 없음"); const key = Object.keys(s.val())[0];
             db.ref(`hands/${myName}/tile_${Date.now()}`).set(s.val()[key]); db.ref(`pool/${key}`).remove(); nextTurn();
@@ -268,14 +332,17 @@
         });
     }
 
-    db.ref('board').on('value', snap => { const bEl = document.getElementById('game-board'); if(!bEl) return; bEl.querySelectorAll('.tile').forEach(t => t.remove()); boardTiles = snap.val() || {}; for (let id in boardTiles) renderTile(bEl, id, boardTiles[id], false); });
+    db.ref('board').on('value', snap => { 
+        const bEl = document.getElementById('game-board'); if(!bEl) return; 
+        bEl.querySelectorAll('.tile').forEach(t => t.remove()); 
+        boardTiles = snap.val() || {}; 
+        for (let id in boardTiles) renderTile(bEl, id, boardTiles[id], false); 
+        if (currentTurn === myName) updateRegPoints();
+    });
     db.ref(`hands/${myName}`).on('value', snap => { myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val })); if(sortMode!=='manual') applyAutoSort(); renderRack(); });
     function setSortMode(m) { sortMode = m; applyAutoSort(); renderRack(); }
     function applyAutoSort() { const co = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 }; myHandData.sort((a, b) => { const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); return sortMode === 'color' ? (co[a.color] - co[b.color] || vA - vB) : (vA - vB || co[a.color] - co[b.color]); }); }
     function renderRack() { const rEl = document.getElementById('my-rack'); if(!rEl) return; rEl.querySelectorAll('.tile').forEach(el => el.remove()); const btnId = sortMode === 'number' ? 'sort-num' : sortMode === 'color' ? 'sort-col' : 'sort-man'; document.querySelectorAll('#rack-controls button').forEach(b => b.classList.toggle('active-sort', b.id === btnId)); myHandData.forEach(t => renderTile(rEl, t.id, t, true)); }
-    function toggleChat() { const box = document.getElementById('chat-box'), inp = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle'); const open = box.style.display === 'block'; box.style.display = open ? 'none' : 'block'; inp.style.display = open ? 'none' : 'flex'; btn.innerText = open ? '💬 채팅' : '❌ 닫기'; if (!open) { box.scrollTop = box.scrollHeight; document.getElementById('chat-input').focus(); } }
-    function sendChat() { const i = document.getElementById('chat-input'); if (!i.value.trim()) return; db.ref('chat').push({ name: myName, msg: i.value.trim() }); i.value = ''; }
-    db.ref('chat').limitToLast(20).on('child_added', snap => { const d = snap.val(), box = document.getElementById('chat-box'); if (!box) return; const div = document.createElement('div'); div.innerHTML = `<span style="color:var(--accent-gold)">${d.name}:</span> <span>${d.msg}</span>`; box.appendChild(div); box.scrollTop = box.scrollHeight; });
 </script>
 </body>
 </html>
