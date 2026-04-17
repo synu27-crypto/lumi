@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>루미 : 어반 에디션 Pro+</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -28,7 +29,6 @@
         #game-board { flex: 7; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; transition: filter 0.3s; }
         #game-board.not-my-turn { pointer-events: none; filter: grayscale(0.6) brightness(0.7); }
 
-        /* 💬 채팅 UI 레이어 최상단 고정 */
         #chat-wrapper { position: fixed; bottom: 25px; right: 25px; width: 320px; z-index: 2000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 280px; background: var(--chat-bg); backdrop-filter: blur(15px); border-radius: 15px 15px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 15px; pointer-events: auto; display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
         #chat-box div { margin-bottom: 8px; font-size: 0.85rem; line-height: 1.5; word-break: break-all; }
@@ -36,13 +36,12 @@
         .chat-me { color: #fff; background: rgba(255,255,255,0.12); padding: 2px 8px; border-radius: 6px; }
         #chat-input-container { display: flex; background: #1a1a1a; border-radius: 0 0 15px 15px; border: 1px solid rgba(255,255,255,0.15); border-top: none; pointer-events: auto; display: none; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 12px; color: #fff; outline: none; font-size: 0.85rem; }
-        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 12px 24px; border-radius: 30px; cursor: pointer; pointer-events: auto; font-weight: bold; font-size: 0.85rem; box-shadow: 0 5px 20px rgba(0,0,0,0.5); transition: transform 0.2s; }
-        #chat-toggle:hover { transform: scale(1.05); }
+        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 12px 24px; border-radius: 30px; cursor: pointer; pointer-events: auto; font-weight: bold; font-size: 0.85rem; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
 
         #overlay-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .modal-card { background: rgba(45, 45, 45, 0.95); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.7); min-width: 400px; }
         .score-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-        .score-table th, .score-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .score-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
         #my-rack { flex: 2.8; background: #151515; border-top: 1px solid rgba(255, 255, 255, 0.1); position: relative; padding: 25px 20px; display: flex; gap: 12px; flex-wrap: wrap; align-content: flex-start; z-index: 600; }
         #rack-controls { position: absolute; top: -50px; right: 20px; display: flex; gap: 10px; }
@@ -113,15 +112,18 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 🛡️ 안전하게 텍스트를 업데이트하는 함수
-    function safeUpdateText(id, text) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = text;
-    }
+    // 🛡️ 텍스트 및 HTML 안전 업데이트 도구
+    const UI = {
+        set: (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; },
+        text: (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; },
+        show: (id, display = 'inline-block') => { const el = document.getElementById(id); if (el) el.style.display = display; },
+        hide: (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; },
+        disable: (id, bool) => { const el = document.getElementById(id); if (el) el.disabled = bool; }
+    };
 
     let audioCtx = null, bgm = document.getElementById('bgm-audio');
     function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
-    function toggleBGM() { const b = document.getElementById('btn-bgm'); if (bgm.paused) { bgm.play(); b.innerText = "🎵 ON"; b.style.color = "var(--accent-gold)"; } else { bgm.pause(); b.innerText = "🎵 OFF"; b.style.color = "#fff"; } }
+    function toggleBGM() { const b = document.getElementById('btn-bgm'); if (bgm.paused) { bgm.play(); UI.text('btn-bgm', "🎵 ON"); b.style.color = "var(--accent-gold)"; } else { bgm.pause(); UI.text('btn-bgm', "🎵 OFF"); b.style.color = "#fff"; } }
     function changeVolume(v) { bgm.volume = v; }
     function playSnapSound() { if (!audioCtx) return; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.frequency.setValueAtTime(600, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); g.gain.setValueAtTime(0.05, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.1); }
     function playTurnNotifySound() { if (!audioCtx) return; const n = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(880, n); o.frequency.setValueAtTime(1100, n + 0.2); g.gain.setValueAtTime(0.1, n); g.gain.exponentialRampToValueAtTime(0.01, n + 0.5); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(n + 0.5); }
@@ -144,9 +146,7 @@
         playerList = sorted.map(p => p.n);
         const isHost = (playerList[0] === myName);
         
-        const bStart = document.getElementById('btn-start'), bForce = document.getElementById('btn-force-lobby');
-        if (bStart) bStart.style.display = isHost ? 'inline-block' : 'none';
-        if (bForce) bForce.style.display = isHost ? 'inline-block' : 'none';
+        if (isHost) { UI.show('btn-start'); UI.show('btn-force-lobby'); } else { UI.hide('btn-start'); UI.hide('btn-force-lobby'); }
 
         db.ref('hands').on('value', hSnap => {
             const allHands = hSnap.val() || {}, listEl = document.getElementById('player-list-container');
@@ -169,7 +169,7 @@
         const isOpen = (box.style.display === 'block');
         box.style.display = isOpen ? 'none' : 'block';
         input.style.display = isOpen ? 'none' : 'flex';
-        btn.innerText = isOpen ? '💬 채팅 열기' : '❌ 채팅 닫기';
+        UI.text('chat-toggle', isOpen ? '💬 채팅 열기' : '❌ 채팅 닫기');
         if (!isOpen) { box.scrollTop = box.scrollHeight; document.getElementById('chat-input').focus(); }
     }
     function sendChat() { const input = document.getElementById('chat-input'); if (!input || !input.value.trim()) return; db.ref('chat').push({ name: myName, msg: input.value.trim(), time: Date.now() }); input.value = ''; }
@@ -183,11 +183,9 @@
 
     db.ref('settings/status').on('value', snap => {
         gameStatus = snap.val() || "waiting";
-        const overlay = document.getElementById('overlay-layer'), body = document.getElementById('modal-body'), lobbyBtn = document.getElementById('btn-reset-lobby');
-        if (!overlay || !body) return;
-        if (gameStatus === "waiting") { overlay.style.display = "flex"; lobbyBtn.style.display = "none"; body.innerHTML = `<h2>대기실</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p>`; }
-        else if (gameStatus === "finished") { overlay.style.display = "flex"; lobbyBtn.style.display = "block"; showRanking(); }
-        else { overlay.style.display = "none"; }
+        if (gameStatus === "waiting") { UI.show('overlay-layer', 'flex'); UI.hide('btn-reset-lobby'); UI.set('modal-body', `<h2>대기실</h2><p>방장이 게임을 시작할 때까지 대기해 주세요.</p>`); }
+        else if (gameStatus === "finished") { UI.show('overlay-layer', 'flex'); UI.show('btn-reset-lobby', 'block'); showRanking(); }
+        else { UI.hide('overlay-layer'); }
     });
 
     function showRanking() {
@@ -200,7 +198,7 @@
             scoreData.forEach(p => { if (p.isW) p.fs = total; }); scoreData.sort((a,b) => b.fs - a.fs);
             let html = `<h2>🎮 게임 결과</h2><table class="score-table">`;
             scoreData.forEach((p, i) => { html += `<tr class="${i===0?'rank-row-1':''}"><td>${i+1}위</td><td>${p.n}</td><td>${p.fs>0?'+':''}${p.fs}점</td></tr>`; });
-            const mb = document.getElementById('modal-body'); if(mb) mb.innerHTML = html + `</table>`;
+            UI.set('modal-body', html + `</table>`);
         });
     }
 
@@ -212,16 +210,14 @@
         else if (!isMy) document.body.classList.remove('is-my-turn-frame');
         lastTurn = currentTurn;
         const gb = document.getElementById('game-board'); if(gb) gb.classList.toggle('not-my-turn', !isMy);
-        const bDraw = document.getElementById('btn-draw'), bEnd = document.getElementById('btn-end'), bRoll = document.getElementById('btn-rollback');
-        if(bDraw) bDraw.disabled = !isMy; if(bEnd) bEnd.disabled = !isMy; if(bRoll) bRoll.disabled = !isMy;
-        const tInfo = document.getElementById('turn-info');
-        if(tInfo) tInfo.innerHTML = isMy ? `<span style='color:var(--turn-blue); font-weight:bold;'>내 차례!</span>` : `<span>차례: ${currentTurn || '-'}</span>`;
+        UI.disable('btn-draw', !isMy); UI.disable('btn-end', !isMy); UI.disable('btn-rollback', !isMy);
+        UI.set('turn-info', isMy ? `<span style='color:var(--turn-blue); font-weight:bold;'>내 차례!</span>` : `<span>차례: ${currentTurn || '-'}</span>`);
     });
 
     function takeSnapshot() { db.ref('board').once('value', s => snapshotBoard = s.val() || {}); db.ref(`hands/${myName}`).once('value', s => snapshotHand = s.val() || {}); }
     function rollbackTurn() { if (confirm("무를까요?")) { if (snapshotBoard) db.ref('board').set(snapshotBoard); if (snapshotHand) db.ref(`hands/${myName}`).set(snapshotHand); playSnapSound(); } }
     db.ref('board').on('value', snap => { const boardEl = document.getElementById('game-board'); if(!boardEl) return; boardEl.querySelectorAll('.tile').forEach(t => t.remove()); boardTiles = snap.val() || {}; for (let id in boardTiles) renderTile(boardEl, id, boardTiles[id], false); });
-    db.ref('pool').on('value', snap => safeUpdateText('pool-count', `POOL: ${snap.numChildren()}`));
+    db.ref('pool').on('value', snap => UI.text('pool-count', `POOL: ${snap.numChildren()}`));
 
     db.ref(`hands/${myName}`).on('value', snap => {
         const newData = snap.val() || {}, newIds = Object.keys(newData);
