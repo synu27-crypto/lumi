@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미큐브 : 어반 에디션 Ver 23.0</title>
+    <title>루미큐브 : 어반 에디션 Ver 23.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -14,7 +14,6 @@
         }
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; width: 100vw; overflow: hidden; user-select: none; }
         
-        /* 턴 알림 팝업 */
         #turn-announcer {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.95); color: var(--turn-blue);
@@ -22,14 +21,12 @@
             z-index: 30000; pointer-events: none; border: 3px solid var(--turn-blue); display: none;
         }
 
-        /* 메인 레이아웃 */
         #main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
         #ui-layer { height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; }
         #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.6); }
 
-        /* 타일 스타일 */
-        .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; position: absolute; cursor: grab; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; transition: transform 0.1s; }
+        .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; position: absolute; cursor: grab; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; }
         .tile.locked { filter: grayscale(0.8) brightness(0.5); cursor: not-allowed !important; opacity: 0.6; }
         .red { color: #d63031 !important; border-bottom: 4px solid #d63031 !important; }
         .blue { color: #0984e3 !important; border-bottom: 4px solid #0984e3 !important; }
@@ -37,7 +34,6 @@
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
 
-        /* 채팅 */
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; }
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding-right: 8px; }
@@ -50,21 +46,19 @@
         
         button { padding: 8px 16px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; }
         button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:disabled { opacity: 0.5; }
 
         .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
 
-        /* 팝업 레이어 */
         #overlay-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .modal-card { background: #2a2a2a; padding: 40px; border-radius: 24px; text-align: center; min-width: 380px; border: 1px solid #444; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .mode-btn { background: #3d3d3d; border: 1px solid #555; padding: 12px; border-radius: 12px; cursor: pointer; margin: 10px 5px; width: 130px; color: white; transition: 0.3s; }
+        .mode-btn { background: #3d3d3d; border: 1px solid #555; padding: 12px; border-radius: 12px; cursor: pointer; margin: 10px 5px; width: 130px; color: white; }
         .mode-btn.selected { border-color: var(--accent-gold); background: rgba(241, 196, 15, 0.2); color: var(--accent-gold); font-weight: bold; }
         .spectate-btn { background: var(--accent-purple); color: white; width: 100%; margin-top: 15px; padding: 12px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
         .spectate-btn.active { background: #555; color: #aaa; }
         .start-btn-large { background: var(--accent-green); color: #000; width: 100%; margin-top: 20px; padding: 18px; border-radius: 12px; font-size: 1.1rem; font-weight: 900; border: none; cursor: pointer; }
-        #reg-info { position: absolute; top: 10px; left: 10px; font-size: 0.8rem; color: #777; pointer-events: none; }
     </style>
 </head>
 <body onclick="if(window.initAudio) window.initAudio()">
@@ -102,7 +96,7 @@
     </div>
     
     <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)">
-        <div id="reg-info">등록 대기 중...</div>
+        <div id="reg-info" style="position:absolute; top:10px; left:10px; font-size:0.8rem; color:#666;">등록 대기 중...</div>
     </div>
 
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
@@ -127,7 +121,7 @@
     let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal", isSpectating = false;
     let isRegistered = false, initialBoardState = {}, registrationPoints = 0;
 
-    // --- 유틸리티 및 로비 렌더링 ---
+    // --- 로비 UI 렌더링 함수 ---
     window.renderLobbyUI = function() {
         const modalBody = document.getElementById('modal-body');
         const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
@@ -163,13 +157,20 @@
     window.changeVolume = function(v) { if(bgm) bgm.volume = v; };
     window.forceNextTurn = function() { if(confirm("강제 턴 넘기기?")) window.nextTurnAction(); };
 
+    // --- [중요] 게임 시작 함수 (경로 충돌 수정) ---
     window.startGame = function() {
         db.ref('players').once('value', pSnap => {
             const players = pSnap.val() || {};
             const nonSpectators = Object.entries(players).filter(([n, d]) => !d.spectating).map(([n, d]) => n);
-            if (nonSpectators.length < 2) return alert("참여자가 최소 2명 이상이어야 합니다!");
+            
+            // 인원 체크 (테스트 시 주의)
+            if (nonSpectators.length < 2) {
+                alert("참여자가 최소 2명 이상이어야 합니다! (창을 두 개 띄워보세요)");
+                return;
+            }
 
-            let pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
+            let pool = []; 
+            const colors = ['red', 'blue', 'yellow', 'black'];
             const sets = (gameMode === 'expert') ? 3 : 2;
             const jokers = (gameMode === 'expert') ? 4 : 2;
             
@@ -178,21 +179,31 @@
             pool.sort(() => Math.random() - 0.5);
 
             const updates = {};
+            // 전체 게임 상태 업데이트
             updates['settings/status'] = "playing";
-            updates['board'] = null; updates['pool'] = Object.assign({}, pool);
+            updates['board'] = {}; // 기존 보드 삭제
+            updates['pool'] = Object.assign({}, pool);
             updates['currentTurn'] = nonSpectators[0];
             updates['settings/activePlayers'] = nonSpectators;
 
+            // 각 플레이어 손패 배분 (충돌 방지를 위해 path 직접 지정)
             nonSpectators.forEach(p => {
-                updates[`hands/${p}`] = {}; 
+                // hands/플레이어 경로를 먼저 밀어버림 (별도 처리 권장)
+                db.ref(`hands/${p}`).remove(); 
+                
                 for(let i=0; i<14; i++) {
-                    const t = pool.pop(); const id = 'tile_' + Math.random().toString(36).substr(2, 9);
+                    const t = pool.pop(); 
+                    const id = 'tile_' + Math.random().toString(36).substr(2, 9);
                     updates[`hands/${p}/${id}`] = t;
                 }
                 updates[`players/${p}/registered`] = false;
                 updates[`players/${p}/tileCount`] = 14;
             });
-            db.ref('/').update(updates);
+
+            // 원자적 업데이트 실행
+            db.ref('/').update(updates)
+                .then(() => console.log("Game started!"))
+                .catch(err => alert("시작 중 에러: " + err.message));
         });
     }
 
@@ -201,7 +212,6 @@
         db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/activePlayers": null });
     };
 
-    // --- 메인 로직 ---
     window.onload = function() {
         myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임을 입력하세요") || "게스트_" + Math.floor(Math.random()*100);
         window.sessionStorage.setItem('lumi-nick', myName);
@@ -222,13 +232,17 @@
             }
         });
 
-        // 리스너들
+        // 상태 리스너들
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             const overlay = document.getElementById('overlay-layer');
-            if (gameStatus === "playing") { overlay.style.display = 'none'; }
-            else if (gameStatus === "finished") { overlay.style.display = 'flex'; window.showRanking(); }
-            else { overlay.style.display = 'flex'; renderLobbyUI(); }
+            if (gameStatus === "playing") { 
+                overlay.style.display = 'none'; 
+            } else if (gameStatus === "finished") { 
+                overlay.style.display = 'flex'; window.showRanking(); 
+            } else { 
+                overlay.style.display = 'flex'; renderLobbyUI(); 
+            }
         });
 
         db.ref('settings/gameMode').on('value', snap => {
@@ -270,7 +284,7 @@
             currentTurn = snap.val();
             const isMy = (currentTurn === myName);
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-            if(isMy) { window.takeTurnSnapshot(); } 
+            if(isMy) window.takeTurnSnapshot(); 
             document.getElementById('btn-draw').disabled = !isMy; 
             document.getElementById('btn-end').disabled = !isMy;
             document.getElementById('btn-rollback').disabled = !isMy;
@@ -301,9 +315,7 @@
                 rEl.appendChild(div);
             });
             db.ref('players/' + myName).update({ tileCount: myHandData.length });
-            if (myHandData.length === 0 && gameStatus === "playing") {
-                db.ref('settings/status').set("finished");
-            }
+            if (myHandData.length === 0 && gameStatus === "playing") db.ref('settings/status').set("finished");
         });
 
         db.ref('chat').limitToLast(20).on('child_added', snap => {
@@ -314,7 +326,7 @@
         });
     };
 
-    // --- 게임 액션 ---
+    // --- 게임 액션들 ---
     window.nextTurnAction = function() {
         if (activePlayers.length < 2) return;
         const nextIdx = (activePlayers.indexOf(currentTurn) + 1) % activePlayers.length;
@@ -323,7 +335,7 @@
 
     window.drawTile = function() {
         db.ref('pool').limitToFirst(1).once('value', s => { 
-            if (!s.exists()) { alert("풀에 타일이 없습니다!"); window.nextTurnAction(); return; }
+            if (!s.exists()) { window.nextTurnAction(); return; }
             const key = Object.keys(s.val())[0]; 
             db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]); 
             db.ref('pool/' + key).remove(); 
@@ -337,7 +349,7 @@
             Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => {
                 pts += (t.num === 'J' ? 30 : Number(t.num));
             });
-            if (pts < 30) return alert(`등록 점수가 부족합니다! (현재: ${pts} / 필요: 30)`);
+            if (pts < 30) return alert(`등록 점수가 부족합니다! (현재: ${pts} / 30 필요)`);
             db.ref('players/' + myName).update({ registered: true });
         }
         window.nextTurnAction();
@@ -359,7 +371,7 @@
 
     window.dropOnRack = function(e) {
         e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
-        if (initialBoardState[id] && !isRegistered) return; // 등록 전엔 바닥 타일 못 가져옴
+        if (initialBoardState[id] && !isRegistered) return;
         db.ref('board/' + id).once('value', s => { 
             if (s.exists()) { 
                 db.ref('hands/' + myName + '/' + id).set({ num: s.val().num, color: s.val().color }); 
@@ -369,7 +381,6 @@
     };
 
     window.setSortMode = function(m) { sortMode = m; applyAutoSort(); db.ref('hands/' + myName).once('value', s => {}); };
-    
     function applyAutoSort() { 
         const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 }; 
         myHandData.sort((a, b) => { 
@@ -379,17 +390,12 @@
     }
 
     window.takeTurnSnapshot = function() { db.ref('board').once('value', s => { initialBoardState = JSON.parse(JSON.stringify(s.val() || {})); }); };
-    
-    window.rollbackTurn = function() { 
-        if (confirm("이번 턴의 모든 조작을 무르겠습니까?")) db.ref('board').set(initialBoardState); 
-    };
-
+    window.rollbackTurn = function() { if (confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
     window.toggleChat = function() { 
         const box = document.getElementById('chat-box'), inp = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle');
         const open = box.style.display === 'block'; box.style.display = open ? 'none' : 'block'; 
         inp.style.display = open ? 'none' : 'flex'; btn.innerText = open ? '💬 채팅' : '❌ 닫기';
     };
-
     window.sendChat = function() { 
         const i = document.getElementById('chat-input'), cp = document.getElementById('chat-color-picker');
         if (!i.value.trim()) return; db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value }); i.value = ''; 
@@ -399,14 +405,12 @@
         db.ref('hands').once('value', s => {
             const h = s.val() || {}; 
             let res = activePlayers.map(n => { 
-                let sum = 0; 
-                Object.values(h[n]||{}).forEach(t => sum += (t.num === 'J' ? 50 : Number(t.num))); 
+                let sum = 0; Object.values(h[n]||{}).forEach(t => sum += (t.num === 'J' ? 50 : Number(t.num))); 
                 return { n, sum }; 
             }).sort((a,b) => a.sum - b.sum);
-            
             let htm = `<h2>🏆 게임 종료!</h2>`;
-            res.forEach((p, i) => htm += `<p style="font-size:1.2rem">${i+1}위: <strong>${p.n}</strong> (${p.sum}점)</p>`);
-            htm += `<button onclick="window.returnToLobby()" style="background:var(--accent-green); width:100%; margin-top:20px; padding:15px; border-radius:12px; font-weight:bold;">대기실로 이동</button>`;
+            res.forEach((p, i) => htm += `<p>${i+1}위: <strong>${p.n}</strong> (${p.sum}점)</p>`);
+            htm += `<button onclick="window.returnToLobby()" style="background:var(--accent-green); width:100%; margin-top:20px; padding:15px; border-radius:12px;">대기실로</button>`;
             document.getElementById('modal-body').innerHTML = htm;
         });
     }
