@@ -11,11 +11,11 @@
         :root {
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.95); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #27ae60; --accent-gold: #f1c40f; --accent-red: #e74c3c;
+            --turn-blue: #3498db;
         }
 
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; overflow: hidden; transition: box-shadow 0.3s; }
         
-        /* 🚨 내 차례 펄스 애니메이션 */
         @keyframes pulse-border {
             0% { box-shadow: inset 0 0 30px rgba(52, 152, 219, 0.2); }
             50% { box-shadow: inset 0 0 100px rgba(52, 152, 219, 0.6); }
@@ -26,7 +26,6 @@
         #ui-layer { padding: 12px 24px; background: var(--panel-bg); backdrop-filter: blur(20px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); z-index: 500; }
         #main-container { display: flex; flex-direction: column; height: 100vh; }
         
-        /* 🚫 내 차례가 아닐 때 보드 잠금 */
         #game-board { flex: 7; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; transition: filter 0.3s; }
         #game-board.not-my-turn { pointer-events: none; filter: grayscale(0.7) brightness(0.7); opacity: 0.8; }
 
@@ -148,10 +147,17 @@
             const allHands = hSnap.val() || {};
             const listEl = document.getElementById('player-list-container');
             listEl.innerHTML = '';
+            
             playerList.forEach((name, idx) => {
                 const isThisHost = (idx === 0);
-                const count = allHands[name] ? Object.keys(allHands[name]).length : 0;
-                if (gameStatus === "playing" && count === 0) db.ref('settings/status').set("finished");
+                const handData = allHands[name];
+                const count = handData ? Object.keys(handData).length : 0;
+                
+                // 🚀 승리 판독기 강화: 'playing' 상태고, 이전에 타일이 있었다가(myHandData) 지금 0이 되었을 때만
+                if (gameStatus === "playing" && count === 0 && myHandData.length > 5) {
+                    db.ref('settings/status').set("finished");
+                }
+
                 const badge = document.createElement('span');
                 badge.className = `player-badge ${isThisHost ? 'is-host-badge' : ''}`;
                 badge.innerHTML = `${isThisHost ? '👑' : ''} ${name}${name === myName ? ' (나)' : ''} <span class="tile-num">${count}</span>`;
@@ -188,7 +194,11 @@
         });
     }
 
-    function returnToLobby() { if (!confirm("대기실로 돌아갈까요? (방 전체 적용)")) return; db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); }
+    // 🚀 원자적 초기화 로직 (Atomic Lobby Reset)
+    function returnToLobby() {
+        if (!confirm("대기실로 돌아갈까요?")) return;
+        db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null });
+    }
 
     db.ref('currentTurn').on('value', snap => {
         currentTurn = snap.val();
@@ -196,10 +206,7 @@
         if (isMy && lastTurn !== myName) { playTurnNotifySound(); document.body.classList.add('is-my-turn-frame'); takeSnapshot(); }
         else if (!isMy) document.body.classList.remove('is-my-turn-frame');
         lastTurn = currentTurn;
-
-        // 🧲 내 차례가 아닐 때 보드판 비활성화
         document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-        
         document.getElementById('btn-draw').disabled = !isMy;
         document.getElementById('btn-end').disabled = !isMy;
         document.getElementById('btn-rollback').disabled = !isMy;
@@ -253,7 +260,7 @@
         div.innerText = data.num; div.id = id; div.draggable = true;
         if (!isRack) { div.style.left = data.x + 'px'; div.style.top = data.y + 'px'; }
         div.ondragstart = (e) => { 
-            if (!isRack && currentTurn !== myName) return e.preventDefault(); // 🚫 보드 타일 보호
+            if (!isRack && currentTurn !== myName) return e.preventDefault();
             e.dataTransfer.setData("text", e.target.id); setTimeout(() => e.target.style.opacity = "0.4", 0); 
         };
         div.ondragend = (e) => e.target.style.opacity = "1";
@@ -262,7 +269,7 @@
 
     function allowDrop(ev) { ev.preventDefault(); }
     function dropToBoard(ev) {
-        ev.preventDefault(); if (currentTurn !== myName) return; // 🚫 턴 체크
+        ev.preventDefault(); if (currentTurn !== myName) return;
         const id = ev.dataTransfer.getData("text"), rX = ev.clientX - 24, rY = ev.clientY - 90;
         let snapX = Math.round(rX / 50) * 50 + 2, snapY = Math.round(rY / 75) * 75 + 2;
         while (Object.entries(boardTiles).some(([tid, t]) => tid !== id && Math.abs(t.x - snapX) < 10 && Math.abs(t.y - snapY) < 10)) snapX += 50;
@@ -289,7 +296,8 @@
 
     function startGame() {
         if (!confirm("시작할까요?")) return;
-        db.ref('settings/status').set("preparing"); myHandData = []; db.ref('board').remove(); db.ref('hands').remove(); 
+        db.ref('settings/status').set("preparing");
+        myHandData = []; db.ref('board').remove(); db.ref('hands').remove(); 
         let pool = []; const co = ['red', 'blue', 'yellow', 'black'], sets = currentGameMode === 5 ? 3 : 2;
         co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); } });
         for(let i=0; i<(currentGameMode === 5 ? 4 : 2); i++) pool.push({ num: 'J', color: 'joker' });
