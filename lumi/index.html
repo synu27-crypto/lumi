@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미 : 어반 에디션 Pro+ Ver 20.2</title>
+    <title>루미 : 어반 에디션 Pro+ Ver 20.3</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -84,9 +84,8 @@
         .mode-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; cursor: pointer; transition: 0.3s; margin: 10px 5px; display: inline-block; width: 45%; }
         .mode-btn.selected { border-color: var(--accent-gold) !important; background: rgba(241, 196, 15, 0.2) !important; color: var(--accent-gold) !important; font-weight: 900; }
         
-        /* 🚀 관전 버튼 전용 스타일 */
-        .spectate-btn { background: var(--accent-purple); color: #fff; width: 100%; margin-top: 15px; padding: 12px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
-        .spectate-btn.active { background: #555; color: #aaa; }
+        .spectate-btn { background: var(--accent-purple); color: #fff; width: 100%; margin-top: 15px; padding: 12px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; }
+        .spectate-btn.active { background: #555; color: #ccc; }
     </style>
 </head>
 <body onclick="if(window.initAudio) window.initAudio()">
@@ -242,7 +241,6 @@
             box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
 
-        // 🚀 대기실 렌더링 (관전 버튼 추가)
         function renderLobby() {
             const hostName = playerList.includes("계헌") ? "계헌" : playerList[0];
             const isHost = (myName === hostName);
@@ -250,16 +248,19 @@
             let lobbyHtml = `<h2>대기실</h2><p>${hostName}님이 시작하기를 기다리고 있습니다.</p>`;
             if (isHost) {
                 lobbyHtml += `<div style="margin:20px 0;">
-                    <div class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="setGameMode('normal')">4인용 (106장)</div>
-                    <div class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="setGameMode('expert')">5인용 (160장)</div>
+                    <div class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="window.setGameMode('normal')">4인용 (106장)</div>
+                    <div class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="window.setGameMode('expert')">5인용 (160장)</div>
                 </div>`;
             }
-            // 🚀 관전 전환 버튼
-            lobbyHtml += `<button class="spectate-btn ${isSpectating?'active':''}" onclick="toggleSpectate()">${isSpectating ? '🎮 게임 참여하기' : '👁️ 관전자로 남기'}</button>`;
+            // 🚀 전역 함수로 호출되도록 window 객체에 연결 확인
+            lobbyHtml += `<button class="spectate-btn ${isSpectating?'active':''}" onclick="window.toggleSpectate()">${isSpectating ? '🎮 게임 참여하기' : '👁️ 관전자로 남기'}</button>`;
             UI.set('modal-body', lobbyHtml);
         }
 
-        window.toggleSpectate = function() { db.ref('players/' + myName).update({ spectating: !isSpectating }); };
+        // 🚀 버튼 클릭이 안 되는 문제를 해결하기 위해 window 객체에 명시적으로 등록
+        window.toggleSpectate = function() { 
+            db.ref('players/' + myName).update({ spectating: !isSpectating }); 
+        };
         window.setGameMode = function(mode) { db.ref('settings/gameMode').set(mode); };
 
         db.ref('settings/status').on('value', snap => {
@@ -315,7 +316,7 @@
         };
         window.dropOnRack = function(e) {
             e.preventDefault(); const id = e.dataTransfer.getData("text/plain");
-            if (!isRegistered && initialBoardState[id]) return; 
+            if (!isRegistered && initialBoardState[id]) return; 
             db.ref('board/' + id).once('value', s => { if (s.exists() && currentTurn === myName) { db.ref('hands/' + myName + '/' + id).set({ num: s.val().num, color: s.val().color }); db.ref('board/' + id).remove(); playSfx('tile'); } });
         };
         window.handleTurnEnd = function() {
@@ -352,21 +353,16 @@
             if (!confirm("게임을 시작할까요?")) return;
             db.ref('players').once('value', pSnap => {
                 const players = pSnap.val() || {};
-                // 🚀 관전자가 아닌 사람들만 참여자 명단에 넣음
                 const nonSpectators = Object.entries(players).filter(([n, d]) => !d.spectating).map(([n, d]) => n);
                 if (nonSpectators.length < 2) return alert("참여자가 최소 2명은 있어야 합니다!");
-
                 db.ref('/').update({ "settings/status": "preparing", "board": null, "hands": null, "settings/activePlayers": nonSpectators });
                 nonSpectators.forEach(p => { db.ref('players/' + p).update({ registered: false }); if(p === myName) window.sessionStorage.setItem('lumi-reg', 'false'); });
-                
                 let pool = []; const co = ['red', 'blue', 'yellow', 'black'];
                 const setsCount = (gameMode === 'expert') ? 3 : 2;
                 const jokerCount = (gameMode === 'expert') ? 4 : 2;
                 co.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<setsCount; j++) pool.push({ num: i, color: c }); } });
                 for(let k=0; k<jokerCount; k++) pool.push({ num: 'J', color: 'joker' });
-                pool.sort(() => Math.random() - 0.5); 
-                
-                db.ref('currentTurn').set(nonSpectators[0]);
+                pool.sort(() => Math.random() - 0.5); db.ref('currentTurn').set(nonSpectators[0]);
                 const ups = {}; nonSpectators.forEach(p => { for(let i=0; i<14; i++) { const t = pool.pop(), id = 'tile_' + Math.random().toString(36).substr(2,9); ups['hands/' + p + '/' + id] = t; } });
                 db.ref('/').update({ ...ups, pool: Object.assign({}, pool), "settings/status": "playing" });
             });
@@ -376,7 +372,6 @@
             if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("판에 낸 타일을 회수해야 뽑을 수 있습니다.");
             db.ref('pool').limitToFirst(1).once('value', s => { if (!s.exists()) return; const key = Object.keys(s.val())[0]; db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]); db.ref('pool/' + key).remove(); window.nextTurn(); });
         };
-
         function showRanking() {
             db.ref('hands').once('value', s => {
                 const h = s.val() || {}; let res = activePlayers.map(n => { let sum = 0; Object.values(h[n]||{}).forEach(t => sum += (t.num === 'J' ? 30 : Number(t.num))); return { n, sum }; }).sort((a,b) => a.sum - b.sum);
