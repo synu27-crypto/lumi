@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 30.4</title>
+    <title>루미큐브 : Ver 30.5</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -455,7 +455,7 @@
 
                 if (isPiggybacking) {
                     playSFX('error');
-                    return alert("🚨 등록 실패! 첫 등록 시에는 바닥에 깔린 패에 이어 붙일 수 없습니다. 오직 내 손에 있는 패로만 30점을 만들어야 합니다.");
+                    return alert("🚨 등록 실패! 첫 등록 시에는 바닥에 깔린 패에 이어 붙일 수 없습니다. 오직 내 손에 있는 패로만 독립된 세트를 만들어야 합니다.");
                 }
                 // --------------------------------------------------------
 
@@ -465,12 +465,9 @@
                 });
                 
                 if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); }
-                
-                // 모든 조건을 통과해야만 등록 완료 처리
                 db.ref(`players/${myName}`).update({ registered: true });
             }
             
-            // 패를 다 털었는지 확인 (승리 조건)
             if (myHandData.length === 0) {
                 db.ref('hands').once('value', hSnap => {
                     const allHands = hSnap.val();
