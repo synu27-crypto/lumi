@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 28.1</title>
+    <title>루미큐브 : Ver 27.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -214,16 +214,29 @@
         db.ref('settings/host').on('value', snap => { currentHost = snap.val(); });
 
         db.ref('players').on('value', snap => {
-            const players = snap.val() || {};
+    const players = snap.val() || {};
+    
+    // [보완] 내 닉네임이 설정되어 있는데 서버 데이터에 내가 없다면, 
+    // 일시적인 동기화 오류일 수 있으므로 UI 업데이트를 중단하고 기다립니다.
+    if (myName && !players[myName]) return;
             playerList = Object.entries(players)
                 .filter(p => p[1].joined && p[1].role === 'player')
                 .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
                 .map(p => p[0]);
 
             if (playerList.length > 0) {
-                let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
-                if (currentHost !== targetHost) db.ref('settings/host').set(targetHost);
-            }
+    let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
+    
+    // [권한 체크] 불필요한 중복 쓰기를 막기 위해 한 명만 명령을 보냅니다.
+    const isHostMissing = !playerList.includes(currentHost); // 현재 방장이 나갔거나 없는 경우
+    const iAmCurrentHost = (myName === currentHost);         // 내가 현재 방장인 경우
+
+    if (isHostMissing || iAmCurrentHost) {
+        if (currentHost !== targetHost) {
+            db.ref('settings/host').set(targetHost);
+        }
+    }
+}
 
             const listEl = document.getElementById('player-list-container'); 
             if (listEl) {
