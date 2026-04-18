@@ -120,36 +120,49 @@
 
     window.startGame = function() {
         if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
-        db.ref('players').once('value', snap => {
-            const players = snap.val() || {};
-            const list = playerList;
-            let pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
+        
+        // 데이터베이스에서 풀을 생성하고 플레이어 정보를 업데이트합니다.
+        db.ref('/').once('value', snap => {
+            const pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
             const sets = (gameMode === 'expert') ? 3 : 2;
+            
+            // 타일 생성
             colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
             for(let k=0; k<(gameMode === 'expert'?4:2); k++) pool.push({ num: 'J', color: 'joker' });
+            
+            // 셔플
             pool.sort(() => Math.random() - 0.5);
 
             const updates = {};
-            updates['board'] = null;
-            updates['pool'] = Object.assign({}, pool);
-            updates['currentTurn'] = list[0];
-            updates['settings/activePlayers'] = list;
+            updates['board'] = {}; // 보드 비우기
+            updates['currentTurn'] = playerList[0];
+            updates['settings/activePlayers'] = playerList;
             updates['settings/status'] = "playing";
-            list.forEach(p => {
-                updates[`hands/${p}`] = {}; 
+            
+            // 손패 분배 (경로 충돌 방지를 위해 객체를 먼저 생성)
+            playerList.forEach(p => {
+                const initialHand = {};
                 for(let i=0; i<14; i++) {
-                    const t = pool.pop(); const id = 'tile_' + Math.random().toString(36).substr(2, 9);
-                    updates[`hands/${p}/${id}`] = t;
+                    const t = pool.pop(); 
+                    const id = 'tile_' + Math.random().toString(36).substr(2, 9);
+                    initialHand[id] = t;
                 }
+                updates[`hands/${p}`] = initialHand; // 통째로 할당
                 updates[`players/${p}/registered`] = false;
+                updates[`players/${p}/tileCount`] = 14;
             });
-            db.ref('/').update(updates);
+
+            updates['pool'] = Object.assign({}, pool);
+            
+            db.ref('/').update(updates).catch(e => console.error("Game Start Error:", e));
         });
     };
 
     window.onload = function() {
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
-        firebase.initializeApp(config); db = firebase.database();
+        if (!firebase.apps.length) firebase.initializeApp(config);
+        db = firebase.database();
+        
         myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임") || "유저"+Math.floor(Math.random()*100);
         window.sessionStorage.setItem('lumi-nick', myName);
         bgm = document.getElementById('bgm-audio');
@@ -173,7 +186,7 @@
             playerList.forEach(name => {
                 const badge = document.createElement('span');
                 badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-                badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>`;
+                badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name]?.tileCount || 0}</span>`;
                 listEl.appendChild(badge);
             });
             isRegistered = players[myName]?.registered || false;
@@ -221,6 +234,7 @@
             db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]);
         });
     };
+
     window.drawTile = function() {
         if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 무르거나 종료해야 합니다.");
         db.ref('pool').limitToFirst(1).once('value', s => {
@@ -232,6 +246,7 @@
             db.ref('/').update(updates).then(() => window.nextTurnAction());
         });
     };
+
     window.handleTurnEnd = function() {
         if (!isRegistered) {
             let pts = 0;
@@ -243,6 +258,7 @@
         }
         if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
     };
+
     window.dropOnBoard = function(e) {
         e.preventDefault(); if (currentTurn !== myName) return;
         const id = e.dataTransfer.getData("text");
@@ -256,6 +272,7 @@
             db.ref('/').update(updates);
         } else if (boardTiles[id]) db.ref(`board/${id}`).update({ x: snapX, y: snapY });
     };
+
     window.dropOnRack = function(e) {
         e.preventDefault(); const id = e.dataTransfer.getData("text");
         if (initialBoardState[id] && !isRegistered) return;
@@ -266,6 +283,7 @@
             }
         });
     };
+
     window.setSortMode = function(m) { sortMode = m; window.applyAutoSort(); };
     window.applyAutoSort = function() {
         if (sortMode !== 'manual') {
@@ -281,10 +299,19 @@
             div.draggable = true; div.ondragstart = (e) => e.dataTransfer.setData("text", t.id); rEl.appendChild(div);
         });
     };
+
     window.setGameMode = function(mode) { gameMode = mode; window.renderLobbyUI(); };
     window.forceNextTurn = function() { if(confirm("턴을 넘길까요?")) window.nextTurnAction(); };
     window.rollbackTurn = function() { if(confirm("무를까요?")) db.ref('board').set(initialBoardState); };
-    window.returnToLobby = function() { if(confirm("리셋?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); };
+    window.returnToLobby = function() { if(confirm("리셋?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {} }); };
+    
+    window.toggleChat = function() {
+        const box = document.getElementById('chat-box');
+        const input = document.getElementById('chat-input-container');
+        const isOpen = box.style.display === 'block';
+        box.style.display = isOpen ? 'none' : 'block';
+        input.style.display = isOpen ? 'none' : 'flex';
+    };
 </script>
 </body>
 </html>
