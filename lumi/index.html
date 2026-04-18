@@ -214,26 +214,49 @@
 
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
+            
+            // 1. 플레이어 리스트 추출 및 정렬 (기존 유지)
             playerList = Object.entries(players)
                 .filter(p => p[1].joined && p[1].role === 'player')
                 .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
                 .map(p => p[0]);
 
+            // 2. 방장 결정 로직 (계헌 우선순위 추가)
+            if (playerList.length > 0) {
+                let targetHost = "";
+                // '계헌' 닉네임이 리스트에 있는지 확인
+                if (playerList.includes("계헌")) {
+                    targetHost = "계헌";
+                } else {
+                    // 없으면 가장 먼저 들어온 사람 (배열의 0번째)
+                    targetHost = playerList[0];
+                }
+
+                // 현재 서버에 등록된 방장과 결정된 방장이 다를 때만 업데이트 (무한 루프 방지)
+                if (currentHost !== targetHost) {
+                    db.ref('settings/host').set(targetHost);
+                }
+            }
+
+            // 3. UI 렌더링 (플레이어 배지 생성)
             const listEl = document.getElementById('player-list-container'); 
             if (listEl) {
                 listEl.innerHTML = '';
                 playerList.forEach(name => {
                     const badge = document.createElement('span');
                     badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+                    // 방장 표시 👑
                     badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${players[name]?.tileCount || 0}</span>`;
                     listEl.appendChild(badge);
                 });
             }
 
+            // 4. 권한 및 안내 문구 업데이트
             const isHost = (myName === currentHost);
             document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
             document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
             document.getElementById('reg-info').innerText = (myRole === 'spectator') ? "👀 관전 모드" : (players[myName]?.registered ? "" : "첫 등록 필요 (30점 이상)");
+            
             if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
