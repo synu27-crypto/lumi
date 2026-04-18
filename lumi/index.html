@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 26.8 (Volume Control Update)</title>
+    <title>루미큐브 : Ver 26.9 (Result & Score Update)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
     <style>
-        /* [Style System] 전반적인 디자인 테마 */
         :root {
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.98); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #2ecc71; --accent-gold: #f1c40f; --accent-red: #e74c3c;
@@ -27,8 +26,6 @@
         .yellow { color: #f39c12 !important; border-bottom: 4px solid #f39c12 !important; }
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
-        
-        /* [Chat & Audio UI] 채팅 및 오디오 컨트롤 */
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; font-size: 0.85rem; }
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
@@ -38,12 +35,9 @@
         #chat-toggle, #bgm-toggle { background: var(--accent-purple); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         #bgm-toggle { background: #444; }
         #bgm-toggle.playing { background: var(--accent-green); color: #000; }
-        
-        /* [Volume Slider Style] 볼륨 조절바 스타일 */
         .volume-container { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .volume-container span { font-size: 0.7rem; color: #aaa; font-weight: bold; }
         #bgm-volume { cursor: pointer; accent-color: var(--accent-green); width: 80px; height: 4px; }
-
         #my-rack { height: 210px; background: #151515; border-top: 2px solid rgba(255, 255, 255, 0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; }
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: #151515; padding-bottom: 10px; }
         button { padding: 8px 16px; font-weight: 700; cursor: pointer; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; }
@@ -107,12 +101,12 @@
 </div>
 
 <script>
-    // --- [Core Variables] 핵심 변수 ---
+    // --- [Core Variables] ---
     let db, myName, currentHost = "";
     let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
     let isRegistered = false, initialBoardState = {};
 
-    // --- [Audio System] 사운드 관리 시스템 ---
+    // --- [Audio System] ---
     const SOUND_ASSETS = {
         bgm: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         tilePick: "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3",
@@ -121,124 +115,73 @@
         error: "https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3",
         success: "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
     };
-
-    const audioCtx = {
-        bgm: new Audio(SOUND_ASSETS.bgm),
-        isBGMPlaying: false,
-        currentVolume: 0.5
-    };
-    audioCtx.bgm.loop = true;
-    audioCtx.bgm.volume = audioCtx.currentVolume;
-
-    window.updateVolume = function(val) {
-        audioCtx.currentVolume = val;
-        audioCtx.bgm.volume = val;
-    };
-
-    function playSFX(key) {
-        const sfx = new Audio(SOUND_ASSETS[key]);
-        sfx.volume = audioCtx.currentVolume; // 효과음도 설정된 볼륨을 따름
-        sfx.play().catch(() => {});
-    }
-
-    window.toggleBGM = function() {
+    const audioCtx = { bgm: new Audio(SOUND_ASSETS.bgm), isBGMPlaying: false, currentVolume: 0.5 };
+    audioCtx.bgm.loop = true; audioCtx.bgm.volume = 0.5;
+    window.updateVolume = (val) => { audioCtx.currentVolume = val; audioCtx.bgm.volume = val; };
+    function playSFX(key) { const sfx = new Audio(SOUND_ASSETS[key]); sfx.volume = audioCtx.currentVolume; sfx.play().catch(()=>{}); }
+    window.toggleBGM = () => {
         const btn = document.getElementById('bgm-toggle');
-        if (audioCtx.isBGMPlaying) {
-            audioCtx.bgm.pause();
-            btn.innerText = "🎵 BGM OFF";
-            btn.classList.remove('playing');
-        } else {
-            audioCtx.bgm.play().catch(() => alert("화면을 클릭한 후 다시 시도해주세요."));
-            btn.innerText = "🎶 BGM ON";
-            btn.classList.add('playing');
-        }
+        if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); btn.innerText = "🎵 BGM OFF"; btn.classList.remove('playing'); }
+        else { audioCtx.bgm.play().catch(() => alert("상호작용 후 재생 가능")); btn.innerText = "🎶 BGM ON"; btn.classList.add('playing'); }
         audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying;
     };
 
-    // --- [Validation Logic] 게임 검증 로직 ---
+    // --- [Validation Logic] ---
     function isValidSet(tiles) {
         if (tiles.length < 3) return false;
         const nonJokers = tiles.filter(t => t.num !== 'J');
         if (nonJokers.length === 0) return true;
         const isGroup = () => {
-            const num = nonJokers[0].num;
-            const colors = nonJokers.map(t => t.color);
+            const num = nonJokers[0].num; const colors = nonJokers.map(t => t.color);
             return nonJokers.every(t => t.num === num) && (new Set(colors)).size === colors.length && tiles.length <= 4;
         };
         const isRun = () => {
-            const color = nonJokers[0].color;
-            if (!nonJokers.every(t => t.color === color)) return false;
+            const color = nonJokers[0].color; if (!nonJokers.every(t => t.color === color)) return false;
             let lastNum = -1;
-            for(let t of tiles) {
-                if(t.num !== 'J') {
-                    if(lastNum !== -1 && Number(t.num) <= lastNum) return false;
-                    lastNum = Number(t.num);
-                }
-            }
+            for(let t of tiles) { if(t.num !== 'J') { if(lastNum !== -1 && Number(t.num) <= lastNum) return false; lastNum = Number(t.num); } }
             return true;
         };
         return isGroup() || isRun();
     }
-
     function validateBoard() {
-        const rows = {};
-        Object.values(boardTiles).forEach(t => { if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
+        const rows = {}; Object.values(boardTiles).forEach(t => { if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
         for (let y in rows) {
-            const rowTiles = rows[y].sort((a,b) => a.x - b.x);
-            let currentSet = [];
+            const rowTiles = rows[y].sort((a,b) => a.x - b.x); let currentSet = [];
             for (let i=0; i<rowTiles.length; i++) {
                 currentSet.push(rowTiles[i]);
-                if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
-                    if (!isValidSet(currentSet)) return false;
-                    currentSet = [];
-                }
+                if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) { if (!isValidSet(currentSet)) return false; currentSet = []; }
             }
         }
         return true;
     }
 
-    // --- [Connection Management] 연결 관리 ---
-    function initConnection() {
-        let myTimestamp = window.sessionStorage.getItem('lumi-timestamp');
-        if (!myTimestamp) {
-            myTimestamp = Date.now();
-            window.sessionStorage.setItem('lumi-timestamp', myTimestamp);
-        }
-        const playerRef = db.ref('players/' + myName);
-        playerRef.update({ joined: true, timestamp: Number(myTimestamp) });
-        playerRef.onDisconnect().remove();
-
-        db.ref('settings/host').once('value', snap => {
-            if (!snap.exists()) db.ref('settings/host').set(myName);
-        });
-        
-        db.ref('settings/host').on('value', snap => {
-            currentHost = snap.val();
-            if (currentHost && !playerList.includes(currentHost) && playerList.length > 0) {
-                db.ref('settings/host').set(playerList[0]);
-            }
-        });
-    }
-
-    // --- [App Lifecycle] 앱 로드 ---
+    // --- [Firebase Lifecycle] ---
     window.onload = function() {
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
         firebase.initializeApp(config); db = firebase.database();
-        
         myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임") || "유저"+Math.floor(Math.random()*100);
         window.sessionStorage.setItem('lumi-nick', myName);
 
-        initConnection();
+        // Connection
+        let ts = window.sessionStorage.getItem('lumi-timestamp') || Date.now();
+        window.sessionStorage.setItem('lumi-timestamp', ts);
+        const pRef = db.ref('players/' + myName);
+        pRef.update({ joined: true, timestamp: Number(ts) });
+        pRef.onDisconnect().remove();
 
+        db.ref('settings/host').on('value', snap => {
+            currentHost = snap.val();
+            if (!currentHost && playerList.length > 0) db.ref('settings/host').set(playerList[0]);
+        });
+
+        // Listeners
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
             playerList = Object.entries(players).filter(p => p[1].joined).sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0)).map(p => p[0]);
             const isHost = (myName === currentHost);
             document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
             document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
-            
-            const listEl = document.getElementById('player-list-container');
-            listEl.innerHTML = '';
+            const listEl = document.getElementById('player-list-container'); listEl.innerHTML = '';
             playerList.forEach(name => {
                 const badge = document.createElement('span');
                 badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
@@ -250,45 +193,28 @@
             if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
-        db.ref('chats').limitToLast(20).on('child_added', snap => {
-            const c = snap.val();
-            const div = document.createElement('div');
-            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-            const box = document.getElementById('chat-box');
-            box.appendChild(div); box.scrollTop = box.scrollHeight;
-        });
-
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
             if (gameStatus === "waiting") window.renderLobbyUI();
-            if (gameStatus === "finished") playSFX('success');
+            else if (gameStatus === "finished") { playSFX('success'); window.renderResultUI(); }
         });
 
         db.ref('currentTurn').on('value', snap => {
-            const prevTurn = currentTurn;
-            currentTurn = snap.val(); 
-            const isMy = (currentTurn === myName);
+            const prev = currentTurn; currentTurn = snap.val(); const isMy = (currentTurn === myName);
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
             ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-            if(isMy && prevTurn !== myName) playSFX('turnAlarm');
+            if(isMy && prev !== myName) playSFX('turnAlarm');
             if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
         });
 
         db.ref('board').on('value', snap => {
-            boardTiles = snap.val() || {};
-            const bEl = document.getElementById('game-board');
+            boardTiles = snap.val() || {}; const bEl = document.getElementById('game-board');
             bEl.querySelectorAll('.tile').forEach(t => t.remove());
             Object.entries(boardTiles).forEach(([id, data]) => {
-                const div = document.createElement('div');
-                div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num; div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
-                div.draggable = true; 
-                div.ondragstart = (e) => { 
-                    if (currentTurn !== myName) return e.preventDefault(); 
-                    e.dataTransfer.setData("text", id); 
-                    playSFX('tilePick');
-                };
+                const div = document.createElement('div'); div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num; div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
+                div.draggable = true; div.ondragstart = (e) => { if (currentTurn !== myName) return e.preventDefault(); e.dataTransfer.setData("text", id); playSFX('tilePick'); };
                 bEl.appendChild(div);
             });
         });
@@ -300,195 +226,130 @@
         });
 
         db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
+        db.ref('chats').limitToLast(20).on('child_added', snap => {
+            const c = snap.val(); const div = document.createElement('div'); div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
+            const box = document.getElementById('chat-box'); box.appendChild(div); box.scrollTop = box.scrollHeight;
+        });
     };
 
-    // --- [Game Control] 게임 및 인터랙션 ---
+    // --- [UI Rendering] ---
     window.renderLobbyUI = function() {
-        const modalBody = document.getElementById('modal-body');
-        const isHost = (myName === currentHost);
-        let playerTags = playerList.map(name => `<span class="lobby-player-tag">${name === currentHost ? '👑 ' : ''}${name}</span>`).join('');
-        let html = `<h2 style="color:white;">🎮 루미큐브 대기실</h2>`;
-        html += `<div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${playerTags}</div>`;
+        const modalBody = document.getElementById('modal-body'); const isHost = (myName === currentHost);
+        let tags = playerList.map(name => `<span class="lobby-player-tag">${name === currentHost ? '👑 ' : ''}${name}</span>`).join('');
+        let html = `<h2 style="color:white;">🎮 루미큐브 대기실</h2><div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${tags}</div>`;
         html += `<div style="margin-bottom:20px;"><p style="font-size:0.8rem; color:#aaa; margin-bottom:10px;">게임 모드 설정</p>
-            <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="window.setGameMode('normal')">보통 (4인)</button>
-            <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="window.setGameMode('expert')">전문가 (6인)</button></div>`;
+            <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
+            <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button></div>`;
         if (isHost) html += `<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>`;
-        else html += `<p style="color:var(--accent-gold);">방장(${currentHost||'...'})이 모드를 설정 중입니다...</p>`;
+        else html += `<p style="color:var(--accent-gold);">방장이 모드를 설정 중입니다...</p>`;
         modalBody.innerHTML = html;
     };
 
-    window.setGameMode = function(mode) { if (myName === currentHost) db.ref('settings/gameMode').set(mode); };
+    window.renderResultUI = function() {
+        db.ref('settings/gameResult').once('value', snap => {
+            const data = snap.val(); if (!data) return;
+            const modalBody = document.getElementById('modal-body');
+            let html = `<h1 style="color:var(--accent-gold); font-size:2.5rem; margin-bottom:10px;">🎉 WINNER: ${data.winner}! 🎉</h1>`;
+            html += `<p style="color:#aaa; margin-bottom:20px;">남은 패 점수 합계 (낮을수록 좋음)</p><div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; margin-bottom:25px; text-align:left;">`;
+            const sorted = Object.entries(data.scores).sort((a, b) => a[1] - b[1]);
+            sorted.forEach(([name, score]) => {
+                const isWinner = name === data.winner;
+                html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #444; ${isWinner ? 'color:var(--accent-green); font-weight:bold;' : ''}">
+                            <span>${isWinner ? '🏆' : '👤'} ${name}</span><span>${isWinner ? 'WINNER' : '-' + score + '점'}</span></div>`;
+            });
+            html += `</div>`;
+            if (myName === currentHost) html += `<button onclick="window.returnToLobby()" style="background:var(--accent-purple); color:white; width:100%; padding:15px; font-weight:900;">대기실로 돌아가기</button>`;
+            else html += `<p style="color:var(--accent-gold);">방장이 대기실로 이동시킬 때까지 대기하세요...</p>`;
+            modalBody.innerHTML = html;
+        });
+    };
+
+    // --- [Game Actions] ---
     window.startGame = function() {
-        if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
+        if (playerList.length < 2) return alert("최소 2명 필요");
         db.ref('/').once('value', snap => {
-            const pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
-            const sets = (gameMode === 'expert') ? 3 : 2;
+            const pool = []; const colors = ['red', 'blue', 'yellow', 'black']; const sets = (gameMode === 'expert') ? 3 : 2;
             colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
             for(let k=0; k<(sets === 3 ? 4 : 2); k++) pool.push({ num: 'J', color: 'joker' });
             pool.sort(() => Math.random() - 0.5);
-            const updates = { 'board': {}, 'currentTurn': playerList[0], 'settings/status': "playing", 'settings/activePlayers': playerList, 'chats': null };
+            const up = { 'board': {}, 'currentTurn': playerList[0], 'settings/status': "playing", 'settings/activePlayers': playerList, 'chats': null, 'settings/gameResult': null };
             playerList.forEach(p => {
-                const hand = {};
-                for(let i=0; i<14; i++) { const t = pool.pop(); hand['tile_'+Math.random().toString(36).substr(2,9)] = t; }
-                updates[`hands/${p}`] = hand; updates[`players/${p}/registered`] = false; updates[`players/${p}/tileCount`] = 14;
+                const hand = {}; for(let i=0; i<14; i++) { const t = pool.pop(); hand['tile_'+Math.random().toString(36).substr(2,9)] = t; }
+                up[`hands/${p}`] = hand; up[`players/${p}/registered`] = false;
             });
-            updates['pool'] = Object.assign({}, pool); db.ref('/').update(updates);
+            up['pool'] = Object.assign({}, pool); db.ref('/').update(up);
         });
     };
 
-    window.toggleChat = function() { const box = document.getElementById('chat-box'); const input = document.getElementById('chat-input-container'); const isVisible = box.style.display === 'block'; box.style.display = isVisible ? 'none' : 'block'; input.style.display = isVisible ? 'none' : 'flex'; };
-    window.sendChat = function() { const input = document.getElementById('chat-input'); if (!input.value.trim()) return; db.ref('chats').push({ name: myName, msg: input.value, time: Date.now() }); input.value = ''; };
-    
-// --- [Action] 종료 로직 수정 (등록 상태 DB 직접 확인) ---
-window.handleTurnEnd = function() {
-    if (!validateBoard()) { 
-        playSFX('error'); 
-        return alert("⚠️ 유효하지 않은 세트가 있습니다!"); 
-    }
-
-    // DB에서 현재 유저의 최신 등록 상태를 다시 읽어옴
-    db.ref(`players/${myName}/registered`).once('value', snap => {
-        const alreadyRegistered = snap.val() || false;
-
-        if (!alreadyRegistered) {
-            // 첫 등록 검사: 턴 시작 시점의 보드와 비교하여 새로 낸 타일의 점수 합산
-            let pts = 0; 
-            Object.entries(boardTiles).forEach(([id, t]) => {
-                if (!initialBoardState[id]) { // 시작 시 보드에 없던 타일(내가 낸 타일)만 계산
-                    pts += (t.num === 'J' ? 30 : Number(t.num));
-                }
-            });
-
-            if (pts < 30) { 
-                playSFX('error'); 
-                return alert(`등록 실패 (${pts}점)! 첫 등록은 30점 이상 내야 합니다.`); 
+    window.handleTurnEnd = function() {
+        if (!validateBoard()) { playSFX('error'); return alert("유효하지 않은 세트!"); }
+        db.ref(`players/${myName}/registered`).once('value', snap => {
+            if (!snap.val()) {
+                let pts = 0; Object.entries(boardTiles).forEach(([id, t]) => { if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); });
+                if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 필요`); }
+                db.ref('players/' + myName).update({ registered: true });
             }
-            
-            // 등록 성공 시 DB에 기록
-            playSFX('success'); 
-            db.ref('players/' + myName).update({ registered: true });
+            if (myHandData.length === 0) {
+                db.ref('hands').once('value', hs => {
+                    const res = {}; const hands = hs.val() || {};
+                    playerList.forEach(p => { let s = 0; Object.values(hands[p]||{}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); res[p] = s; });
+                    db.ref('/').update({ "settings/gameResult": { winner: myName, scores: res }, "settings/status": "finished" });
+                });
+            } else window.nextTurnAction();
+        });
+    };
+
+    window.rollbackTurn = function() {
+        if(confirm("무를까요?")) {
+            const up = {}; const cKeys = Object.keys(boardTiles); const iKeys = Object.keys(initialBoardState);
+            cKeys.forEach(id => { if (!iKeys.includes(id)) up[`hands/${myName}/${id}`] = boardTiles[id]; });
+            up['board'] = initialBoardState; db.ref('/').update(up).then(() => playSFX('tilePick'));
         }
-
-        // 패가 0개면 승리, 아니면 다음 턴으로
-        if (myHandData.length === 0) {
-            db.ref('settings/status').set("finished"); 
-        } else {
-            window.nextTurnAction();
-        }
-    });
-};// --- [Action] 종료 로직 수정 (등록 상태 DB 직접 확인) ---
-window.handleTurnEnd = function() {
-    if (!validateBoard()) { 
-        playSFX('error'); 
-        return alert("⚠️ 유효하지 않은 세트가 있습니다!"); 
-    }
-
-    // DB에서 현재 유저의 최신 등록 상태를 다시 읽어옴
-    db.ref(`players/${myName}/registered`).once('value', snap => {
-        const alreadyRegistered = snap.val() || false;
-
-        if (!alreadyRegistered) {
-            // 첫 등록 검사: 턴 시작 시점의 보드와 비교하여 새로 낸 타일의 점수 합산
-            let pts = 0; 
-            Object.entries(boardTiles).forEach(([id, t]) => {
-                if (!initialBoardState[id]) { // 시작 시 보드에 없던 타일(내가 낸 타일)만 계산
-                    pts += (t.num === 'J' ? 30 : Number(t.num));
-                }
-            });
-
-            if (pts < 30) { 
-                playSFX('error'); 
-                return alert(`등록 실패 (${pts}점)! 첫 등록은 30점 이상 내야 합니다.`); 
-            }
-            
-            // 등록 성공 시 DB에 기록
-            playSFX('success'); 
-            db.ref('players/' + myName).update({ registered: true });
-        }
-
-        // 패가 0개면 승리, 아니면 다음 턴으로
-        if (myHandData.length === 0) {
-            db.ref('settings/status').set("finished"); 
-        } else {
-            window.nextTurnAction();
-        }
-    });
-};
+    };
 
     window.drawTile = function() {
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 무르거나 종료해야 합니다.");
-        db.ref('pool').limitToFirst(1).once('value', s => { 
-            if (!s.exists()) return window.nextTurnAction(); 
-            const key = Object.keys(s.val())[0]; 
-            const updates = {}; 
-            updates[`hands/${myName}/tile_${Date.now()}`] = s.val()[key]; updates[`pool/${key}`] = null; 
-            db.ref('/').update(updates).then(() => { playSFX('tilePick'); window.nextTurnAction(); }); 
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 무르거나 종료해야 함");
+        db.ref('pool').limitToFirst(1).once('value', s => {
+            if (!s.exists()) return window.nextTurnAction();
+            const key = Object.keys(s.val())[0]; const up = {};
+            up[`hands/${myName}/tile_${Date.now()}`] = s.val()[key]; up[`pool/${key}`] = null;
+            db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
         });
     };
 
-    window.dropOnBoard = function(e) { 
-        e.preventDefault(); if (currentTurn !== myName) return; 
-        const id = e.dataTransfer.getData("text"); 
-        const rect = document.getElementById('game-board').getBoundingClientRect(); 
-        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2; 
-        const inHand = myHandData.find(t => t.id === id); 
-        if (inHand) { 
-            const updates = {}; updates[`board/${id}`] = { num: inHand.num, color: inHand.color, x: snapX, y: snapY }; updates[`hands/${myName}/${id}`] = null; 
-            db.ref('/').update(updates); playSFX('tileDrop');
-        } else if (boardTiles[id]) {
-            db.ref(`board/${id}`).update({ x: snapX, y: snapY }); playSFX('tileDrop');
-        }
+    window.dropOnBoard = function(e) {
+        e.preventDefault(); if (currentTurn !== myName) return;
+        const id = e.dataTransfer.getData("text"); const rect = document.getElementById('game-board').getBoundingClientRect();
+        let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+        const inHand = myHandData.find(t => t.id === id);
+        if (inHand) { const up = {}; up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy }; up[`hands/${myName}/${id}`] = null; db.ref('/').update(up); playSFX('tileDrop'); }
+        else if (boardTiles[id]) { db.ref(`board/${id}`).update({ x: sx, y: sy }); playSFX('tileDrop'); }
     };
 
-    window.dropOnRack = function(e) { 
-        e.preventDefault(); const id = e.dataTransfer.getData("text"); 
-        db.ref(`board/${id}`).once('value', s => { 
-            if (s.exists()) { 
-                const updates = {}; updates[`hands/${myName}/${id}`] = s.val(); updates[`board/${id}`] = null; 
-                db.ref('/').update(updates); playSFX('tilePick');
-            } 
-        }); 
+    window.dropOnRack = function(e) {
+        e.preventDefault(); const id = e.dataTransfer.getData("text");
+        db.ref(`board/${id}`).once('value', s => { if (s.exists()) { const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null; db.ref('/').update(up); playSFX('tilePick'); } });
     };
 
-    window.setSortMode = function(m) { sortMode = m; window.applyAutoSort(); };
     window.applyAutoSort = function() {
         const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
-        myHandData.sort((a, b) => { const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]); });
+        myHandData.sort((a, b) => {
+            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
+            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
+        });
         const rEl = document.getElementById('my-rack'); rEl.querySelectorAll('.tile').forEach(t => t.remove());
-        myHandData.forEach(t => { 
-            const div = document.createElement('div'); 
-            div.className = `tile ${t.color}`; div.id = t.id; div.innerText = t.num; div.draggable = true; 
-            div.ondragstart = (e) => { e.dataTransfer.setData("text", t.id); playSFX('tilePick'); };
-            rEl.appendChild(div); 
+        myHandData.forEach(t => {
+            const div = document.createElement('div'); div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = true;
+            div.ondragstart = (e) => { e.dataTransfer.setData("text", t.id); playSFX('tilePick'); }; rEl.appendChild(div);
         });
     };
-    window.nextTurnAction = function() { db.ref('settings/activePlayers').once('value', snap => { const list = snap.val() || []; db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]); }); };
-    // --- [Interaction] 무르기 로직 수정 (보드 복구 + 내 패로 타일 회수) ---
-window.rollbackTurn = function() {
-    if(confirm("이번 턴에 낸 패를 모두 취소하고 무를까요?")) {
-        const updates = {};
-        const currentBoardKeys = Object.keys(boardTiles);
-        const initialBoardKeys = Object.keys(initialBoardState);
 
-        // 1. 내 턴 시작 이후 보드에 새로 올라온 타일들(내가 내놓은 타일들)을 찾음
-        currentBoardKeys.forEach(id => {
-            if (!initialBoardKeys.includes(id)) {
-                // 이 타일은 내가 턴 중에 낸 것이므로 내 주머니(hands)로 복구
-                updates[`hands/${myName}/${id}`] = boardTiles[id];
-            }
-        });
-
-        // 2. 보드판 상태를 턴 시작 시점으로 되돌림
-        updates['board'] = initialBoardState;
-
-        // 3. 데이터베이스 한 번에 업데이트
-        db.ref('/').update(updates).then(() => {
-            playSFX('tilePick'); // 회수 소리
-        });
-    }
-};
-    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {} }); };
-    window.forceNextTurn = function() { if(confirm("턴 넘기기?")) window.nextTurnAction(); };
+    window.setSortMode = (m) => { sortMode = m; window.applyAutoSort(); };
+    window.nextTurnAction = () => { db.ref('settings/activePlayers').once('value', s => { const l = s.val() || []; db.ref('currentTurn').set(l[(l.indexOf(currentTurn) + 1) % l.length]); }); };
+    window.returnToLobby = () => { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {}, "settings/gameResult": null }); };
+    window.forceNextTurn = () => { if(confirm("강제 이동?")) window.nextTurnAction(); };
+    window.toggleChat = () => { const b = document.getElementById('chat-box'); const i = document.getElementById('chat-input-container'); const v = b.style.display === 'block'; b.style.display = v?'none':'block'; i.style.display = v?'none':'flex'; };
+    window.sendChat = () => { const i = document.getElementById('chat-input'); if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value }); i.value = ''; } };
 </script>
 </body>
 </html>
