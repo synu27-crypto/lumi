@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 26.9 (Result & Score Update)</title>
+    <title>루미큐브 : Ver 27.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.98); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #2ecc71; --accent-gold: #f1c40f; --accent-red: #e74c3c;
             --turn-blue: #3498db; --chat-bg: rgba(25, 25, 25, 0.98);
+            --chat-text-color: #ffffff; /* 채팅 기본 색상 */
         }
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; width: 100vw; overflow: hidden; user-select: none; }
         #main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
@@ -26,18 +27,26 @@
         .yellow { color: #f39c12 !important; border-bottom: 4px solid #f39c12 !important; }
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
+        
+        /* 채팅 관련 스타일 */
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; font-size: 0.85rem; }
+        #chat-box div { color: var(--chat-text-color); margin-bottom: 4px; } /* 색상 선택기 연동 */
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
+        
         #audio-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; margin-top: 5px; pointer-events: auto; }
         #audio-buttons { display: flex; gap: 5px; }
         #chat-toggle, #bgm-toggle { background: var(--accent-purple); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         #bgm-toggle { background: #444; }
         #bgm-toggle.playing { background: var(--accent-green); color: #000; }
-        .volume-container { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
-        .volume-container span { font-size: 0.7rem; color: #aaa; font-weight: bold; }
+        
+        /* 컨트롤 패널 스타일 */
+        .volume-container, .color-picker-container { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .volume-container span, .color-picker-container span { font-size: 0.7rem; color: #aaa; font-weight: bold; }
         #bgm-volume { cursor: pointer; accent-color: var(--accent-green); width: 80px; height: 4px; }
+        #chat-color-input { cursor: pointer; border: none; width: 20px; height: 20px; background: none; padding: 0; }
+
         #my-rack { height: 210px; background: #151515; border-top: 2px solid rgba(255, 255, 255, 0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; }
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: #151515; padding-bottom: 10px; }
         button { padding: 8px 16px; font-weight: 700; cursor: pointer; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; }
@@ -78,6 +87,10 @@
             <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
         </div>
         <div id="audio-controls">
+            <div class="color-picker-container">
+                <span>TXT</span>
+                <input type="color" id="chat-color-input" value="#ffffff" oninput="window.updateChatColor(this.value)">
+            </div>
             <div class="volume-container">
                 <span>VOL</span>
                 <input type="range" id="bgm-volume" min="0" max="1" step="0.01" value="0.5" oninput="window.updateVolume(this.value)">
@@ -101,12 +114,10 @@
 </div>
 
 <script>
-    // --- [Core Variables] ---
     let db, myName, currentHost = "";
     let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
     let isRegistered = false, initialBoardState = {};
 
-    // --- [Audio System] ---
     const SOUND_ASSETS = {
         bgm: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         tilePick: "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3",
@@ -115,18 +126,25 @@
         error: "https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3",
         success: "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
     };
+
     const audioCtx = { bgm: new Audio(SOUND_ASSETS.bgm), isBGMPlaying: false, currentVolume: 0.5 };
     audioCtx.bgm.loop = true; audioCtx.bgm.volume = 0.5;
+
     window.updateVolume = (val) => { audioCtx.currentVolume = val; audioCtx.bgm.volume = val; };
+    window.updateChatColor = (color) => { 
+        document.documentElement.style.setProperty('--chat-text-color', color);
+        localStorage.setItem('lumi-chat-color', color);
+    };
+
     function playSFX(key) { const sfx = new Audio(SOUND_ASSETS[key]); sfx.volume = audioCtx.currentVolume; sfx.play().catch(()=>{}); }
+
     window.toggleBGM = () => {
         const btn = document.getElementById('bgm-toggle');
         if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); btn.innerText = "🎵 BGM OFF"; btn.classList.remove('playing'); }
-        else { audioCtx.bgm.play().catch(() => alert("상호작용 후 재생 가능")); btn.innerText = "🎶 BGM ON"; btn.classList.add('playing'); }
+        else { audioCtx.bgm.play().catch(() => alert("화면 클릭 후 재생 가능")); btn.innerText = "🎶 BGM ON"; btn.classList.add('playing'); }
         audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying;
     };
 
-    // --- [Validation Logic] ---
     function isValidSet(tiles) {
         if (tiles.length < 3) return false;
         const nonJokers = tiles.filter(t => t.num !== 'J');
@@ -143,6 +161,7 @@
         };
         return isGroup() || isRun();
     }
+
     function validateBoard() {
         const rows = {}; Object.values(boardTiles).forEach(t => { if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
         for (let y in rows) {
@@ -155,14 +174,16 @@
         return true;
     }
 
-    // --- [Firebase Lifecycle] ---
     window.onload = function() {
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
         firebase.initializeApp(config); db = firebase.database();
         myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임") || "유저"+Math.floor(Math.random()*100);
         window.sessionStorage.setItem('lumi-nick', myName);
 
-        // Connection
+        const savedColor = localStorage.getItem('lumi-chat-color') || "#ffffff";
+        window.updateChatColor(savedColor);
+        document.getElementById('chat-color-input').value = savedColor;
+
         let ts = window.sessionStorage.getItem('lumi-timestamp') || Date.now();
         window.sessionStorage.setItem('lumi-timestamp', ts);
         const pRef = db.ref('players/' + myName);
@@ -171,30 +192,17 @@
 
         db.ref('settings/host').on('value', snap => {
             currentHost = snap.val();
-            if (!currentHost && playerList.length > 0) db.ref('settings/host').set(playerList[0]);
         });
 
-        // [수정된 플레이어 리스트 및 방장 자동 승계 로직]
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
+            playerList = Object.entries(players).filter(p => p[1].joined).sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0)).map(p => p[0]);
             
-            // 1. 현재 접속 중인 플레이어 리스트 갱신 (타임스탬프 순 정렬)
-            playerList = Object.entries(players)
-                .filter(p => p[1].joined)
-                .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
-                .map(p => p[0]);
-
-            // 2. 방장 자동 승계 체크
             if (!currentHost || !playerList.includes(currentHost)) {
-                if (playerList.length > 0) {
-                    const newHost = playerList[0];
-                    db.ref('settings/host').set(newHost);
-                }
+                if (playerList.length > 0) db.ref('settings/host').set(playerList[0]);
             }
-            
-            // 3. UI 업데이트 (배지 생성)
-            const listEl = document.getElementById('player-list-container');
-            listEl.innerHTML = '';
+
+            const listEl = document.getElementById('player-list-container'); listEl.innerHTML = '';
             playerList.forEach(name => {
                 const badge = document.createElement('span');
                 badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
@@ -202,16 +210,12 @@
                 listEl.appendChild(badge);
             });
 
-// 4. 내 권한 및 등록 상태 체크
             const isHost = (myName === currentHost);
             document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
             document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
             
-            // 유저의 등록 상태 확인
             isRegistered = players[myName]?.registered || false;
             document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
-            
-            // 대기실 UI 갱신
             if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
@@ -254,7 +258,6 @@
         });
     };
 
-    // --- [UI Rendering] ---
     window.renderLobbyUI = function() {
         const modalBody = document.getElementById('modal-body'); const isHost = (myName === currentHost);
         let tags = playerList.map(name => `<span class="lobby-player-tag">${name === currentHost ? '👑 ' : ''}${name}</span>`).join('');
@@ -286,7 +289,6 @@
         });
     };
 
-    // --- [Game Actions] ---
     window.startGame = function() {
         if (playerList.length < 2) return alert("최소 2명 필요");
         db.ref('/').once('value', snap => {
@@ -345,7 +347,7 @@
         let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
         const inHand = myHandData.find(t => t.id === id);
         if (inHand) { const up = {}; up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy }; up[`hands/${myName}/${id}`] = null; db.ref('/').update(up); playSFX('tileDrop'); }
-        else if (boardTiles[id]) { db.ref(`board/${id}`).update({ x: sx, y: sy }); playSFX('tileDrop'); }
+        else if (boardTiles[id]) { db.ref(`board/${id}`).update({ x: sx, sy }); playSFX('tileDrop'); }
     };
 
     window.dropOnRack = function(e) {
