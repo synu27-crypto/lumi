@@ -397,7 +397,30 @@
         });
     };
     window.nextTurnAction = function() { db.ref('settings/activePlayers').once('value', snap => { const list = snap.val() || []; db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]); }); };
-    window.rollbackTurn = function() { if(confirm("무를까요?")) db.ref('board').set(initialBoardState); };
+    // --- [Interaction] 무르기 로직 수정 (보드 복구 + 내 패로 타일 회수) ---
+window.rollbackTurn = function() {
+    if(confirm("이번 턴에 낸 패를 모두 취소하고 무를까요?")) {
+        const updates = {};
+        const currentBoardKeys = Object.keys(boardTiles);
+        const initialBoardKeys = Object.keys(initialBoardState);
+
+        // 1. 내 턴 시작 이후 보드에 새로 올라온 타일들(내가 내놓은 타일들)을 찾음
+        currentBoardKeys.forEach(id => {
+            if (!initialBoardKeys.includes(id)) {
+                // 이 타일은 내가 턴 중에 낸 것이므로 내 주머니(hands)로 복구
+                updates[`hands/${myName}/${id}`] = boardTiles[id];
+            }
+        });
+
+        // 2. 보드판 상태를 턴 시작 시점으로 되돌림
+        updates['board'] = initialBoardState;
+
+        // 3. 데이터베이스 한 번에 업데이트
+        db.ref('/').update(updates).then(() => {
+            playSFX('tilePick'); // 회수 소리
+        });
+    }
+};
     window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {} }); };
     window.forceNextTurn = function() { if(confirm("턴 넘기기?")) window.nextTurnAction(); };
 </script>
