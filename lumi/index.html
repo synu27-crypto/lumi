@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미큐브 : Ver 25.5</title>
+    <title>루미큐브 : Ver 26.0</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -20,9 +20,8 @@
         }
         body.is-my-turn-frame { animation: pulse-border 1.5s infinite; }
 
-        #main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
+        #main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; z-index: 1; }
         #ui-layer { height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        
         #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; }
         #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.6); }
 
@@ -37,14 +36,14 @@
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
 
-        /* 채팅 UI */
-        #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 15000; display: flex; flex-direction: column; pointer-events: none; }
+        /* 채팅 레이어 최상단 고정 */
+        #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; }
         #chat-box div { margin-bottom: 6px; font-size: 0.85rem; line-height: 1.4; word-break: break-all; }
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; font-size: 0.8rem; outline: none; }
         #chat-color-picker { width: 25px; height: 25px; border: none; background: none; cursor: pointer; padding: 0; }
-        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; pointer-events: auto; font-weight: bold; margin-top: 5px; }
+        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; pointer-events: auto; font-weight: bold; margin-top: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
         #my-rack { height: 210px; background: #151515; border-top: 2px solid rgba(255, 255, 255, 0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; }
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: #151515; padding-bottom: 10px; z-index: 700; }
@@ -52,18 +51,15 @@
         button { padding: 8px 16px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; }
         button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
 
-        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
+        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
 
+        /* 🚀 팝업 레이어 강제 집행 */
         #overlay-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
         .modal-card { background: #2a2a2a; padding: 40px; border-radius: 24px; text-align: center; min-width: 400px; border: 1px solid #444; }
-        
-        .lobby-player-list { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin: 15px 0; text-align: left; max-height: 150px; overflow-y: auto; }
+        .lobby-player-list { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin: 15px 0; text-align: left; }
         .lobby-player-tag { display: inline-block; padding: 6px 12px; background: #333; border-radius: 20px; margin: 4px; font-size: 0.85rem; border: 1px solid #555; }
-        
-        .mode-btn { background: #333; border: 1px solid #555; padding: 12px; border-radius: 12px; cursor: pointer; margin: 10px 5px; width: 130px; color: white; }
-        .mode-btn.selected { border-color: var(--accent-gold); background: rgba(241, 196, 15, 0.2); color: var(--accent-gold); font-weight: bold; }
         .start-btn-large { background: var(--accent-green); color: #000; width: 100%; margin-top: 20px; padding: 18px; border-radius: 12px; font-size: 1.1rem; font-weight: 900; border: none; cursor: pointer; }
     </style>
 </head>
@@ -121,73 +117,68 @@
 <audio id="bgm-audio" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg"></audio>
 
 <script>
-    // 🚀 전역 변수 선언
+    // 🚀 모든 로직 전역화
     let db, myName, myJoinTime, audioCtx, bgm;
     let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
     let isRegistered = false, initialBoardState = {};
 
-    // 1. 방장 결정 (제일 먼저 들어온 사람)
     function getHostName() { return playerList[0] || ""; }
 
-    // 2. 🚀 대기실 UI 렌더링
     window.renderLobbyUI = function() {
         const modalBody = document.getElementById('modal-body');
         if(!modalBody) return;
         const hostName = getHostName();
         const isHost = (myName === hostName);
-        
         let playerTags = playerList.map(name => `<span class="lobby-player-tag">${name === hostName ? '👑 ' : ''}${name}</span>`).join('');
-
         let html = `<h2 style="color:white; margin-top:0;">🎮 루미큐브 대기실</h2>`;
-        html += `<div class="lobby-player-list"><p style="margin:0 0 10px 0; font-size:0.85rem; color:#aaa;">현재 대기실 (${playerList.length}명)</p>${playerTags}</div>`;
-
+        html += `<div class="lobby-player-list"><p style="margin:0 0 10px 0; font-size:0.85rem; color:#aaa;">대기 인원 (${playerList.length}명)</p>${playerTags}</div>`;
         if (isHost) {
             html += `<div style="margin:20px 0; border:1px solid #444; padding:15px; border-radius:12px;">
-                <p style="margin-top:0; font-size:0.9rem;">방장 설정 권한 (👑)</p>
-                <button class="mode-btn ${gameMode === 'normal'?'selected':''}" onclick="window.setGameMode('normal')">보통 (2세트)</button>
-                <button class="mode-btn ${gameMode === 'expert'?'selected':''}" onclick="window.setGameMode('expert')">전문가 (3세트)</button>
+                <button class="mode-btn ${gameMode === 'normal'?'selected':''}" onclick="window.setGameMode('normal')">보통</button>
+                <button class="mode-btn ${gameMode === 'expert'?'selected':''}" onclick="window.setGameMode('expert')">전문가</button>
             </div><button class="start-btn-large" onclick="window.startGame()">게임 시작</button>`;
         } else {
-            html += `<p style="color:var(--accent-gold); margin:30px 0;">방장(${hostName})이 게임을 시작하길 기다리고 있습니다...</p>`;
+            html += `<p style="color:var(--accent-gold); margin:30px 0;">방장이 게임을 시작하길 기다리고 있습니다...</p>`;
         }
         modalBody.innerHTML = html;
     };
 
-    // 3. 🚀 게임 시작 (버그 수정됨)
+    // 🚀 게임 시작 로직 (강제 UI 폐쇄 추가)
     window.startGame = function() {
         db.ref('players').once('value', snap => {
             const players = snap.val() || {};
             const list = Object.keys(players).filter(n => !players[n].spectating);
             if (list.length < 2) return alert("최소 2명이 필요합니다.");
             
+            // 셔플 및 타일 생성 로직
             let pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
             const sets = (gameMode === 'expert') ? 3 : 2;
             colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
             for(let k=0; k<(gameMode === 'expert'?4:2); k++) pool.push({ num: 'J', color: 'joker' });
             pool.sort(() => Math.random() - 0.5);
 
+            // 본인 화면 즉시 닫기 (강제성)
+            document.getElementById('overlay-layer').style.display = 'none';
+
             const updates = {};
-            updates['board'] = null; // 보드 비우기
+            updates['board'] = null;
             updates['pool'] = Object.assign({}, pool);
             updates['currentTurn'] = list[0];
             updates['settings/activePlayers'] = list;
-            updates['settings/status'] = "playing"; // 게임 상태 변경
+            updates['settings/status'] = "playing";
 
             list.forEach(p => {
-                updates[`hands/${p}`] = null; // 기존 패 삭제
+                updates[`hands/${p}`] = {}; 
                 for(let i=0; i<14; i++) {
-                    const t = pool.pop();
-                    const id = 'tile_' + Math.random().toString(36).substr(2, 9);
+                    const t = pool.pop(); const id = 'tile_' + Math.random().toString(36).substr(2, 9);
                     updates[`hands/${p}/${id}`] = t;
                 }
                 updates[`players/${p}/registered`] = false;
             });
-            db.ref('/').update(updates).catch(e => alert("시작 오류: " + e.message));
+            db.ref('/').update(updates);
         });
     };
 
-    // 4. 전역 기능들
-    window.setGameMode = function(mode) { if(db) db.ref('settings/gameMode').set(mode); };
     window.toggleBGM = function() { if (bgm.paused) bgm.play(); else bgm.pause(); };
     window.changeVolume = function(v) { if(bgm) bgm.volume = v; };
     window.toggleChat = function() {
@@ -202,82 +193,28 @@
         i.value = '';
     };
 
-    window.handleTurnEnd = function() {
-        if (!isRegistered) {
-            let pts = 0;
-            Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => {
-                pts += (t.num === 'J' ? 30 : Number(t.num));
-            });
-            if (pts < 30) return alert(`⚠️ 등록 실패! (현재: ${pts}점)\n첫 등록은 숫자 합계 30점 이상이어야 합니다.`);
-            db.ref('players/' + myName).update({ registered: true });
-        }
-        if (myHandData.length === 0) db.ref('settings/status').set("finished");
-        else window.nextTurnAction();
-    };
-
-    window.nextTurnAction = function() {
-        if(activePlayers.length < 2) return;
-        const nextIdx = (activePlayers.indexOf(currentTurn) + 1) % activePlayers.length;
-        db.ref('currentTurn').set(activePlayers[nextIdx]);
-    };
-
-    window.drawTile = function() {
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("패를 회수해야 뽑을 수 있습니다.");
-        db.ref('pool').limitToFirst(1).once('value', s => {
-            if (!s.exists()) return window.nextTurnAction();
-            const key = Object.keys(s.val())[0];
-            db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]);
-            db.ref('pool/' + key).remove(); window.nextTurnAction();
-        });
-    };
-
-    window.rollbackTurn = function() { if(confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
-    window.setSortMode = function(m) { sortMode = m; window.applyAutoSort(); };
-    window.applyAutoSort = function() {
-        const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
-        myHandData.sort((a, b) => {
-            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
-            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
-        });
-        const rEl = document.getElementById('my-rack'); rEl.querySelectorAll('.tile').forEach(t => t.remove());
-        myHandData.forEach(t => {
-            const div = document.createElement('div'); div.className = `tile ${t.color}`; div.id = t.id; div.innerText = t.num;
-            div.draggable = true; div.ondragstart = (e) => e.dataTransfer.setData("text", t.id); rEl.appendChild(div);
-        });
-    };
-
-    window.dropOnBoard = function(e) {
-        e.preventDefault(); const id = e.dataTransfer.getData("text");
-        const rect = document.getElementById('game-board').getBoundingClientRect();
-        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
-        const inHand = myHandData.find(t => t.id === id);
-        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
-        else if (boardTiles[id]) { db.ref('board/' + id).update({ x: snapX, y: snapY }); }
-    };
-
-    window.dropOnRack = function(e) {
-        e.preventDefault(); const id = e.dataTransfer.getData("text");
-        if (initialBoardState[id] && !isRegistered) return;
-        db.ref('board/' + id).once('value', s => { if (s.exists()) { db.ref('hands/' + myName + '/' + id).set(s.val()); db.ref('board/' + id).remove(); } });
-    };
-
-    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); };
-
-    // --- 🚀 초기화 리스너 ---
     window.onload = function() {
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
         firebase.initializeApp(config); db = firebase.database();
         myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임") || "유저"+Math.floor(Math.random()*100);
         window.sessionStorage.setItem('lumi-nick', myName);
         bgm = document.getElementById('bgm-audio');
+        window.initAudio = function() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); };
 
         db.ref('players/' + myName).update({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP, spectating: false });
         db.ref('players/' + myName).onDisconnect().remove();
 
+        // 🚀 상태 리스너: 시작 신호 받으면 모든 사람 화면에서 대기실 삭제
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
-            document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
-            if (gameStatus === "finished") window.showRanking(); else if (gameStatus === "waiting") window.renderLobbyUI();
+            const layer = document.getElementById('overlay-layer');
+            if (gameStatus === "playing") {
+                layer.style.setProperty('display', 'none', 'important');
+            } else if (gameStatus === "finished") {
+                layer.style.display = 'flex'; window.showRanking();
+            } else {
+                layer.style.display = 'flex'; window.renderLobbyUI();
+            }
         });
 
         db.ref('players').on('value', snap => {
@@ -286,15 +223,15 @@
             const hostName = getHostName();
             document.getElementById('btn-force-next').style.display = (myName === hostName) ? 'inline-block' : 'none';
             document.getElementById('btn-force-lobby').style.display = (myName === hostName) ? 'inline-block' : 'none';
-            
             const listEl = document.getElementById('player-list-container');
-            listEl.innerHTML = '';
-            playerList.forEach(name => {
-                const isActive = activePlayers.includes(name);
-                const badge = document.createElement('span'); badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-                badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>`;
-                listEl.appendChild(badge);
-            });
+            if(listEl) {
+                listEl.innerHTML = '';
+                playerList.forEach(name => {
+                    const badge = document.createElement('span'); badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+                    badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>`;
+                    listEl.appendChild(badge);
+                });
+            }
             isRegistered = players[myName]?.registered || false;
             document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
             if (gameStatus === "waiting") window.renderLobbyUI();
@@ -332,19 +269,399 @@
             div.innerHTML = `<span style="color:${d.color || '#f1c40f'}; font-weight:bold;">${d.name}:</span> <span style="color:#eee;">${d.msg}</span>`;
             box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
-        db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || "normal"; if(gameStatus === "waiting") renderLobbyUI(); });
-        db.ref('settings/activePlayers').on('value', snap => { activePlayers = snap.val() || []; });
-        db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
     };
 
-    window.showRanking = function() {
-        db.ref('players').once('value', s => {
-            const p = s.val(); let htm = `<h2>🏆 게임 종료</h2>`;
-            Object.keys(p).forEach(n => htm += `<p>${n}: ${p[n].tileCount}장 남음</p>`);
-            htm += `<button onclick="window.returnToLobby()" style="background:var(--accent-green); width:100%; padding:10px;">대기실로</button>`;
-            document.getElementById('modal-body').innerHTML = htm;
+    // --- 기타 기능 ---
+    window.setSortMode = function(m) { sortMode = m; window.applyAutoSort(); };
+    window.applyAutoSort = function() {
+        const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+        myHandData.sort((a, b) => {
+            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
+            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
+        });
+        const rEl = document.getElementById('my-rack'); if(!rEl) return;
+        rEl.querySelectorAll('.tile').forEach(t => t.remove());
+        myHandData.forEach(t => {
+            const div = document.createElement('div'); div.className = `tile ${t.color} rack-tile`; div.id = t.id; div.innerText = t.num;
+            div.draggable = true; div.ondragstart = (e) => e.dataTransfer.setData("text", t.id); rEl.appendChild(div);
         });
     };
+    window.nextTurnAction = function() {
+        db.ref('settings/activePlayers').once('value', snap => {
+            const list = snap.val() || [];
+            db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]);
+        });
+    };
+    window.drawTile = function() {
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 회수해야 뽑을 수 있습니다.");
+        db.ref('pool').limitToFirst(1).once('value', s => {
+            if (!s.exists()) return window.nextTurnAction();
+            const key = Object.keys(s.val())[0];
+            db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]);
+            db.ref('pool/' + key).remove(); window.nextTurnAction();
+        });
+    };
+    window.handleTurnEnd = function() {
+        if (!isRegistered) {
+            let pts = 0;
+            Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => {
+                pts += (t.num === 'J' ? 30 : Number(t.num));
+            });
+            if (pts < 30) return alert(`⚠️ 등록 실패! (현재: ${pts}점)\n첫 등록은 숫자 합계 30점 이상이어야 합니다.`);
+            db.ref('players/' + myName).update({ registered: true });
+        }
+        if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
+    };
+    window.dropOnBoard = function(e) {
+        e.preventDefault(); if (currentTurn !== myName) return;
+        const id = e.dataTransfer.getData("text");
+        const rect = document.getElementById('game-board').getBoundingClientRect();
+        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+        const inHand = myHandData.find(t => t.id === id);
+        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
+        else if (boardTiles[id]) { db.ref('board/' + id).update({ x: snapX, y: snapY }); }
+    };
+    window.dropOnRack = function(e) {
+        e.preventDefault(); const id = e.dataTransfer.getData("text");
+        if (initialBoardState[id] && !isRegistered) return;
+        db.ref('board/' + id).once('value', s => { if (s.exists()) { db.ref('hands/' + myName + '/' + id).set(s.val()); db.ref('board/' + id).remove(); } });
+    };
+    window.setGameMode = function(mode) { if(db) db.ref('settings/gameMode').set(mode); };
+    window.rollbackTurn = function() { if(confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
+    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); };
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>루미큐브 : Ver 26.0</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.98); --tile-bg: #f8f5f0;
+            --accent-purple: #9d50bb; --accent-green: #2ecc71; --accent-gold: #f1c40f; --accent-red: #e74c3c;
+            --turn-blue: #3498db; --chat-bg: rgba(25, 25, 25, 0.98);
+        }
+        body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; width: 100vw; overflow: hidden; user-select: none; }
+        
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: inset 0 0 20px rgba(52, 152, 219, 0.3); }
+            50% { box-shadow: inset 0 0 60px rgba(52, 152, 219, 0.6); }
+        }
+        body.is-my-turn-frame { animation: pulse-border 1.5s infinite; }
+
+        #main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; z-index: 1; }
+        #ui-layer { height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; }
+        #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.6); }
+
+        .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; cursor: grab; }
+        #game-board .tile { position: absolute; }
+        #my-rack .tile { position: relative; left: auto !important; top: auto !important; flex-shrink: 0; }
+        .tile.locked { filter: grayscale(0.8) brightness(0.5); cursor: not-allowed !important; opacity: 0.6; }
+        
+        .red { color: #d63031 !important; border-bottom: 4px solid #d63031 !important; }
+        .blue { color: #0984e3 !important; border-bottom: 4px solid #0984e3 !important; }
+        .yellow { color: #f39c12 !important; border-bottom: 4px solid #f39c12 !important; }
+        .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
+        .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
+
+        /* 채팅 레이어 최상단 고정 */
+        #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
+        #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; }
+        #chat-box div { margin-bottom: 6px; font-size: 0.85rem; line-height: 1.4; word-break: break-all; }
+        #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
+        #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; font-size: 0.8rem; outline: none; }
+        #chat-color-picker { width: 25px; height: 25px; border: none; background: none; cursor: pointer; padding: 0; }
+        #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; pointer-events: auto; font-weight: bold; margin-top: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        #my-rack { height: 210px; background: #151515; border-top: 2px solid rgba(255, 255, 255, 0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; }
+        #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: #151515; padding-bottom: 10px; z-index: 700; }
+        
+        button { padding: 8px 16px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; }
+        button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
+
+        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
+        .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
+        .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
+
+        /* 🚀 팝업 레이어 강제 집행 */
+        #overlay-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        .modal-card { background: #2a2a2a; padding: 40px; border-radius: 24px; text-align: center; min-width: 400px; border: 1px solid #444; }
+        .lobby-player-list { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 15px; margin: 15px 0; text-align: left; }
+        .lobby-player-tag { display: inline-block; padding: 6px 12px; background: #333; border-radius: 20px; margin: 4px; font-size: 0.85rem; border: 1px solid #555; }
+        .start-btn-large { background: var(--accent-green); color: #000; width: 100%; margin-top: 20px; padding: 18px; border-radius: 12px; font-size: 1.1rem; font-weight: 900; border: none; cursor: pointer; }
+    </style>
+</head>
+<body onclick="if(window.initAudio) window.initAudio()">
+
+<div id="main-container">
+    <div id="ui-layer">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
+            <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
+            <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px;">
+                <button onclick="window.toggleBGM()" style="padding: 2px 8px; font-size: 0.6rem;">🎵 BGM</button>
+                <input type="range" id="vol-slider" min="0" max="1" step="0.01" value="0.2" oninput="window.changeVolume(this.value)" style="width: 40px; height: 4px;">
+            </div>
+            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
+        </div>
+        <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
+        <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
+            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
+            <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">턴 넘기기</button>
+            <span id="pool-badge" style="color:var(--accent-purple); font-weight:900; align-self:center; margin-right:10px;">POOL: --</span>
+            <button id="btn-rollback" onclick="window.rollbackTurn()" disabled>무르기</button>
+            <button id="btn-draw" onclick="window.drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
+            <button id="btn-end" onclick="window.handleTurnEnd()" disabled style="background:var(--accent-green); color:#000;">종료</button>
+        </div>
+    </div>
+    
+    <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)">
+        <div id="reg-info" style="position: absolute; top: 10px; width: 100%; text-align: center; color: var(--accent-gold); font-weight: bold; z-index: 100;"></div>
+    </div>
+
+    <div id="chat-wrapper">
+        <div id="chat-box"></div>
+        <div id="chat-input-container">
+            <input type="color" id="chat-color-picker" value="#f1c40f">
+            <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
+        </div>
+        <button id="chat-toggle" onclick="window.toggleChat()">💬 채팅</button>
+    </div>
+
+    <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
+        <div id="rack-controls">
+            <button onclick="window.setSortMode('number')">777 숫자</button>
+            <button onclick="window.setSortMode('color')">123 색상</button>
+            <button onclick="window.setSortMode('manual')">🖐 수동</button>
+        </div>
+    </div>
+</div>
+
+<div id="overlay-layer">
+    <div class="modal-card" id="modal-body">
+        <h2>서버 연결 중...</h2>
+    </div>
+</div>
+
+<audio id="bgm-audio" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg"></audio>
+
+<script>
+    // 🚀 모든 로직 전역화
+    let db, myName, myJoinTime, audioCtx, bgm;
+    let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
+    let isRegistered = false, initialBoardState = {};
+
+    function getHostName() { return playerList[0] || ""; }
+
+    window.renderLobbyUI = function() {
+        const modalBody = document.getElementById('modal-body');
+        if(!modalBody) return;
+        const hostName = getHostName();
+        const isHost = (myName === hostName);
+        let playerTags = playerList.map(name => `<span class="lobby-player-tag">${name === hostName ? '👑 ' : ''}${name}</span>`).join('');
+        let html = `<h2 style="color:white; margin-top:0;">🎮 루미큐브 대기실</h2>`;
+        html += `<div class="lobby-player-list"><p style="margin:0 0 10px 0; font-size:0.85rem; color:#aaa;">대기 인원 (${playerList.length}명)</p>${playerTags}</div>`;
+        if (isHost) {
+            html += `<div style="margin:20px 0; border:1px solid #444; padding:15px; border-radius:12px;">
+                <button class="mode-btn ${gameMode === 'normal'?'selected':''}" onclick="window.setGameMode('normal')">보통</button>
+                <button class="mode-btn ${gameMode === 'expert'?'selected':''}" onclick="window.setGameMode('expert')">전문가</button>
+            </div><button class="start-btn-large" onclick="window.startGame()">게임 시작</button>`;
+        } else {
+            html += `<p style="color:var(--accent-gold); margin:30px 0;">방장이 게임을 시작하길 기다리고 있습니다...</p>`;
+        }
+        modalBody.innerHTML = html;
+    };
+
+    // 🚀 게임 시작 로직 (강제 UI 폐쇄 추가)
+    window.startGame = function() {
+        db.ref('players').once('value', snap => {
+            const players = snap.val() || {};
+            const list = Object.keys(players).filter(n => !players[n].spectating);
+            if (list.length < 2) return alert("최소 2명이 필요합니다.");
+            
+            // 셔플 및 타일 생성 로직
+            let pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
+            const sets = (gameMode === 'expert') ? 3 : 2;
+            colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
+            for(let k=0; k<(gameMode === 'expert'?4:2); k++) pool.push({ num: 'J', color: 'joker' });
+            pool.sort(() => Math.random() - 0.5);
+
+            // 본인 화면 즉시 닫기 (강제성)
+            document.getElementById('overlay-layer').style.display = 'none';
+
+            const updates = {};
+            updates['board'] = null;
+            updates['pool'] = Object.assign({}, pool);
+            updates['currentTurn'] = list[0];
+            updates['settings/activePlayers'] = list;
+            updates['settings/status'] = "playing";
+
+            list.forEach(p => {
+                updates[`hands/${p}`] = {}; 
+                for(let i=0; i<14; i++) {
+                    const t = pool.pop(); const id = 'tile_' + Math.random().toString(36).substr(2, 9);
+                    updates[`hands/${p}/${id}`] = t;
+                }
+                updates[`players/${p}/registered`] = false;
+            });
+            db.ref('/').update(updates);
+        });
+    };
+
+    window.toggleBGM = function() { if (bgm.paused) bgm.play(); else bgm.pause(); };
+    window.changeVolume = function(v) { if(bgm) bgm.volume = v; };
+    window.toggleChat = function() {
+        const box = document.getElementById('chat-box'), inp = document.getElementById('chat-input-container'), btn = document.getElementById('chat-toggle');
+        const open = box.style.display === 'block'; box.style.display = open ? 'none' : 'block'; inp.style.display = open ? 'none' : 'flex';
+        btn.innerText = open ? '💬 채팅' : '❌ 닫기';
+    };
+    window.sendChat = function() {
+        const i = document.getElementById('chat-input'), cp = document.getElementById('chat-color-picker');
+        if (!i.value.trim()) return;
+        db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value });
+        i.value = '';
+    };
+
+    window.onload = function() {
+        const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
+        firebase.initializeApp(config); db = firebase.database();
+        myName = window.sessionStorage.getItem('lumi-nick') || prompt("닉네임") || "유저"+Math.floor(Math.random()*100);
+        window.sessionStorage.setItem('lumi-nick', myName);
+        bgm = document.getElementById('bgm-audio');
+        window.initAudio = function() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); };
+
+        db.ref('players/' + myName).update({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP, spectating: false });
+        db.ref('players/' + myName).onDisconnect().remove();
+
+        // 🚀 상태 리스너: 시작 신호 받으면 모든 사람 화면에서 대기실 삭제
+        db.ref('settings/status').on('value', snap => {
+            gameStatus = snap.val() || "waiting";
+            const layer = document.getElementById('overlay-layer');
+            if (gameStatus === "playing") {
+                layer.style.setProperty('display', 'none', 'important');
+            } else if (gameStatus === "finished") {
+                layer.style.display = 'flex'; window.showRanking();
+            } else {
+                layer.style.display = 'flex'; window.renderLobbyUI();
+            }
+        });
+
+        db.ref('players').on('value', snap => {
+            const players = snap.val() || {};
+            playerList = Object.entries(players).map(([name, data]) => ({ name, ...data })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)).map(p => p.name);
+            const hostName = getHostName();
+            document.getElementById('btn-force-next').style.display = (myName === hostName) ? 'inline-block' : 'none';
+            document.getElementById('btn-force-lobby').style.display = (myName === hostName) ? 'inline-block' : 'none';
+            const listEl = document.getElementById('player-list-container');
+            if(listEl) {
+                listEl.innerHTML = '';
+                playerList.forEach(name => {
+                    const badge = document.createElement('span'); badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+                    badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>`;
+                    listEl.appendChild(badge);
+                });
+            }
+            isRegistered = players[myName]?.registered || false;
+            document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
+            if (gameStatus === "waiting") window.renderLobbyUI();
+        });
+
+        db.ref('currentTurn').on('value', snap => {
+            currentTurn = snap.val(); const isMy = (currentTurn === myName);
+            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
+            ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
+            document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
+            if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
+        });
+
+        db.ref('board').on('value', snap => {
+            boardTiles = snap.val() || {}; const bEl = document.getElementById('game-board'); bEl.querySelectorAll('.tile').forEach(t => t.remove());
+            Object.entries(boardTiles).forEach(([id, data]) => {
+                const div = document.createElement('div');
+                const isLocked = initialBoardState[id] && !isRegistered;
+                div.className = `tile ${data.color} ${isLocked ? 'locked' : ''}`;
+                div.id = id; div.innerText = data.num; div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
+                div.ondragstart = (e) => { if (currentTurn !== myName || isLocked) return e.preventDefault(); e.dataTransfer.setData("text", id); };
+                bEl.appendChild(div);
+            });
+        });
+
+        db.ref('hands/' + myName).on('value', snap => {
+            myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
+            db.ref('players/' + myName).update({ tileCount: myHandData.length });
+            window.applyAutoSort();
+        });
+
+        db.ref('chat').limitToLast(30).on('child_added', snap => {
+            const d = snap.val(); const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color:${d.color || '#f1c40f'}; font-weight:bold;">${d.name}:</span> <span style="color:#eee;">${d.msg}</span>`;
+            box.appendChild(div); box.scrollTop = box.scrollHeight;
+        });
+    };
+
+    // --- 기타 기능 ---
+    window.setSortMode = function(m) { sortMode = m; window.applyAutoSort(); };
+    window.applyAutoSort = function() {
+        const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+        myHandData.sort((a, b) => {
+            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
+            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
+        });
+        const rEl = document.getElementById('my-rack'); if(!rEl) return;
+        rEl.querySelectorAll('.tile').forEach(t => t.remove());
+        myHandData.forEach(t => {
+            const div = document.createElement('div'); div.className = `tile ${t.color} rack-tile`; div.id = t.id; div.innerText = t.num;
+            div.draggable = true; div.ondragstart = (e) => e.dataTransfer.setData("text", t.id); rEl.appendChild(div);
+        });
+    };
+    window.nextTurnAction = function() {
+        db.ref('settings/activePlayers').once('value', snap => {
+            const list = snap.val() || [];
+            db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]);
+        });
+    };
+    window.drawTile = function() {
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 회수해야 뽑을 수 있습니다.");
+        db.ref('pool').limitToFirst(1).once('value', s => {
+            if (!s.exists()) return window.nextTurnAction();
+            const key = Object.keys(s.val())[0];
+            db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]);
+            db.ref('pool/' + key).remove(); window.nextTurnAction();
+        });
+    };
+    window.handleTurnEnd = function() {
+        if (!isRegistered) {
+            let pts = 0;
+            Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => {
+                pts += (t.num === 'J' ? 30 : Number(t.num));
+            });
+            if (pts < 30) return alert(`⚠️ 등록 실패! (현재: ${pts}점)\n첫 등록은 숫자 합계 30점 이상이어야 합니다.`);
+            db.ref('players/' + myName).update({ registered: true });
+        }
+        if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
+    };
+    window.dropOnBoard = function(e) {
+        e.preventDefault(); if (currentTurn !== myName) return;
+        const id = e.dataTransfer.getData("text");
+        const rect = document.getElementById('game-board').getBoundingClientRect();
+        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+        const inHand = myHandData.find(t => t.id === id);
+        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
+        else if (boardTiles[id]) { db.ref('board/' + id).update({ x: snapX, y: snapY }); }
+    };
+    window.dropOnRack = function(e) {
+        e.preventDefault(); const id = e.dataTransfer.getData("text");
+        if (initialBoardState[id] && !isRegistered) return;
+        db.ref('board/' + id).once('value', s => { if (s.exists()) { db.ref('hands/' + myName + '/' + id).set(s.val()); db.ref('board/' + id).remove(); } });
+    };
+    window.setGameMode = function(mode) { if(db) db.ref('settings/gameMode').set(mode); };
+    window.rollbackTurn = function() { if(confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
+    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); };
 </script>
 </body>
 </html>
