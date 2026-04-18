@@ -12,36 +12,28 @@
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.98); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #2ecc71; --accent-gold: #f1c40f; --accent-red: #e74c3c;
             --turn-blue: #3498db; --chat-bg: rgba(25, 25, 25, 0.98);
-            --chat-text-color: #ffffff; /* 채팅 기본 색상 */
+            --chat-text-color: #ffffff;
         }
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; width: 100vw; overflow: hidden; user-select: none; }
-        <div id="entry-layer" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 30000;">
-    <div class="modal-card">
-        <h2 style="color:white; margin-bottom:10px;">🎮 루미큐브 : Ver 27.1</h2>
-        <input type="text" id="nick-input" placeholder="닉네임을 입력하세요" style="width: 80%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; outline: none; text-align: center; font-size: 1.1rem;">
-        <div style="display: flex; gap: 15px; justify-content: center;">
-            <button onclick="handleEntry('player')" style="background: var(--accent-purple); padding: 15px 30px; font-weight: 900; cursor: pointer;">플레이어로 참여</button>
-            <button onclick="handleEntry('spectator')" style="background: var(--accent-green); color: #000; padding: 15px 30px; font-weight: 900; cursor: pointer;">관전자로 참여</button>
-        </div>
-    </div>
-</div>
-#main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
+        
+        #main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
         #ui-layer { height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; }
         #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.6); }
+        
         .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; cursor: grab; }
         #game-board .tile { position: absolute; }
         #my-rack .tile { position: relative; flex-shrink: 0; }
+        
         .red { color: #d63031 !important; border-bottom: 4px solid #d63031 !important; }
         .blue { color: #0984e3 !important; border-bottom: 4px solid #0984e3 !important; }
         .yellow { color: #f39c12 !important; border-bottom: 4px solid #f39c12 !important; }
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
         
-        /* 채팅 관련 스타일 */
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; font-size: 0.85rem; }
-        #chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); } /* 색상 선택기 연동 */
+        #chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
         
@@ -51,7 +43,6 @@
         #bgm-toggle { background: #444; }
         #bgm-toggle.playing { background: var(--accent-green); color: #000; }
         
-        /* 컨트롤 패널 스타일 */
         .volume-container, .color-picker-container { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .volume-container span, .color-picker-container span { font-size: 0.7rem; color: #aaa; font-weight: bold; }
         #bgm-volume { cursor: pointer; accent-color: var(--accent-green); width: 80px; height: 4px; }
@@ -65,12 +56,25 @@
         .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; }
-        #overlay-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        
+        #overlay-layer, #entry-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        #entry-layer { z-index: 30000; }
         .modal-card { background: #2a2a2a; padding: 40px; border-radius: 24px; text-align: center; min-width: 400px; border: 1px solid #444; }
         .lobby-player-tag { display: inline-block; padding: 6px 12px; background: #333; border-radius: 20px; margin: 4px; font-size: 0.85rem; border: 1px solid #555; }
     </style>
 </head>
 <body>
+
+<div id="entry-layer" style="display: none;">
+    <div class="modal-card">
+        <h2 style="color:white; margin-bottom:10px;">🎮 루미큐브 : Ver 27.1</h2>
+        <input type="text" id="nick-input" placeholder="닉네임을 입력하세요" style="width: 80%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; outline: none; text-align: center; font-size: 1.1rem;">
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <button onclick="handleEntry('player')" style="background: var(--accent-purple); padding: 15px 30px; font-weight: 900; cursor: pointer;">플레이어로 참여</button>
+            <button onclick="handleEntry('spectator')" style="background: var(--accent-green); color: #000; padding: 15px 30px; font-weight: 900; cursor: pointer;">관전자로 참여</button>
+        </div>
+    </div>
+</div>
 
 <div id="main-container">
     <div id="ui-layer">
@@ -79,7 +83,7 @@
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
-<div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
+        <div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
         <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
             <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">강제 턴</button>
@@ -125,9 +129,8 @@
 </div>
 
 <script>
-    // [1] 전역 변수 설정
     let db, myName, currentHost = "";
-    let myRole = ""; // 역할(player/spectator) 저장
+    let myRole = ""; 
     let turnTimer = null;
     let timeLeft = 60;
     let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
@@ -145,7 +148,6 @@
     const audioCtx = { bgm: new Audio(SOUND_ASSETS.bgm), isBGMPlaying: false, currentVolume: 0.5 };
     audioCtx.bgm.loop = true; audioCtx.bgm.volume = 0.5;
 
-    // [2] 유틸리티 함수
     window.updateVolume = (val) => { audioCtx.currentVolume = val; audioCtx.bgm.volume = val; };
     window.updateChatColor = (color) => { 
         document.documentElement.style.setProperty('--chat-text-color', color);
@@ -160,7 +162,7 @@
         const timerEl = document.getElementById('timer-display');
         turnTimer = setInterval(() => {
             timeLeft--;
-            timerEl.innerText = timeLeft + "s";
+            if (timerEl) timerEl.innerText = timeLeft + "s";
             if (timeLeft <= 0) {
                 clearInterval(turnTimer);
                 if (currentTurn === myName && myRole === 'player') {
@@ -171,7 +173,6 @@
         }, 1000);
     };
 
-    // [3] 핵심: 입장 처리 함수
     window.handleEntry = function(role, isAuto = false) {
         if (!isAuto) {
             const nickInput = document.getElementById('nick-input');
@@ -179,7 +180,6 @@
             myName = nickInput.value.trim();
             myRole = role;
         }
-
         const ts = window.sessionStorage.getItem('lumi-timestamp') || Date.now();
         window.sessionStorage.setItem('lumi-nick', myName);
         window.sessionStorage.setItem('lumi-role', myRole);
@@ -193,7 +193,6 @@
         if(!isAuto) playSFX('success');
     };
 
-    // [4] 메인 로드 함수
     window.onload = function() {
         const config = { 
             apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", 
@@ -205,14 +204,12 @@
 
         myName = window.sessionStorage.getItem('lumi-nick');
         myRole = window.sessionStorage.getItem('lumi-role') || "player";
-
         const savedColor = localStorage.getItem('lumi-chat-color') || "#ffffff";
         window.updateChatColor(savedColor);
 
         if (myName) { window.handleEntry(myRole, true); } 
         else { document.getElementById('entry-layer').style.display = 'flex'; }
 
-        // --- 데이터베이스 감시 (on) ---
         db.ref('settings/host').on('value', snap => { currentHost = snap.val(); });
 
         db.ref('players').on('value', snap => {
@@ -222,13 +219,16 @@
                 .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
                 .map(p => p[0]);
 
-            const listEl = document.getElementById('player-list-container'); listEl.innerHTML = '';
-            playerList.forEach(name => {
-                const badge = document.createElement('span');
-                badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-                badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${players[name]?.tileCount || 0}</span>`;
-                listEl.appendChild(badge);
-            });
+            const listEl = document.getElementById('player-list-container'); 
+            if (listEl) {
+                listEl.innerHTML = '';
+                playerList.forEach(name => {
+                    const badge = document.createElement('span');
+                    badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+                    badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${players[name]?.tileCount || 0}</span>`;
+                    listEl.appendChild(badge);
+                });
+            }
 
             const isHost = (myName === currentHost);
             document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
@@ -246,28 +246,31 @@
         });
 
         db.ref('currentTurn').on('value', snap => {
-            const prev = currentTurn; currentTurn = snap.val();
+            const prev = currentTurn;
+            currentTurn = snap.val();
             const isMy = (currentTurn === myName && myRole === 'player');
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
             ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-            if(isMy && prev !== myName) playSFX('turnAlarm');
+            if(isMy && prev !== myName && prev !== "") playSFX('turnAlarm');
             if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
             window.startTurnTimer();
         });
 
         db.ref('board').on('value', snap => {
             boardTiles = snap.val() || {}; const bEl = document.getElementById('game-board');
-            bEl.querySelectorAll('.tile').forEach(t => t.remove());
-            Object.entries(boardTiles).forEach(([id, data]) => {
-                const div = document.createElement('div'); div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num; div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
-                div.draggable = true;
-                div.ondragstart = (e) => { 
-                    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault(); 
-                    e.dataTransfer.setData("text", id); playSFX('tilePick'); 
-                };
-                bEl.appendChild(div);
-            });
+            if (bEl) {
+                bEl.querySelectorAll('.tile').forEach(t => t.remove());
+                Object.entries(boardTiles).forEach(([id, data]) => {
+                    const div = document.createElement('div'); div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num; div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
+                    div.draggable = true;
+                    div.ondragstart = (e) => { 
+                        if (currentTurn !== myName || myRole !== 'player') return e.preventDefault(); 
+                        e.dataTransfer.setData("text", id); playSFX('tilePick'); 
+                    };
+                    bEl.appendChild(div);
+                });
+            }
         });
 
         db.ref('hands/' + myName).on('value', snap => {
@@ -280,11 +283,10 @@
         db.ref('chats').limitToLast(20).on('child_added', snap => {
             const c = snap.val(); const div = document.createElement('div');
             div.style.color = c.color || "#ffffff"; div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-            const box = document.getElementById('chat-box'); box.appendChild(div); box.scrollTop = box.scrollHeight;
+            const box = document.getElementById('chat-box'); if (box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
         });
     };
 
-    // [5] 나머지 게임 기능 함수들
     window.toggleBGM = () => {
         const btn = document.getElementById('bgm-toggle');
         if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); btn.innerText = "🎵 BGM OFF"; btn.classList.remove('playing'); }
@@ -323,6 +325,7 @@
 
     window.renderLobbyUI = function() {
         const modalBody = document.getElementById('modal-body'); const isHost = (myName === currentHost);
+        if (!modalBody) return;
         let tags = playerList.map(name => `<span class="lobby-player-tag">${name === currentHost ? '👑 ' : ''}${name}</span>`).join('');
         let html = `<h2 style="color:white;">🎮 루미큐브 대기실</h2><div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${tags}</div>`;
         html += `<div style="margin-bottom:20px;"><p style="font-size:0.8rem; color:#aaa; margin-bottom:10px;">게임 모드 설정</p>
@@ -412,15 +415,18 @@
             const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
             return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
         });
-        const rEl = document.getElementById('my-rack'); rEl.querySelectorAll('.tile').forEach(t => t.remove());
-        myHandData.forEach(t => {
-            const div = document.createElement('div'); div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = true;
-            div.ondragstart = (e) => { 
-                if (myRole !== 'player') return e.preventDefault();
-                e.dataTransfer.setData("text", t.id); playSFX('tilePick'); 
-            }; 
-            rEl.appendChild(div);
-        });
+        const rEl = document.getElementById('my-rack'); 
+        if (rEl) {
+            rEl.querySelectorAll('.tile').forEach(t => t.remove());
+            myHandData.forEach(t => {
+                const div = document.createElement('div'); div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = true;
+                div.ondragstart = (e) => { 
+                    if (myRole !== 'player') return e.preventDefault();
+                    e.dataTransfer.setData("text", t.id); playSFX('tilePick'); 
+                }; 
+                rEl.appendChild(div);
+            });
+        }
     };
 
     window.setSortMode = (m) => { sortMode = m; window.applyAutoSort(); };
@@ -431,7 +437,7 @@
     window.sendChat = () => { 
         const i = document.getElementById('chat-input'); 
         const color = document.getElementById('chat-color-input').value;
-        if (i.value.trim()) { 
+        if (i && i.value.trim()) { 
             db.ref('chats').push({ name: myName, msg: i.value, color: color }); 
             i.value = ''; 
         } 
