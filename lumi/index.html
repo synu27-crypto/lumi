@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 26.7 (Sound & Audio Update)</title>
+    <title>루미큐브 : Ver 26.8 (Volume Control Update)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -33,10 +33,16 @@
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; font-size: 0.85rem; }
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
-        #audio-controls { display: flex; gap: 5px; align-self: flex-end; margin-top: 5px; pointer-events: auto; }
-        #chat-toggle, #bgm-toggle { background: var(--accent-purple); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        #audio-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; margin-top: 5px; pointer-events: auto; }
+        #audio-buttons { display: flex; gap: 5px; }
+        #chat-toggle, #bgm-toggle { background: var(--accent-purple); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
         #bgm-toggle { background: #444; }
         #bgm-toggle.playing { background: var(--accent-green); color: #000; }
+        
+        /* [Volume Slider Style] 볼륨 조절바 스타일 */
+        .volume-container { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .volume-container span { font-size: 0.7rem; color: #aaa; font-weight: bold; }
+        #bgm-volume { cursor: pointer; accent-color: var(--accent-green); width: 80px; height: 4px; }
 
         #my-rack { height: 210px; background: #151515; border-top: 2px solid rgba(255, 255, 255, 0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; }
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: #151515; padding-bottom: 10px; }
@@ -78,8 +84,14 @@
             <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
         </div>
         <div id="audio-controls">
-            <button id="bgm-toggle" onclick="window.toggleBGM()">🎵 BGM OFF</button>
-            <button id="chat-toggle" onclick="window.toggleChat()">💬 채팅</button>
+            <div class="volume-container">
+                <span>VOL</span>
+                <input type="range" id="bgm-volume" min="0" max="1" step="0.01" value="0.5" oninput="window.updateVolume(this.value)">
+            </div>
+            <div id="audio-buttons">
+                <button id="bgm-toggle" onclick="window.toggleBGM()">🎵 BGM OFF</button>
+                <button id="chat-toggle" onclick="window.toggleChat()">💬 채팅</button>
+            </div>
         </div>
     </div>
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
@@ -102,23 +114,30 @@
 
     // --- [Audio System] 사운드 관리 시스템 ---
     const SOUND_ASSETS = {
-        bgm: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3", // 배경음 예시
-        tilePick: "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3", // 타일 집을 때
-        tileDrop: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3", // 타일 놓을 때
-        turnAlarm: "https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3", // 내 차례 알람
-        error: "https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3", // 오류/등록 실패
-        success: "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" // 등록 성공/승리
+        bgm: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        tilePick: "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3",
+        tileDrop: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
+        turnAlarm: "https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3",
+        error: "https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3",
+        success: "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
     };
 
     const audioCtx = {
         bgm: new Audio(SOUND_ASSETS.bgm),
-        isBGMPlaying: false
+        isBGMPlaying: false,
+        currentVolume: 0.5
     };
     audioCtx.bgm.loop = true;
+    audioCtx.bgm.volume = audioCtx.currentVolume;
+
+    window.updateVolume = function(val) {
+        audioCtx.currentVolume = val;
+        audioCtx.bgm.volume = val;
+    };
 
     function playSFX(key) {
         const sfx = new Audio(SOUND_ASSETS[key]);
-        sfx.volume = 0.5;
+        sfx.volume = audioCtx.currentVolume; // 효과음도 설정된 볼륨을 따름
         sfx.play().catch(() => {});
     }
 
@@ -129,7 +148,7 @@
             btn.innerText = "🎵 BGM OFF";
             btn.classList.remove('playing');
         } else {
-            audioCtx.bgm.play().catch(() => alert("브라우저 정책으로 인해 상호작용 후 재생 가능합니다."));
+            audioCtx.bgm.play().catch(() => alert("화면을 클릭한 후 다시 시도해주세요."));
             btn.innerText = "🎶 BGM ON";
             btn.classList.add('playing');
         }
@@ -178,7 +197,7 @@
         return true;
     }
 
-    // --- [Connection & Host Management] 연결 및 방장 관리 ---
+    // --- [Connection Management] 연결 관리 ---
     function initConnection() {
         let myTimestamp = window.sessionStorage.getItem('lumi-timestamp');
         if (!myTimestamp) {
@@ -201,7 +220,7 @@
         });
     }
 
-    // --- [App Lifecycle] 앱 로드 및 이벤트 바인딩 ---
+    // --- [App Lifecycle] 앱 로드 ---
     window.onload = function() {
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
         firebase.initializeApp(config); db = firebase.database();
@@ -211,11 +230,9 @@
 
         initConnection();
 
-        // 플레이어 리스트 갱신
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
             playerList = Object.entries(players).filter(p => p[1].joined).sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0)).map(p => p[0]);
-            
             const isHost = (myName === currentHost);
             document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
             document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
@@ -233,7 +250,6 @@
             if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
-        // 채팅 감시
         db.ref('chats').limitToLast(20).on('child_added', snap => {
             const c = snap.val();
             const div = document.createElement('div');
@@ -242,7 +258,6 @@
             box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
 
-        // 게임 상태 및 턴 감시
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
@@ -257,14 +272,10 @@
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
             ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-            
-            if(isMy) {
-                initialBoardState = JSON.parse(JSON.stringify(boardTiles));
-                if(prevTurn !== myName) playSFX('turnAlarm'); // 내 턴이 되면 알람
-            }
+            if(isMy && prevTurn !== myName) playSFX('turnAlarm');
+            if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
         });
 
-        // 보드판 갱신
         db.ref('board').on('value', snap => {
             boardTiles = snap.val() || {};
             const bEl = document.getElementById('game-board');
@@ -282,7 +293,6 @@
             });
         });
 
-        // 내 패 갱신
         db.ref('hands/' + myName).on('value', snap => {
             myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
             db.ref('players/' + myName).update({ tileCount: myHandData.length });
@@ -292,7 +302,7 @@
         db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
     };
 
-    // --- [Lobby & Game Control] 로비 및 게임 제어 ---
+    // --- [Game Control] 게임 및 인터랙션 ---
     window.renderLobbyUI = function() {
         const modalBody = document.getElementById('modal-body');
         const isHost = (myName === currentHost);
@@ -308,7 +318,6 @@
     };
 
     window.setGameMode = function(mode) { if (myName === currentHost) db.ref('settings/gameMode').set(mode); };
-    
     window.startGame = function() {
         if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
         db.ref('/').once('value', snap => {
@@ -327,75 +336,50 @@
         });
     };
 
-    // --- [Interaction] 상호작용 기능 ---
     window.toggleChat = function() { const box = document.getElementById('chat-box'); const input = document.getElementById('chat-input-container'); const isVisible = box.style.display === 'block'; box.style.display = isVisible ? 'none' : 'block'; input.style.display = isVisible ? 'none' : 'flex'; };
     window.sendChat = function() { const input = document.getElementById('chat-input'); if (!input.value.trim()) return; db.ref('chats').push({ name: myName, msg: input.value, time: Date.now() }); input.value = ''; };
     
     window.handleTurnEnd = function() {
-        if (!validateBoard()) {
-            playSFX('error');
-            return alert("⚠️ 유효하지 않은 세트가 있습니다!");
-        }
+        if (!validateBoard()) { playSFX('error'); return alert("⚠️ 유효하지 않은 세트가 있습니다!"); }
         if (!isRegistered) {
             let pts = 0; Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => { pts += (t.num === 'J' ? 30 : Number(t.num)); });
-            if (pts < 30) {
-                playSFX('error');
-                return alert(`등록 실패 (${pts}점)! 30점 이상 내세요.`);
-            }
-            playSFX('success');
-            db.ref('players/' + myName).update({ registered: true });
+            if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내세요.`); }
+            playSFX('success'); db.ref('players/' + myName).update({ registered: true });
         }
         if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
     };
 
-    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {} }); };
-    window.forceNextTurn = function() { if(confirm("턴 넘기기?")) window.nextTurnAction(); };
-    window.nextTurnAction = function() { db.ref('settings/activePlayers').once('value', snap => { const list = snap.val() || []; db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]); }); };
-    
     window.drawTile = function() {
         if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 무르거나 종료해야 합니다.");
         db.ref('pool').limitToFirst(1).once('value', s => { 
             if (!s.exists()) return window.nextTurnAction(); 
             const key = Object.keys(s.val())[0]; 
             const updates = {}; 
-            updates[`hands/${myName}/tile_${Date.now()}`] = s.val()[key]; 
-            updates[`pool/${key}`] = null; 
-            db.ref('/').update(updates).then(() => {
-                playSFX('tilePick');
-                window.nextTurnAction();
-            }); 
+            updates[`hands/${myName}/tile_${Date.now()}`] = s.val()[key]; updates[`pool/${key}`] = null; 
+            db.ref('/').update(updates).then(() => { playSFX('tilePick'); window.nextTurnAction(); }); 
         });
     };
 
     window.dropOnBoard = function(e) { 
-        e.preventDefault(); 
-        if (currentTurn !== myName) return; 
+        e.preventDefault(); if (currentTurn !== myName) return; 
         const id = e.dataTransfer.getData("text"); 
         const rect = document.getElementById('game-board').getBoundingClientRect(); 
         let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2; 
         const inHand = myHandData.find(t => t.id === id); 
         if (inHand) { 
-            const updates = {}; 
-            updates[`board/${id}`] = { num: inHand.num, color: inHand.color, x: snapX, y: snapY }; 
-            updates[`hands/${myName}/${id}`] = null; 
-            db.ref('/').update(updates); 
-            playSFX('tileDrop');
+            const updates = {}; updates[`board/${id}`] = { num: inHand.num, color: inHand.color, x: snapX, y: snapY }; updates[`hands/${myName}/${id}`] = null; 
+            db.ref('/').update(updates); playSFX('tileDrop');
         } else if (boardTiles[id]) {
-            db.ref(`board/${id}`).update({ x: snapX, y: snapY }); 
-            playSFX('tileDrop');
+            db.ref(`board/${id}`).update({ x: snapX, y: snapY }); playSFX('tileDrop');
         }
     };
 
     window.dropOnRack = function(e) { 
-        e.preventDefault(); 
-        const id = e.dataTransfer.getData("text"); 
+        e.preventDefault(); const id = e.dataTransfer.getData("text"); 
         db.ref(`board/${id}`).once('value', s => { 
             if (s.exists()) { 
-                const updates = {}; 
-                updates[`hands/${myName}/${id}`] = s.val(); 
-                updates[`board/${id}`] = null; 
-                db.ref('/').update(updates); 
-                playSFX('tilePick');
+                const updates = {}; updates[`hands/${myName}/${id}`] = s.val(); updates[`board/${id}`] = null; 
+                db.ref('/').update(updates); playSFX('tilePick');
             } 
         }); 
     };
@@ -408,14 +392,14 @@
         myHandData.forEach(t => { 
             const div = document.createElement('div'); 
             div.className = `tile ${t.color}`; div.id = t.id; div.innerText = t.num; div.draggable = true; 
-            div.ondragstart = (e) => {
-                e.dataTransfer.setData("text", t.id);
-                playSFX('tilePick');
-            };
+            div.ondragstart = (e) => { e.dataTransfer.setData("text", t.id); playSFX('tilePick'); };
             rEl.appendChild(div); 
         });
     };
+    window.nextTurnAction = function() { db.ref('settings/activePlayers').once('value', snap => { const list = snap.val() || []; db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]); }); };
     window.rollbackTurn = function() { if(confirm("무를까요?")) db.ref('board').set(initialBoardState); };
+    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {} }); };
+    window.forceNextTurn = function() { if(confirm("턴 넘기기?")) window.nextTurnAction(); };
 </script>
 </body>
 </html>
