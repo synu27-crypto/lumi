@@ -31,7 +31,7 @@
         /* 채팅 관련 스타일 */
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; font-size: 0.85rem; }
-        #chat-box div { color: var(--chat-text-color); margin-bottom: 4px; } /* 색상 선택기 연동 */
+        #chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); } /* 색상 선택기 연동 */
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
         
@@ -252,9 +252,18 @@
         });
 
         db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
+        // 채팅 로그를 가져올 때 개별 설정된 색상을 입히는 로직
         db.ref('chats').limitToLast(20).on('child_added', snap => {
-            const c = snap.val(); const div = document.createElement('div'); div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-            const box = document.getElementById('chat-box'); box.appendChild(div); box.scrollTop = box.scrollHeight;
+            const c = snap.val(); 
+            const div = document.createElement('div');
+            
+            // 데이터베이스에 저장된 color 값이 있으면 적용, 없으면 기본 흰색(#ffffff) 적용
+            div.style.color = c.color || "#ffffff"; 
+            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
+            
+            const box = document.getElementById('chat-box'); 
+            box.appendChild(div); 
+            box.scrollTop = box.scrollHeight;
         });
     };
 
@@ -373,7 +382,19 @@
     window.returnToLobby = () => { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {}, "settings/gameResult": null }); };
     window.forceNextTurn = () => { if(confirm("강제 이동?")) window.nextTurnAction(); };
     window.toggleChat = () => { const b = document.getElementById('chat-box'); const i = document.getElementById('chat-input-container'); const v = b.style.display === 'block'; b.style.display = v?'none':'block'; i.style.display = v?'none':'flex'; };
-    window.sendChat = () => { const i = document.getElementById('chat-input'); if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value }); i.value = ''; } };
+    window.sendChat = () => { 
+    const i = document.getElementById('chat-input'); 
+    const color = document.getElementById('chat-color-input').value; // 내가 고른 색상 가져오기
+    
+    if (i.value.trim()) { 
+        db.ref('chats').push({ 
+            name: myName, 
+            msg: i.value, 
+            color: color // DB에 색상 정보 포함해서 저장
+        }); 
+        i.value = ''; 
+    } 
+};
 </script>
 </body>
 </html>
