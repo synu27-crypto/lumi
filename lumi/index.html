@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 30</title>
+    <title>루미큐브 : Ver 30.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -486,15 +486,15 @@
         if(sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
         pool.sort(() => Math.random() - 0.5);
 
-        // 예전 데이터가 남아 오류가 발생하는 것을 막기 위해 명시적으로 null 처리하여 DB 완전 초기화
+        // hands: null을 제외하여 경로 충돌을 방지합니다.
         const updates = { 
             'board': null, 
-            'hands': null,
-            'pool': null,
             'currentTurn': playerList[0], 
             'settings/status': "playing", 
             'chats': null 
         };
+        
+        const allHands = {}; // 플레이어들의 패를 모을 빈 객체 생성
         
         playerList.forEach(p => {
             const hand = {};
@@ -502,11 +502,12 @@
                 const t = pool.pop(); 
                 if(t) hand['tile_' + Math.random().toString(36).substr(2,9)] = t; 
             }
-            updates[`hands/${p}`] = hand;
+            allHands[p] = hand; // 객체에 개별 플레이어 패 저장
             updates[`players/${p}/registered`] = false;
         });
         
-        // 파이어베이스 배열 인식 오류 방지를 위한 객체 변환
+        updates['hands'] = allHands; // 묶어둔 패 데이터를 hands 전체에 한 번에 덮어씌움
+        
         const poolObj = {};
         pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
         updates['pool'] = poolObj;
