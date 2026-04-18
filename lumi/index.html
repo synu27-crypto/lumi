@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미큐브 : Ver 24.1</title>
+    <title>루미큐브 : Ver 24.2</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -50,9 +50,8 @@
         
         button { padding: 8px 16px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border-radius: 8px; border: none; background: rgba(255, 255, 255, 0.1); color: #fff; transition: 0.2s; }
         button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.2); }
-        button:disabled { opacity: 0.3; }
 
-        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
+        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1.5px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; font-size: 0.7rem; }
 
@@ -67,7 +66,7 @@
 
 <div id="main-container">
     <div id="ui-layer">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
             <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
             <div class="audio-ctrl">
                 <button onclick="window.toggleBGM()">🎵 BGM</button>
@@ -76,7 +75,7 @@
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
-        <div style="display: flex; gap: 8px; flex: 1; justify-content: flex-end;">
+        <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
             <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">턴 넘기기</button>
             <span id="pool-badge" style="color:var(--accent-purple); font-weight:900; align-self:center; margin-right:10px;">POOL: --</span>
@@ -117,15 +116,17 @@
 <audio id="bgm-audio" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg"></audio>
 
 <script>
-    // 🚀 [Scope 수리] 함수들을 window.onload 밖 전역 스코프로 끄집어냄
-    let db, myName, playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal", isSpectating = false;
-    let isRegistered = false, initialBoardState = {}, bgm;
+    // 🚀 [핵심] 모든 핵심 함수를 전역(window) 스코프로 이동하여 파이어베이스 리스너가 즉시 인식하게 함
+    let db, myName, myJoinTime, audioCtx, bgm;
+    let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
+    let isRegistered = false, initialBoardState = {};
 
+    // 1. 방장 결정 (계헌 로직 완전 삭제)
     function getHostName() {
-        if (playerList.includes("계헌")) return "계헌";
-        return playerList[0] || "";
+        return playerList[0] || ""; // 그냥 리스트의 첫 번째 사람
     }
 
+    // 2. 로비 UI 렌더링
     window.renderLobbyUI = function() {
         const modalBody = document.getElementById('modal-body');
         if(!modalBody) return;
@@ -133,13 +134,51 @@
         const isHost = (myName === hostName);
         let html = `<h2>🎮 루미큐브 대기실</h2><p>내 닉네임: <strong style="color:var(--turn-blue)">${myName}</strong></p>`;
         if (isHost) {
-            html += `<div style="margin:20px 0; border:1px solid #444; padding:15px; border-radius:12px;"><p style="margin-top:0;">방장 설정 권한 (👑)</p><button class="mode-btn ${gameMode === 'normal'?'selected':''}" onclick="window.setGameMode('normal')">보통 (2세트)</button><button class="mode-btn ${gameMode === 'expert'?'selected':''}" onclick="window.setGameMode('expert')">전문가 (3세트)</button></div><button class="start-btn-large" onclick="window.startGame()">게임 시작</button>`;
+            html += `<div style="margin:20px 0; border:1px solid #444; padding:15px; border-radius:12px;">
+                <p style="margin-top:0;">방장 설정 권한 (👑)</p>
+                <button class="mode-btn ${gameMode === 'normal'?'selected':''}" onclick="window.setGameMode('normal')">보통 (2세트)</button>
+                <button class="mode-btn ${gameMode === 'expert'?'selected':''}" onclick="window.setGameMode('expert')">전문가 (3세트)</button>
+            </div><button class="start-btn-large" onclick="window.startGame()">게임 시작</button>`;
         } else {
             html += `<p style="color:var(--accent-gold); margin:30px 0;">방장(${hostName})이 게임을 시작하길 기다리고 있습니다...</p>`;
         }
         modalBody.innerHTML = html;
     };
 
+    // 3. 게임 시작 로직
+    window.startGame = function() {
+        db.ref('players').once('value', snap => {
+            const players = snap.val() || {};
+            const list = Object.keys(players).filter(n => !players[n].spectating);
+            if (list.length < 2) return alert("최소 2명이 필요합니다.");
+            
+            let pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
+            const sets = (gameMode === 'expert') ? 3 : 2;
+            colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
+            for(let k=0; k<(gameMode === 'expert'?4:2); k++) pool.push({ num: 'J', color: 'joker' });
+            pool.sort(() => Math.random() - 0.5);
+
+            const updates = {};
+            updates['board'] = null;
+            updates['pool'] = Object.assign({}, pool);
+            updates['currentTurn'] = list[0];
+            updates['settings/activePlayers'] = list;
+            updates['settings/status'] = "playing";
+
+            list.forEach(p => {
+                updates[`hands/${p}`] = {}; 
+                for(let i=0; i<14; i++) {
+                    const t = pool.pop();
+                    const id = 'tile_' + Math.random().toString(36).substr(2, 9);
+                    updates[`hands/${p}/${id}`] = t;
+                }
+                updates[`players/${p}/registered`] = false;
+            });
+            db.ref('/').update(updates);
+        });
+    };
+
+    // 4. 전역 기능 (채팅, BGM, 종료 등)
     window.setGameMode = function(mode) { if(db) db.ref('settings/gameMode').set(mode); };
     window.toggleBGM = function() { if (bgm.paused) bgm.play(); else bgm.pause(); };
     window.changeVolume = function(v) { if(bgm) bgm.volume = v; };
@@ -155,31 +194,6 @@
         i.value = '';
     };
 
-    window.startGame = function() {
-        db.ref('players').once('value', snap => {
-            const players = snap.val() || {};
-            const list = Object.keys(players).filter(n => !players[n].spectating);
-            if (list.length < 2) return alert("최소 2명이 필요합니다.");
-            let pool = []; const colors = ['red', 'blue', 'yellow', 'black'];
-            const sets = (gameMode === 'expert') ? 3 : 2;
-            colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
-            for(let k=0; k<(gameMode === 'expert'?4:2); k++) pool.push({ num: 'J', color: 'joker' });
-            pool.sort(() => Math.random() - 0.5);
-            const updates = {}; updates['board'] = {}; updates['pool'] = Object.assign({}, pool);
-            updates['currentTurn'] = list[0]; updates['settings/activePlayers'] = list;
-            list.forEach(p => {
-                updates[`hands/${p}`] = {}; 
-                for(let i=0; i<14; i++) {
-                    const t = pool.pop(); const id = 'tile_' + Math.random().toString(36).substr(2, 9);
-                    updates[`hands/${p}/${id}`] = t;
-                }
-                updates[`players/${p}/registered`] = false;
-            });
-            updates['settings/status'] = "playing";
-            db.ref('/').update(updates);
-        });
-    };
-
     window.handleTurnEnd = function() {
         if (!isRegistered) {
             let pts = 0;
@@ -192,7 +206,49 @@
         if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
     };
 
-    // --- 리스너 및 초기화 ---
+    window.nextTurnAction = function() {
+        const list = activePlayers; if (list.length < 2) return;
+        db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]);
+    };
+
+    window.drawTile = function() {
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 회수해야 뽑을 수 있습니다.");
+        db.ref('pool').limitToFirst(1).once('value', s => {
+            if (!s.exists()) return window.nextTurnAction();
+            const key = Object.keys(s.val())[0];
+            db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]);
+            db.ref('pool/' + key).remove(); window.nextTurnAction();
+        });
+    };
+
+    window.rollbackTurn = function() { if(confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
+
+    window.dropOnBoard = function(e) {
+        e.preventDefault(); const id = e.dataTransfer.getData("text");
+        const rect = document.getElementById('game-board').getBoundingClientRect();
+        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+        const inHand = myHandData.find(t => t.id === id);
+        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
+        else if (boardTiles[id]) { if(!isRegistered && initialBoardState[id]) return; db.ref('board/' + id).update({ x: snapX, y: snapY }); }
+    };
+
+    window.dropOnRack = function(e) {
+        e.preventDefault(); const id = e.dataTransfer.getData("text");
+        if (initialBoardState[id] && !isRegistered) return;
+        db.ref('board/' + id).once('value', s => { if (s.exists()) { db.ref('hands/' + myName + '/' + id).set(s.val()); db.ref('board/' + id).remove(); } });
+    };
+
+    window.setSortMode = function(m) {
+        sortMode = m; const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+        myHandData.sort((a, b) => {
+            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
+            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
+        });
+    };
+
+    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); };
+
+    // --- 초기화 리스너 ---
     window.onload = function() {
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
         firebase.initializeApp(config); db = firebase.database();
@@ -215,14 +271,16 @@
             const hostName = getHostName();
             document.getElementById('btn-force-next').style.display = (myName === hostName) ? 'inline-block' : 'none';
             document.getElementById('btn-force-lobby').style.display = (myName === hostName) ? 'inline-block' : 'none';
+            
             const listEl = document.getElementById('player-list-container'); listEl.innerHTML = '';
             playerList.forEach(name => {
                 const badge = document.createElement('span'); badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-                badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>${players[name].registered ? '<small style="color:var(--accent-gold);margin-left:3px;">●</small>' : ''}`;
+                badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>`;
                 listEl.appendChild(badge);
             });
             isRegistered = players[myName]?.registered || false;
             document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
+            if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
         db.ref('currentTurn').on('value', snap => {
@@ -233,14 +291,6 @@
             if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
         });
 
-        db.ref('chat').limitToLast(30).on('child_added', snap => {
-            const d = snap.val(); const box = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.innerHTML = `<span style="color:${d.color || '#f1c40f'}; font-weight:bold;">${d.name}:</span> <span style="color:#eee;">${d.msg}</span>`;
-            box.appendChild(div); box.scrollTop = box.scrollHeight;
-        });
-        
-        // 나머지 리스너(board, hands 등) 생략 없이 Ver 23.5 로직 유지
         db.ref('board').on('value', snap => {
             boardTiles = snap.val() || {}; const bEl = document.getElementById('game-board'); bEl.querySelectorAll('.tile').forEach(t => t.remove());
             Object.entries(boardTiles).forEach(([id, data]) => {
@@ -248,58 +298,23 @@
                 const isLocked = initialBoardState[id] && !isRegistered;
                 div.className = `tile ${data.color} ${isLocked ? 'locked' : ''}`;
                 div.id = id; div.innerText = data.num; div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
-                div.draggable = !isLocked; div.ondragstart = (e) => e.dataTransfer.setData("text", id); bEl.appendChild(div);
+                div.ondragstart = (e) => { if (currentTurn !== myName || isLocked) return e.preventDefault(); e.dataTransfer.setData("text", id); };
+                bEl.appendChild(div);
             });
         });
 
         db.ref('hands/' + myName).on('value', snap => {
             myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
             db.ref('players/' + myName).update({ tileCount: myHandData.length });
-            window.setSortMode(sortMode);
         });
-    };
 
-    window.nextTurnAction = function() {
-        db.ref('settings/activePlayers').once('value', snap => {
-            const list = snap.val() || [];
-            db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]);
+        db.ref('chat').limitToLast(30).on('child_added', snap => {
+            const d = snap.val(); const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color:${d.color || '#f1c40f'}; font-weight:bold;">${d.name}:</span> <span style="color:#fff;">${d.msg}</span>`;
+            box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
     };
-    window.drawTile = function() {
-        db.ref('pool').limitToFirst(1).once('value', s => {
-            if (!s.exists()) return window.nextTurnAction();
-            const key = Object.keys(s.val())[0];
-            db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]);
-            db.ref('pool/' + key).remove(); window.nextTurnAction();
-        });
-    };
-    window.dropOnBoard = function(e) {
-        e.preventDefault(); const id = e.dataTransfer.getData("text");
-        const rect = document.getElementById('game-board').getBoundingClientRect();
-        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
-        const inHand = myHandData.find(t => t.id === id);
-        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
-        else if (boardTiles[id]) { db.ref('board/' + id).update({ x: snapX, y: snapY }); }
-    };
-    window.dropOnRack = function(e) {
-        e.preventDefault(); const id = e.dataTransfer.getData("text");
-        if (initialBoardState[id] && !isRegistered) return;
-        db.ref('board/' + id).once('value', s => { if (s.exists()) { db.ref('hands/' + myName + '/' + id).set(s.val()); db.ref('board/' + id).remove(); } });
-    };
-    window.setSortMode = function(m) {
-        sortMode = m; const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
-        myHandData.sort((a, b) => {
-            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
-            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
-        });
-        const rEl = document.getElementById('my-rack'); rEl.querySelectorAll('.tile').forEach(t => t.remove());
-        myHandData.forEach(t => {
-            const div = document.createElement('div'); div.className = `tile ${t.color}`; div.id = t.id; div.innerText = t.num;
-            div.draggable = true; div.ondragstart = (e) => e.dataTransfer.setData("text", t.id); rEl.appendChild(div);
-        });
-    };
-    window.rollbackTurn = function() { if(confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
-    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); };
 </script>
 </body>
 </html>
