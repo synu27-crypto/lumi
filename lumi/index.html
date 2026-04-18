@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 27.2 (최종 통합본)</title>
+    <title>루미큐브 : Ver 27.5 (최종 통합본)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -138,12 +138,22 @@
 </div>
 
 <script>
-    let db;
-    let myName = "", currentHost = "", myRole = "player";
-    let turnTimer = null, timeLeft = 60;
-    let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
-    let isRegistered = false, initialBoardState = {};
-    window.latestPlayersData = {};
+    // --- [1] 전역 변수 선언 ---
+    let db; 
+    let myName = "";
+    let myRole = "player"; 
+    let currentHost = "";
+    let turnTimer = null;
+    let timeLeft = 60;
+    let playerList = []; // 게임에 참여하는 플레이어 이름 배열
+    let currentTurn = "";
+    let sortMode = 'color';
+    let myHandData = [];
+    let gameStatus = "waiting";
+    let boardTiles = {};
+    let gameMode = "normal";
+    let initialBoardState = {};
+    window.latestPlayersData = {}; // 전체 접속자 정보 저장 (관전자 포함)
 
     const SOUND_ASSETS = {
         bgm: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -155,15 +165,21 @@
     };
 
     const audioCtx = { bgm: new Audio(SOUND_ASSETS.bgm), isBGMPlaying: false, currentVolume: 0.5 };
-    audioCtx.bgm.loop = true; audioCtx.bgm.volume = 0.5;
+    audioCtx.bgm.loop = true;
+
+    // --- [2] 유틸리티 및 UI 함수 ---
+
+    function playSFX(key) {
+        const sfx = new Audio(SOUND_ASSETS[key]);
+        sfx.volume = audioCtx.currentVolume;
+        sfx.play().catch(() => {});
+    }
 
     window.updateVolume = (val) => { audioCtx.currentVolume = val; audioCtx.bgm.volume = val; };
     window.updateChatColor = (color) => { 
         document.documentElement.style.setProperty('--chat-text-color', color);
         localStorage.setItem('lumi-chat-color', color);
     };
-
-    function playSFX(key) { const sfx = new Audio(SOUND_ASSETS[key]); sfx.volume = audioCtx.currentVolume; sfx.play().catch(()=>{}); }
 
     window.startTurnTimer = function() {
         if (turnTimer) clearInterval(turnTimer);
@@ -187,7 +203,10 @@
             const nickInput = document.getElementById('nick-input');
             if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
             myName = nickInput.value.trim();
-            myRole = role;
+            myRole = role; 
+        } else {
+            myName = window.sessionStorage.getItem('lumi-nick');
+            myRole = window.sessionStorage.getItem('lumi-role') || "player";
         }
         
         const ts = window.sessionStorage.getItem('lumi-timestamp') || Date.now();
@@ -198,7 +217,6 @@
         const pRef = db.ref('players/' + myName);
         pRef.update({ joined: true, timestamp: Number(ts), role: myRole });
         pRef.onDisconnect().remove();
-
         document.getElementById('entry-layer').style.display = 'none';
         if(!isAuto) playSFX('success');
     };
@@ -208,11 +226,12 @@
         if (!listEl) return;
         listEl.innerHTML = '';
         
+        // 상단 UI에는 '플레이어'만 표시합니다.
         playerList.forEach(name => {
             const badge = document.createElement('span');
             badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-            const count = window.latestPlayersData[name]?.tileCount || 0;
-            badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${count}</span>`;
+            const pData = window.latestPlayersData[name] || {};
+            badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
             listEl.appendChild(badge);
         });
 
@@ -220,16 +239,19 @@
         document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
         document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
         
-        const regInfo = document.getElementById('reg-info');
+        // 관전자 안내 문구
+        const regInfoEl = document.getElementById('reg-info');
         if (myRole === 'spectator') {
-            regInfo.innerText = "👀 관전 모드";
-            regInfo.style.color = "#aaa";
+            regInfoEl.innerText = "👀 관전 모드 (조작 불가)";
+            regInfoEl.style.color = "#aaa";
         } else {
             const isReg = window.latestPlayersData[myName]?.registered;
-            regInfo.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
-            regInfo.style.color = "var(--accent-gold)";
+            regInfoEl.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
+            regInfoEl.style.color = "var(--accent-gold)";
         }
     };
+
+    // --- [3] 게임 메인 실행부 ---
 
     window.onload = function() {
         const config = { 
@@ -238,38 +260,48 @@
             databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", 
             projectId: "lumi-b373e" 
         };
-        firebase.initializeApp(config); db = firebase.database();
+        if (!firebase.apps.length) firebase.initializeApp(config);
+        db = firebase.database();
 
-        myName = window.sessionStorage.getItem('lumi-nick');
-        myRole = window.sessionStorage.getItem('lumi-role') || "player";
-        
-        const savedColor = localStorage.getItem('lumi-chat-color') || "#ffffff";
-        window.updateChatColor(savedColor);
-        document.getElementById('chat-color-input').value = savedColor;
+        if (window.sessionStorage.getItem('lumi-nick')) window.handleEntry(null, true);
 
-        if (myName) { window.handleEntry(myRole, true); } 
-        else { document.getElementById('entry-layer').style.display = 'flex'; }
-
+        // 방장 정보 감시
         db.ref('settings/host').on('value', snap => { 
             currentHost = snap.val(); 
             window.updatePlayerListUI();
             if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
+        // 전체 접속자 감시 및 방장 자동 선출
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
-            window.latestPlayersData = players;
+            window.latestPlayersData = players; // 데이터 저장
             
+            // 1. 실제 플레이어만 추출하여 시간순 정렬
             playerList = Object.entries(players)
                 .filter(p => p[1].joined && p[1].role === 'player')
                 .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
                 .map(p => p[0]);
 
+            // 2. 방장 선출 로직 (가장 중요!)
             if (playerList.length > 0) {
-                let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
-                if (currentHost !== targetHost && (currentHost === "" || !playerList.includes(currentHost))) {
+                let targetHost = "";
+                
+                // '계헌' 님이 플레이어 목록에 있으면 무조건 우선권 부여
+                if (playerList.includes("계헌")) {
+                    targetHost = "계헌";
+                } else {
+                    // 없으면 가장 먼저 들어온 사람
+                    targetHost = playerList[0];
+                }
+
+                // 현재 방장과 목표 방장이 다르면 Firebase 업데이트
+                if (currentHost !== targetHost) {
                     db.ref('settings/host').set(targetHost);
                 }
+            } else if (Object.keys(players).length === 0) {
+                 // 아무도 없으면 방장 초기화
+                 db.ref('settings/host').set("");
             }
 
             window.updatePlayerListUI();
@@ -279,50 +311,46 @@
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
-            
-            if (gameStatus === "waiting") { window.renderLobbyUI(); }
-            else if (gameStatus === "finished") { playSFX('success'); window.renderResultUI(); }
-            
-            if (gameStatus !== "playing") { 
-                if (turnTimer) clearInterval(turnTimer); 
-                document.getElementById('timer-display').innerText = ""; 
+            if (gameStatus === "waiting") window.renderLobbyUI();
+            else if (gameStatus === "finished") window.renderResultUI();
+            if (gameStatus !== "playing" && turnTimer) {
+                clearInterval(turnTimer);
+                document.getElementById('timer-display').innerText = "";
             }
         });
 
         db.ref('currentTurn').on('value', snap => {
             const prev = currentTurn;
             currentTurn = snap.val();
-            const isMy = (currentTurn === myName && myRole === 'player');
+            const isMyTurn = (currentTurn === myName && myRole === 'player');
             
-            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-            ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
-            document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
+            document.getElementById('game-board').classList.toggle('not-my-turn', !isMyTurn);
+            ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMyTurn);
             
-            if(isMy && prev !== myName && prev !== "") playSFX('turnAlarm');
-            if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
+            document.getElementById('turn-info').innerText = isMyTurn ? "내 차례!" : `차례: ${currentTurn}`;
+            if(isMyTurn && prev !== myName && prev !== "") playSFX('turnAlarm');
+            if(isMyTurn) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
             
             window.startTurnTimer();
             window.updatePlayerListUI();
         });
 
         db.ref('board').on('value', snap => {
-            boardTiles = snap.val() || {}; 
+            boardTiles = snap.val() || {};
             const bEl = document.getElementById('game-board');
-            if (bEl) {
-                bEl.querySelectorAll('.tile').forEach(t => t.remove());
-                Object.entries(boardTiles).forEach(([id, data]) => {
-                    const div = document.createElement('div'); 
-                    div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num; 
-                    div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
-                    
-                    div.draggable = (myRole === 'player');
-                    div.ondragstart = (e) => { 
-                        if (currentTurn !== myName || myRole !== 'player') return e.preventDefault(); 
-                        e.dataTransfer.setData("text", id); playSFX('tilePick'); 
-                    };
-                    bEl.appendChild(div);
-                });
-            }
+            bEl.querySelectorAll('.tile').forEach(t => t.remove());
+            Object.entries(boardTiles).forEach(([id, data]) => {
+                const div = document.createElement('div');
+                div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num;
+                div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
+                
+                div.draggable = (myRole === 'player');
+                div.ondragstart = (e) => {
+                    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+                    e.dataTransfer.setData("text", id); playSFX('tilePick');
+                };
+                bEl.appendChild(div);
+            });
         });
 
         db.ref('hands/' + myName).on('value', snap => {
@@ -331,43 +359,42 @@
             window.applyAutoSort();
         });
 
-        db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
-        
+        db.ref('pool').on('value', snap => {
+            document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`;
+        });
+
         db.ref('chats').limitToLast(20).on('child_added', snap => {
-            const c = snap.val(); const div = document.createElement('div');
-            div.style.color = c.color || "#ffffff"; div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-            const box = document.getElementById('chat-box'); 
-            if (box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
+            const c = snap.val();
+            const div = document.createElement('div');
+            div.style.color = c.color || "#ffffff";
+            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
+            const box = document.getElementById('chat-box');
+            if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
         });
     };
 
-    window.toggleBGM = () => {
-        const btn = document.getElementById('bgm-toggle');
-        if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); btn.innerText = "🎵 BGM OFF"; btn.classList.remove('playing'); }
-        else { audioCtx.bgm.play().catch(() => alert("화면 클릭 후 재생 가능")); btn.innerText = "🎶 BGM ON"; btn.classList.add('playing'); }
-        audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying;
-    };
+    // --- [4] 게임 핵심 규칙 로직 ---
 
     function isValidSet(tiles) {
         if (tiles.length < 3) return false;
         const nonJokers = tiles.filter(t => t.num !== 'J');
         if (nonJokers.length === 0) return true;
-        
+
         const isGroup = () => {
-            const num = nonJokers[0].num; 
+            const num = nonJokers[0].num;
             const colors = nonJokers.map(t => t.color);
             return nonJokers.every(t => t.num === num) && (new Set(colors)).size === colors.length && tiles.length <= 4;
         };
-        
+
         const isRun = () => {
-            const color = nonJokers[0].color; 
+            const color = nonJokers[0].color;
             if (!nonJokers.every(t => t.color === color)) return false;
             let lastNum = -1;
-            for(let t of tiles) { 
-                if(t.num !== 'J') { 
-                    if(lastNum !== -1 && Number(t.num) <= lastNum) return false; 
-                    lastNum = Number(t.num); 
-                } 
+            for(let t of tiles) {
+                if(t.num !== 'J') {
+                    if(lastNum !== -1 && Number(t.num) <= lastNum) return false;
+                    lastNum = Number(t.num);
+                }
             }
             return true;
         };
@@ -375,102 +402,49 @@
     }
 
     function validateBoard() {
-        const rows = {}; 
-        Object.values(boardTiles).forEach(t => { if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
+        const rows = {};
+        Object.values(boardTiles).forEach(t => {
+            if(!rows[t.y]) rows[t.y]=[];
+            rows[t.y].push(t);
+        });
         for (let y in rows) {
-            const rowTiles = rows[y].sort((a,b) => a.x - b.x); 
+            const rowTiles = rows[y].sort((a,b) => a.x - b.x);
             let currentSet = [];
             for (let i=0; i<rowTiles.length; i++) {
                 currentSet.push(rowTiles[i]);
-                if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) { 
-                    if (!isValidSet(currentSet)) return false; 
-                    currentSet = []; 
+                if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
+                    if (!isValidSet(currentSet)) return false;
+                    currentSet = [];
                 }
             }
         }
         return true;
     }
 
-    window.renderLobbyUI = function() {
-        const modalBody = document.getElementById('modal-body'); 
-        const isHost = (myName === currentHost);
-        if (!modalBody) return;
-        
-        const allUsers = Object.entries(window.latestPlayersData);
-        let tags = allUsers.map(([name, data]) => {
-            if(!data.joined) return '';
-            const isSpec = data.role === 'spectator';
-            return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`;
-        }).join('');
-        
-        let html = `<h2 style="color:white;">🎮 루미큐브 대기실</h2><div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${tags}</div>`;
-        html += `<div style="margin-bottom:20px;"><p style="font-size:0.8rem; color:#aaa; margin-bottom:10px;">게임 모드 설정</p>
-            <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
-            <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button></div>`;
-        
-        if (isHost) html += `<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>`;
-        else html += `<p style="color:var(--accent-gold);">방장이 모드를 설정 중입니다...</p>`;
-        
-        modalBody.innerHTML = html;
-    };
-
-    window.startGame = function() {
-        if (playerList.length < 2) return alert("최소 2명 필요");
-        db.ref('/').once('value', snap => {
-            const pool = []; 
-            const colors = ['red', 'blue', 'yellow', 'black']; 
-            const sets = (gameMode === 'expert') ? 3 : 2;
-            
-            colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
-            for(let k=0; k<(sets === 3 ? 4 : 2); k++) pool.push({ num: 'J', color: 'joker' });
-            pool.sort(() => Math.random() - 0.5);
-            
-            const up = { 'board': {}, 'currentTurn': playerList[0], 'settings/status': "playing", 'settings/activePlayers': playerList, 'chats': null, 'settings/gameResult': null };
-            
-            playerList.forEach(p => {
-                const hand = {}; 
-                for(let i=0; i<14; i++) { 
-                    const t = pool.pop(); 
-                    hand['tile_'+Math.random().toString(36).substr(2,9)] = t; 
-                }
-                up[`hands/${p}`] = hand; 
-                up[`players/${p}/registered`] = false;
-            });
-            
-            up['pool'] = Object.assign({}, pool); 
-            db.ref('/').update(up);
-        });
-    };
-
     window.handleTurnEnd = function() {
         if (myRole !== 'player') return;
-        
-        if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) {
-            return alert("타일을 내거나 뽑아야 합니다.");
-        }
-        
-        if (!validateBoard()) { playSFX('error'); return alert("유효하지 않은 세트!"); }
-        
+        if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) return alert("패를 내거나 뽑으세요.");
+        if (!validateBoard()) { playSFX('error'); return alert("보드 배치가 유효하지 않습니다!"); }
+
         db.ref(`players/${myName}/registered`).once('value', snap => {
             if (!snap.val()) {
-                let pts = 0; 
-                Object.entries(boardTiles).forEach(([id, t]) => { 
-                    if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); 
+                let pts = 0;
+                Object.entries(boardTiles).forEach(([id, t]) => {
+                    if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num));
                 });
-                
-                if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 필요`); }
-                db.ref('players/' + myName).update({ registered: true });
+                if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); }
+                db.ref(`players/${myName}`).update({ registered: true });
             }
-            
             if (myHandData.length === 0) {
-                db.ref('hands').once('value', hs => {
-                    const res = {}; const hands = hs.val() || {};
-                    playerList.forEach(p => { 
-                        let s = 0; 
-                        Object.values(hands[p]||{}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); 
-                        res[p] = s; 
+                db.ref('hands').once('value', hSnap => {
+                    const allHands = hSnap.val();
+                    const scores = {};
+                    playerList.forEach(p => {
+                        let s = 0;
+                        Object.values(allHands[p] || {}).forEach(tile => s += (tile.num === 'J' ? 50 : Number(tile.num)));
+                        scores[p] = s;
                     });
-                    db.ref('/').update({ "settings/gameResult": { winner: myName, scores: res }, "settings/status": "finished" });
+                    db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
                 });
             } else {
                 window.nextTurnAction();
@@ -480,62 +454,77 @@
 
     window.rollbackTurn = function() {
         if (myRole !== 'player') return;
-        if(confirm("무를까요?")) {
-            const up = {}; const cKeys = Object.keys(boardTiles); const iKeys = Object.keys(initialBoardState);
-            cKeys.forEach(id => { if (!iKeys.includes(id)) up[`hands/${myName}/${id}`] = boardTiles[id]; });
-            up['board'] = initialBoardState; 
-            db.ref('/').update(up).then(() => playSFX('tilePick'));
+        if(confirm("모든 동작을 취소할까요?")) {
+            const up = {};
+            Object.keys(boardTiles).forEach(k => { if(!initialBoardState[k]) up[`hands/${myName}/${k}`] = boardTiles[k]; });
+            up['board'] = initialBoardState;
+            db.ref('/').update(up);
+            playSFX('tilePick');
         }
     };
 
     window.drawTile = function() {
         if (myRole !== 'player') return;
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 무르거나 종료해야 함");
-        
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("패를 냈다면 무르거나 종료해야 합니다.");
         db.ref('pool').limitToFirst(1).once('value', s => {
             if (!s.exists()) return window.nextTurnAction();
-            const key = Object.keys(s.val())[0]; 
+            const key = Object.keys(s.val())[0];
             const up = {};
-            up[`hands/${myName}/tile_${Date.now()}`] = s.val()[key]; 
+            up[`hands/${myName}/tile_${Date.now()}`] = s.val()[key];
             up[`pool/${key}`] = null;
             db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
         });
     };
 
+    // --- [5] 시스템 제어 ---
+
+    window.startGame = function() {
+        if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
+        const colors = ['red', 'blue', 'yellow', 'black'];
+        const sets = (gameMode === 'expert') ? 3 : 2;
+        let pool = [];
+        colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
+        for(let k=0; k<(sets === 3 ? 4 : 2); k++) pool.push({ num: 'J', color: 'joker' });
+        pool.sort(() => Math.random() - 0.5);
+
+        const updates = { 'board': {}, 'currentTurn': playerList[0], 'settings/status': "playing", 'settings/activePlayers': playerList, 'chats': null };
+        playerList.forEach(p => {
+            const hand = {};
+            for(let i=0; i<14; i++) { const t = pool.pop(); hand['tile_'+Math.random().toString(36).substr(2,9)] = t; }
+            updates[`hands/${p}`] = hand;
+            updates[`players/${p}/registered`] = false;
+        });
+        updates['pool'] = Object.assign({}, pool);
+        db.ref('/').update(updates);
+    };
+
     window.dropOnBoard = function(e) {
         e.preventDefault();
-        if (currentTurn !== myName || myRole !== 'player') return;
-        
+        if (myRole !== 'player' || currentTurn !== myName) return;
         const id = e.dataTransfer.getData("text");
         const rect = document.getElementById('game-board').getBoundingClientRect();
         let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2;
         let sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
         
         const inHand = myHandData.find(t => t.id === id);
-        
         if (inHand) {
             const up = {}; up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy };
-            up[`hands/${myName}/${id}`] = null; 
-            db.ref('/').update(up); 
-            playSFX('tileDrop');
+            up[`hands/${myName}/${id}`] = null; db.ref('/').update(up);
         } else if (boardTiles[id]) {
-            db.ref(`board/${id}`).update({ x: sx, y: sy }); 
-            playSFX('tileDrop');
+            db.ref(`board/${id}`).update({ x: sx, y: sy });
         }
+        playSFX('tileDrop');
     };
 
     window.dropOnRack = function(e) {
-        e.preventDefault(); 
+        e.preventDefault();
         if (myRole !== 'player') return;
         const id = e.dataTransfer.getData("text");
-        db.ref(`board/${id}`).once('value', s => { 
-            if (s.exists()) { 
-                const up = {}; 
-                up[`hands/${myName}/${id}`] = s.val(); 
-                up[`board/${id}`] = null; 
-                db.ref('/').update(up); 
-                playSFX('tilePick'); 
-            } 
+        db.ref(`board/${id}`).once('value', s => {
+            if (s.exists()) {
+                const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null;
+                db.ref('/').update(up); playSFX('tilePick');
+            }
         });
     };
 
@@ -545,58 +534,60 @@
             const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
             return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
         });
+        const rEl = document.getElementById('my-rack');
+        if(!rEl) return;
+        rEl.querySelectorAll('.tile').forEach(t => t.remove());
+        myHandData.forEach(t => {
+            const div = document.createElement('div');
+            div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = (myRole === 'player');
+            div.ondragstart = (e) => { e.dataTransfer.setData("text", t.id); playSFX('tilePick'); };
+            rEl.appendChild(div);
+        });
+    };
+
+    window.renderLobbyUI = function() {
+        const modalBody = document.getElementById('modal-body');
+        const isHost = (myName === currentHost);
+        const allUsers = Object.entries(window.latestPlayersData);
+        let tags = allUsers.map(([name, data]) => {
+            if(!data.joined) return '';
+            const isSpec = data.role === 'spectator';
+            return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`;
+        }).join('');
         
-        const rEl = document.getElementById('my-rack'); 
-        if (rEl) {
-            rEl.querySelectorAll('.tile').forEach(t => t.remove());
-            myHandData.forEach(t => {
-                const div = document.createElement('div'); 
-                div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = (myRole === 'player');
-                div.ondragstart = (e) => { 
-                    if (myRole !== 'player') return e.preventDefault();
-                    e.dataTransfer.setData("text", t.id); playSFX('tilePick'); 
-                }; 
-                rEl.appendChild(div);
-            });
-        }
+        modalBody.innerHTML = `
+            <h2 style="color:white;">🎮 루미큐브 대기실</h2>
+            <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${tags}</div>
+            <div style="margin-bottom:20px;">
+                <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
+                <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button>
+            </div>
+            ${isHost ? '<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>' : '<p style="color:var(--accent-gold);">방장이 게임을 시작하기를 기다리는 중...</p>'}
+        `;
     };
 
     window.renderResultUI = function() {
         db.ref('settings/gameResult').once('value', snap => {
             const data = snap.val(); if (!data) return;
             const modalBody = document.getElementById('modal-body');
-            let html = `<h1 style="color:var(--accent-gold); font-size:2.5rem; margin-bottom:10px;">🎉 WINNER: ${data.winner}! 🎉</h1>`;
-            html += `<p style="color:#aaa; margin-bottom:20px;">남은 패 점수 합계 (낮을수록 좋음)</p><div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; margin-bottom:25px; text-align:left;">`;
-            
-            const sorted = Object.entries(data.scores).sort((a, b) => a[1] - b[1]);
-            sorted.forEach(([name, score]) => {
-                const isWinner = name === data.winner;
-                html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #444; ${isWinner ? 'color:var(--accent-green); font-weight:bold;' : ''}">
-                            <span>${isWinner ? '🏆' : '👤'} ${name}</span><span>${isWinner ? 'WINNER' : '-' + score + '점'}</span></div>`;
+            let html = `<h1 style="color:var(--accent-gold);">🏆 WINNER: ${data.winner}!</h1>`;
+            Object.entries(data.scores).sort((a,b)=>a[1]-b[1]).forEach(([name, score]) => {
+                html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #444;">
+                    <span>${name}</span><span>${name === data.winner ? 'WINNER' : score + '점'}</span>
+                </div>`;
             });
-            html += `</div>`;
-            
-            if (myName === currentHost) html += `<button onclick="window.returnToLobby()" style="background:var(--accent-purple); color:white; width:100%; padding:15px; font-weight:900;">대기실로 돌아가기</button>`;
-            else html += `<p style="color:var(--accent-gold);">방장이 대기실로 이동시킬 때까지 대기하세요...</p>`;
-            
+            if (myName === currentHost) html += `<button onclick="window.returnToLobby()" style="margin-top:20px; width:100%; padding:10px;">대기실로 돌아가기</button>`;
             modalBody.innerHTML = html;
         });
     };
 
     window.setSortMode = (m) => { sortMode = m; window.applyAutoSort(); };
-    window.nextTurnAction = () => { db.ref('settings/activePlayers').once('value', s => { const l = s.val() || []; db.ref('currentTurn').set(l[(l.indexOf(currentTurn) + 1) % l.length]); }); };
-    window.returnToLobby = () => { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {}, "settings/gameResult": null }); };
-    window.forceNextTurn = () => { if(confirm("강제 이동?")) window.nextTurnAction(); };
+    window.nextTurnAction = () => { db.ref('currentTurn').set(playerList[(playerList.indexOf(currentTurn) + 1) % playerList.length]); };
+    window.returnToLobby = () => { if(confirm("방 전체를 초기화할까요?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {}, "settings/gameResult": null }); };
+    window.forceNextTurn = () => { if(confirm("다음 차례로 넘길까요?")) window.nextTurnAction(); };
     window.toggleChat = () => { const b = document.getElementById('chat-box'); const i = document.getElementById('chat-input-container'); const v = b.style.display === 'block'; b.style.display = v?'none':'block'; i.style.display = v?'none':'flex'; };
-    
-    window.sendChat = () => { 
-        const i = document.getElementById('chat-input'); 
-        const color = document.getElementById('chat-color-input').value;
-        if (i && i.value.trim()) { 
-            db.ref('chats').push({ name: myName, msg: i.value, color: color }); 
-            i.value = ''; 
-        } 
-    };
+    window.sendChat = () => { const i = document.getElementById('chat-input'); const color = document.getElementById('chat-color-input').value; if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value, color: color }); i.value = ''; } };
+    window.toggleBGM = () => { if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); } else { audioCtx.bgm.play().catch(()=>{}); } audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying; };
 </script>
 </body>
 </html>
