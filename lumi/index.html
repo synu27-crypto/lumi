@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 30.3</title>
+    <title>루미큐브 : Ver 30.4</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -420,14 +420,57 @@
         if (!validateBoard()) { playSFX('error'); return alert("보드 배치가 유효하지 않습니다!"); }
 
         db.ref(`players/${myName}/registered`).once('value', snap => {
-            if (!snap.val()) {
+            const isReg = snap.val();
+            
+            if (!isReg) {
+                // --- 🚨 꼼수 방지: 남의 패에 이어 붙이기 차단 로직 🚨 ---
+                let isPiggybacking = false;
+                const rows = {};
+                
+                Object.entries(boardTiles).forEach(([id, t]) => {
+                    t.id = id; // 타일에 임시로 ID표시
+                    if(!rows[t.y]) rows[t.y]=[];
+                    rows[t.y].push(t);
+                });
+
+                for (let y in rows) {
+                    const rowTiles = rows[y].sort((a,b) => a.x - b.x);
+                    let currentSet = [];
+                    for (let i=0; i<rowTiles.length; i++) {
+                        currentSet.push(rowTiles[i]);
+                        // 타일 간격이 벌어져서 한 세트가 끝났을 때 검사
+                        if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
+                            // 이 세트 안에 원래 판에 있던 패(Old)와 내가 방금 낸 패(New)가 섞여 있는지 확인
+                            let hasOld = currentSet.some(tile => initialBoardState[tile.id]);
+                            let hasNew = currentSet.some(tile => !initialBoardState[tile.id]);
+                            
+                            // 섞여 있다면 남의 패에 기생한 것!
+                            if (hasOld && hasNew) {
+                                isPiggybacking = true;
+                            }
+                            currentSet = [];
+                        }
+                    }
+                }
+
+                if (isPiggybacking) {
+                    playSFX('error');
+                    return alert("🚨 등록 실패! 첫 등록 시에는 바닥에 깔린 패에 이어 붙일 수 없습니다. 오직 내 손에 있는 패로만 30점을 만들어야 합니다.");
+                }
+                // --------------------------------------------------------
+
                 let pts = 0;
                 Object.entries(boardTiles).forEach(([id, t]) => {
                     if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num));
                 });
+                
                 if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); }
+                
+                // 모든 조건을 통과해야만 등록 완료 처리
                 db.ref(`players/${myName}`).update({ registered: true });
             }
+            
+            // 패를 다 털었는지 확인 (승리 조건)
             if (myHandData.length === 0) {
                 db.ref('hands').once('value', hSnap => {
                     const allHands = hSnap.val();
