@@ -188,11 +188,41 @@
             if (timeLeft <= 0) {
                 clearInterval(turnTimer);
                 if (currentTurn === myName && myRole === 'player') {
-                    alert("시간 초과!");
-                    window.drawTile();
+                    window.timeOutPenalty();
                 }
             }
         }, 1000);
+    };
+
+    // 🚨 시간 초과 벌칙 로직 (새로 추가) 🚨
+    window.timeOutPenalty = function() {
+        alert("시간 초과! 바닥이 초기화되고 벌칙 타일 3개를 받습니다.");
+        
+        // 1. 바닥 상태를 이번 턴 시작 전으로 강제 되돌림 (무르기)
+        const up = {};
+        Object.keys(boardTiles).forEach(k => { 
+            if(!initialBoardState[k]) {
+                // 이번 턴에 낸 내 패는 다시 내 손으로
+                up[`hands/${myName}/${k}`] = boardTiles[k]; 
+            }
+        });
+        up['board'] = initialBoardState;
+        
+        // 2. 벌칙 타일 3개 뽑기
+        db.ref('pool').limitToFirst(3).once('value', s => {
+            if (s.exists()) {
+                const poolObj = s.val();
+                Object.keys(poolObj).forEach(key => {
+                    up[`hands/${myName}/tile_${Date.now()}_${Math.random().toString(36).substr(2,5)}`] = poolObj[key];
+                    up[`pool/${key}`] = null;
+                });
+            }
+            // 3. 업데이트 후 턴 넘기기
+            db.ref('/').update(up).then(() => { 
+                playSFX('error'); 
+                window.nextTurnAction(); 
+            });
+        });
     };
 
     window.handleEntry = function(role, isAuto = false) {
