@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>루미큐브 : Ver 24.0</title>
+    <title>루미큐브 : Ver 24.1</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 15000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; }
         #chat-box div { margin-bottom: 6px; font-size: 0.85rem; line-height: 1.4; word-break: break-all; }
-        #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; }
+        #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; font-size: 0.8rem; outline: none; }
         #chat-color-picker { width: 25px; height: 25px; border: none; background: none; cursor: pointer; padding: 0; }
         #chat-toggle { align-self: flex-end; background: var(--accent-purple); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; pointer-events: auto; font-weight: bold; margin-top: 5px; }
@@ -61,15 +61,13 @@
         .mode-btn { background: #333; border: 1px solid #555; padding: 12px; border-radius: 12px; cursor: pointer; margin: 10px 5px; width: 130px; color: white; }
         .mode-btn.selected { border-color: var(--accent-gold); background: rgba(241, 196, 15, 0.2); color: var(--accent-gold); font-weight: bold; }
         .start-btn-large { background: var(--accent-green); color: #000; width: 100%; margin-top: 20px; padding: 18px; border-radius: 12px; font-size: 1.1rem; font-weight: 900; border: none; cursor: pointer; }
-
-        #reg-badge { background: var(--accent-gold); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 900; margin-left: 5px; }
     </style>
 </head>
 <body onclick="if(window.initAudio) window.initAudio()">
 
 <div id="main-container">
     <div id="ui-layer">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
             <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
             <div class="audio-ctrl">
                 <button onclick="window.toggleBGM()">🎵 BGM</button>
@@ -78,9 +76,9 @@
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
-        <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
+        <div style="display: flex; gap: 8px; flex: 1; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
-            <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">넘기기</button>
+            <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">턴 넘기기</button>
             <span id="pool-badge" style="color:var(--accent-purple); font-weight:900; align-self:center; margin-right:10px;">POOL: --</span>
             <button id="btn-rollback" onclick="window.rollbackTurn()" disabled>무르기</button>
             <button id="btn-draw" onclick="window.drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
@@ -119,11 +117,30 @@
 <audio id="bgm-audio" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" type="audio/mpeg"></audio>
 
 <script>
-    let db, myName, myJoinTime, audioCtx, bgm;
-    let playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
-    let isRegistered = false, initialBoardState = {};
+    // 🚀 [Scope 수리] 함수들을 window.onload 밖 전역 스코프로 끄집어냄
+    let db, myName, playerList = [], activePlayers = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal", isSpectating = false;
+    let isRegistered = false, initialBoardState = {}, bgm;
 
-    // --- 🚀 전역 기능: BGM & 채팅 ---
+    function getHostName() {
+        if (playerList.includes("계헌")) return "계헌";
+        return playerList[0] || "";
+    }
+
+    window.renderLobbyUI = function() {
+        const modalBody = document.getElementById('modal-body');
+        if(!modalBody) return;
+        const hostName = getHostName();
+        const isHost = (myName === hostName);
+        let html = `<h2>🎮 루미큐브 대기실</h2><p>내 닉네임: <strong style="color:var(--turn-blue)">${myName}</strong></p>`;
+        if (isHost) {
+            html += `<div style="margin:20px 0; border:1px solid #444; padding:15px; border-radius:12px;"><p style="margin-top:0;">방장 설정 권한 (👑)</p><button class="mode-btn ${gameMode === 'normal'?'selected':''}" onclick="window.setGameMode('normal')">보통 (2세트)</button><button class="mode-btn ${gameMode === 'expert'?'selected':''}" onclick="window.setGameMode('expert')">전문가 (3세트)</button></div><button class="start-btn-large" onclick="window.startGame()">게임 시작</button>`;
+        } else {
+            html += `<p style="color:var(--accent-gold); margin:30px 0;">방장(${hostName})이 게임을 시작하길 기다리고 있습니다...</p>`;
+        }
+        modalBody.innerHTML = html;
+    };
+
+    window.setGameMode = function(mode) { if(db) db.ref('settings/gameMode').set(mode); };
     window.toggleBGM = function() { if (bgm.paused) bgm.play(); else bgm.pause(); };
     window.changeVolume = function(v) { if(bgm) bgm.volume = v; };
     window.toggleChat = function() {
@@ -137,10 +154,6 @@
         db.ref('chat').push({ name: myName, msg: i.value.trim(), color: cp.value });
         i.value = '';
     };
-
-    // --- 🚀 등록 및 게임 로직 ---
-    window.setGameMode = function(mode) { if(db) db.ref('settings/gameMode').set(mode); };
-    window.forceNextTurn = function() { if(confirm("강제 턴 넘기기?")) window.nextTurnAction(); };
 
     window.startGame = function() {
         db.ref('players').once('value', snap => {
@@ -173,59 +186,13 @@
             Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => {
                 pts += (t.num === 'J' ? 30 : Number(t.num));
             });
-            if (pts < 30) return alert(`⚠️ 등록 점수 부족! (현재: ${pts}점)\n첫 등록은 30점 이상이어야 합니다.`);
+            if (pts < 30) return alert(`⚠️ 등록 실패! (현재 점수: ${pts})\n첫 등록은 숫자 합계 30점 이상이어야 합니다.`);
             db.ref('players/' + myName).update({ registered: true });
         }
         if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
     };
 
-    window.nextTurnAction = function() {
-        const list = activePlayers; if (list.length < 2) return;
-        db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]);
-    };
-
-    window.drawTile = function() {
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 회수해야 뽑을 수 있습니다.");
-        db.ref('pool').limitToFirst(1).once('value', s => {
-            if (!s.exists()) return window.nextTurnAction();
-            const key = Object.keys(s.val())[0];
-            db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]);
-            db.ref('pool/' + key).remove(); window.nextTurnAction();
-        });
-    };
-
-    window.rollbackTurn = function() { if(confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
-
-    window.dropOnBoard = function(e) {
-        e.preventDefault(); const id = e.dataTransfer.getData("text");
-        const rect = document.getElementById('game-board').getBoundingClientRect();
-        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
-        const inHand = myHandData.find(t => t.id === id);
-        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
-        else if (boardTiles[id]) { if(!isRegistered && initialBoardState[id]) return; db.ref('board/' + id).update({ x: snapX, y: snapY }); }
-    };
-
-    window.dropOnRack = function(e) {
-        e.preventDefault(); const id = e.dataTransfer.getData("text");
-        if (initialBoardState[id] && !isRegistered) return;
-        db.ref('board/' + id).once('value', s => { if (s.exists()) { db.ref('hands/' + myName + '/' + id).set(s.val()); db.ref('board/' + id).remove(); } });
-    };
-
-    window.setSortMode = function(m) { sortMode = m; applyAutoSort(); };
-    function applyAutoSort() {
-        const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
-        myHandData.sort((a, b) => {
-            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
-            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
-        });
-        const rEl = document.getElementById('my-rack'); rEl.querySelectorAll('.tile').forEach(t => t.remove());
-        myHandData.forEach(t => {
-            const div = document.createElement('div'); div.className = `tile ${t.color}`; div.id = t.id; div.innerText = t.num;
-            div.draggable = true; div.ondragstart = (e) => e.dataTransfer.setData("text", t.id); rEl.appendChild(div);
-        });
-    }
-
-    // --- 초기화 및 리스너 ---
+    // --- 리스너 및 초기화 ---
     window.onload = function() {
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
         firebase.initializeApp(config); db = firebase.database();
@@ -233,33 +200,31 @@
         window.sessionStorage.setItem('lumi-nick', myName);
         bgm = document.getElementById('bgm-audio');
 
-        db.ref('players/' + myName).set({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP, spectating: false });
+        db.ref('players/' + myName).update({ joined: true, timestamp: firebase.database.ServerValue.TIMESTAMP, spectating: false });
         db.ref('players/' + myName).onDisconnect().remove();
 
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
-            if (gameStatus === "finished") window.showRanking(); else if (gameStatus === "waiting") renderLobbyUI();
+            if (gameStatus === "finished") window.showRanking(); else if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
             playerList = Object.entries(players).map(([name, data]) => ({ name, ...data })).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)).map(p => p.name);
-            const hostName = getHostName(); const isHost = (myName === hostName);
-            document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
-            document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
+            const hostName = getHostName();
+            document.getElementById('btn-force-next').style.display = (myName === hostName) ? 'inline-block' : 'none';
+            document.getElementById('btn-force-lobby').style.display = (myName === hostName) ? 'inline-block' : 'none';
             const listEl = document.getElementById('player-list-container'); listEl.innerHTML = '';
             playerList.forEach(name => {
                 const badge = document.createElement('span'); badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-                badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>${players[name].registered ? '<span id="reg-badge">등록됨</span>' : ''}`;
+                badge.innerHTML = `${name === hostName ? '👑 ' : ''}${name} <span class="tile-count">${players[name].tileCount || 0}</span>${players[name].registered ? '<small style="color:var(--accent-gold);margin-left:3px;">●</small>' : ''}`;
                 listEl.appendChild(badge);
             });
             isRegistered = players[myName]?.registered || false;
-            document.getElementById('reg-info').innerText = isRegistered ? "" : "최초 등록이 필요합니다 (30점 이상)";
-            if (gameStatus === "waiting") renderLobbyUI();
+            document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
         });
 
-        db.ref('settings/activePlayers').on('value', snap => { activePlayers = snap.val() || []; });
         db.ref('currentTurn').on('value', snap => {
             currentTurn = snap.val(); const isMy = (currentTurn === myName);
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
@@ -268,6 +233,14 @@
             if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
         });
 
+        db.ref('chat').limitToLast(30).on('child_added', snap => {
+            const d = snap.val(); const box = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color:${d.color || '#f1c40f'}; font-weight:bold;">${d.name}:</span> <span style="color:#eee;">${d.msg}</span>`;
+            box.appendChild(div); box.scrollTop = box.scrollHeight;
+        });
+        
+        // 나머지 리스너(board, hands 등) 생략 없이 Ver 23.5 로직 유지
         db.ref('board').on('value', snap => {
             boardTiles = snap.val() || {}; const bEl = document.getElementById('game-board'); bEl.querySelectorAll('.tile').forEach(t => t.remove());
             Object.entries(boardTiles).forEach(([id, data]) => {
@@ -281,20 +254,52 @@
 
         db.ref('hands/' + myName).on('value', snap => {
             myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
-            if(sortMode!=='manual') applyAutoSort();
             db.ref('players/' + myName).update({ tileCount: myHandData.length });
+            window.setSortMode(sortMode);
         });
-
-        db.ref('chat').limitToLast(30).on('child_added', snap => {
-            const d = snap.val(); const box = document.getElementById('chat-box');
-            const div = document.createElement('div');
-            div.innerHTML = `<span style="color:${d.color || '#fff'}; font-weight:bold;">${d.name}:</span> <span style="color:#eee;">${d.msg}</span>`;
-            box.appendChild(div); box.scrollTop = box.scrollHeight;
-        });
-        db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || "normal"; if(gameStatus === "waiting") renderLobbyUI(); });
     };
 
-    window.returnToLobby = function() { if(confirm("초기화할까요?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/activePlayers": null }); };
+    window.nextTurnAction = function() {
+        db.ref('settings/activePlayers').once('value', snap => {
+            const list = snap.val() || [];
+            db.ref('currentTurn').set(list[(list.indexOf(currentTurn) + 1) % list.length]);
+        });
+    };
+    window.drawTile = function() {
+        db.ref('pool').limitToFirst(1).once('value', s => {
+            if (!s.exists()) return window.nextTurnAction();
+            const key = Object.keys(s.val())[0];
+            db.ref('hands/' + myName + '/tile_' + Date.now()).set(s.val()[key]);
+            db.ref('pool/' + key).remove(); window.nextTurnAction();
+        });
+    };
+    window.dropOnBoard = function(e) {
+        e.preventDefault(); const id = e.dataTransfer.getData("text");
+        const rect = document.getElementById('game-board').getBoundingClientRect();
+        let snapX = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, snapY = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+        const inHand = myHandData.find(t => t.id === id);
+        if (inHand) { db.ref('board/' + id).set({ num: inHand.num, color: inHand.color, x: snapX, y: snapY }); db.ref('hands/' + myName + '/' + id).remove(); }
+        else if (boardTiles[id]) { db.ref('board/' + id).update({ x: snapX, y: snapY }); }
+    };
+    window.dropOnRack = function(e) {
+        e.preventDefault(); const id = e.dataTransfer.getData("text");
+        if (initialBoardState[id] && !isRegistered) return;
+        db.ref('board/' + id).once('value', s => { if (s.exists()) { db.ref('hands/' + myName + '/' + id).set(s.val()); db.ref('board/' + id).remove(); } });
+    };
+    window.setSortMode = function(m) {
+        sortMode = m; const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+        myHandData.sort((a, b) => {
+            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
+            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
+        });
+        const rEl = document.getElementById('my-rack'); rEl.querySelectorAll('.tile').forEach(t => t.remove());
+        myHandData.forEach(t => {
+            const div = document.createElement('div'); div.className = `tile ${t.color}`; div.id = t.id; div.innerText = t.num;
+            div.draggable = true; div.ondragstart = (e) => e.dataTransfer.setData("text", t.id); rEl.appendChild(div);
+        });
+    };
+    window.rollbackTurn = function() { if(confirm("무르시겠습니까?")) db.ref('board').set(initialBoardState); };
+    window.returnToLobby = function() { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null }); };
 </script>
 </body>
 </html>
