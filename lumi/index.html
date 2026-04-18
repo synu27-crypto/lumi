@@ -339,15 +339,81 @@
     window.toggleChat = function() { const box = document.getElementById('chat-box'); const input = document.getElementById('chat-input-container'); const isVisible = box.style.display === 'block'; box.style.display = isVisible ? 'none' : 'block'; input.style.display = isVisible ? 'none' : 'flex'; };
     window.sendChat = function() { const input = document.getElementById('chat-input'); if (!input.value.trim()) return; db.ref('chats').push({ name: myName, msg: input.value, time: Date.now() }); input.value = ''; };
     
-    window.handleTurnEnd = function() {
-        if (!validateBoard()) { playSFX('error'); return alert("⚠️ 유효하지 않은 세트가 있습니다!"); }
-        if (!isRegistered) {
-            let pts = 0; Object.entries(boardTiles).filter(([id]) => !initialBoardState[id]).forEach(([id, t]) => { pts += (t.num === 'J' ? 30 : Number(t.num)); });
-            if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내세요.`); }
-            playSFX('success'); db.ref('players/' + myName).update({ registered: true });
+// --- [Action] 종료 로직 수정 (등록 상태 DB 직접 확인) ---
+window.handleTurnEnd = function() {
+    if (!validateBoard()) { 
+        playSFX('error'); 
+        return alert("⚠️ 유효하지 않은 세트가 있습니다!"); 
+    }
+
+    // DB에서 현재 유저의 최신 등록 상태를 다시 읽어옴
+    db.ref(`players/${myName}/registered`).once('value', snap => {
+        const alreadyRegistered = snap.val() || false;
+
+        if (!alreadyRegistered) {
+            // 첫 등록 검사: 턴 시작 시점의 보드와 비교하여 새로 낸 타일의 점수 합산
+            let pts = 0; 
+            Object.entries(boardTiles).forEach(([id, t]) => {
+                if (!initialBoardState[id]) { // 시작 시 보드에 없던 타일(내가 낸 타일)만 계산
+                    pts += (t.num === 'J' ? 30 : Number(t.num));
+                }
+            });
+
+            if (pts < 30) { 
+                playSFX('error'); 
+                return alert(`등록 실패 (${pts}점)! 첫 등록은 30점 이상 내야 합니다.`); 
+            }
+            
+            // 등록 성공 시 DB에 기록
+            playSFX('success'); 
+            db.ref('players/' + myName).update({ registered: true });
         }
-        if (myHandData.length === 0) db.ref('settings/status').set("finished"); else window.nextTurnAction();
-    };
+
+        // 패가 0개면 승리, 아니면 다음 턴으로
+        if (myHandData.length === 0) {
+            db.ref('settings/status').set("finished"); 
+        } else {
+            window.nextTurnAction();
+        }
+    });
+};// --- [Action] 종료 로직 수정 (등록 상태 DB 직접 확인) ---
+window.handleTurnEnd = function() {
+    if (!validateBoard()) { 
+        playSFX('error'); 
+        return alert("⚠️ 유효하지 않은 세트가 있습니다!"); 
+    }
+
+    // DB에서 현재 유저의 최신 등록 상태를 다시 읽어옴
+    db.ref(`players/${myName}/registered`).once('value', snap => {
+        const alreadyRegistered = snap.val() || false;
+
+        if (!alreadyRegistered) {
+            // 첫 등록 검사: 턴 시작 시점의 보드와 비교하여 새로 낸 타일의 점수 합산
+            let pts = 0; 
+            Object.entries(boardTiles).forEach(([id, t]) => {
+                if (!initialBoardState[id]) { // 시작 시 보드에 없던 타일(내가 낸 타일)만 계산
+                    pts += (t.num === 'J' ? 30 : Number(t.num));
+                }
+            });
+
+            if (pts < 30) { 
+                playSFX('error'); 
+                return alert(`등록 실패 (${pts}점)! 첫 등록은 30점 이상 내야 합니다.`); 
+            }
+            
+            // 등록 성공 시 DB에 기록
+            playSFX('success'); 
+            db.ref('players/' + myName).update({ registered: true });
+        }
+
+        // 패가 0개면 승리, 아니면 다음 턴으로
+        if (myHandData.length === 0) {
+            db.ref('settings/status').set("finished"); 
+        } else {
+            window.nextTurnAction();
+        }
+    });
+};
 
     window.drawTile = function() {
         if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 무르거나 종료해야 합니다.");
