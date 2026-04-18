@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 28.3</title>
+    <title>루미큐브 : Ver 21</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -204,11 +204,6 @@ window.startTurnTimer = function() {
         }
         return true;
     }
-
-    // 변수 선언부 (기존 위치)
-let db, myName, currentHost = "";
-let myRole = ""; // 역할 저장 변수 추가
-// ... 나머지 변수들
 
 // --- 1. 입장 처리 함수 (window.onload 바깥에 두세요) ---
 window.handleEntry = function(role, isAuto = false) {
