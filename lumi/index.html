@@ -518,19 +518,33 @@
     window.dropOnBoard = function(e) {
         e.preventDefault();
         if (myRole !== 'player' || currentTurn !== myName) return;
+        
         const id = e.dataTransfer.getData("text");
         const rect = document.getElementById('game-board').getBoundingClientRect();
         let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2;
         let sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
         
         const inHand = myHandData.find(t => t.id === id);
+        
         if (inHand) {
+            // 1. 내 손에 있는 타일을 바닥으로 내는 것은 항상 허용
             const up = {}; up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy };
             up[`hands/${myName}/${id}`] = null; db.ref('/').update(up);
+            playSFX('tileDrop');
         } else if (boardTiles[id]) {
+            // 2. 바닥에 있는 타일을 조작하려고 할 때: 내가 '등록'을 했는지 먼저 확인!
+            const isReg = window.latestPlayersData[myName]?.registered;
+            
+            // 만약 등록을 안 했고, 이 타일이 이번 턴에 내가 방금 낸 타일(initialBoardState에 없는 타일)도 아니라면 조작 차단
+            if (!isReg && initialBoardState[id]) {
+                playSFX('error');
+                return alert("등록(30점)을 하기 전에는 바닥에 있는 패를 조작할 수 없습니다.");
+            }
+            
+            // 등록을 했거나, 내가 방금 낸 타일을 다시 움직이는 거라면 허용
             db.ref(`board/${id}`).update({ x: sx, y: sy });
+            playSFX('tileDrop');
         }
-        playSFX('tileDrop');
     };
 
     window.dropOnRack = function(e) {
