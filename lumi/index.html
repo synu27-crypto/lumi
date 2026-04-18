@@ -69,6 +69,7 @@
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
+<div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
         <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
             <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">강제 턴</button>
@@ -115,6 +116,8 @@
 
 <script>
     let db, myName, currentHost = "";
+let turnTimer = null; // 시계 장치를 담아둘 그릇
+    let timeLeft = 60;    // 남은 시간 연료
     let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
     let isRegistered = false, initialBoardState = {};
 
@@ -134,6 +137,24 @@
     window.updateChatColor = (color) => { 
         document.documentElement.style.setProperty('--chat-text-color', color);
         localStorage.setItem('lumi-chat-color', color);
+    };
+window.startTurnTimer = function() {
+        if (turnTimer) clearInterval(turnTimer); // 이미 시계가 가고 있으면 멈추고 새로 시작
+        timeLeft = 60; // 시간을 60으로 리셋
+        const timerEl = document.getElementById('timer-display'); // 숫자를 그릴 화면 위치 찾기
+        
+        turnTimer = setInterval(() => { // 1000ms(1초)마다 아래 내용을 실행해라
+            timeLeft--; // 1씩 깎기
+            timerEl.innerText = timeLeft + "s"; // 화면에 숫자 그리기
+            
+            if (timeLeft <= 0) { // 시간이 다 됐으면?
+                clearInterval(turnTimer); // 시계 멈추고
+                if (currentTurn === myName) { // 하필 그게 내 차례라면?
+                    alert("시간 초과!"); // 경고 띄우고
+                    window.drawTile(); // 강제로 타일 한 개 뽑기 (뽑으면 턴이 자동으로 넘어감)
+                }
+            }
+        }, 1000);
     };
 
     function playSFX(key) { const sfx = new Audio(SOUND_ASSETS[key]); sfx.volume = audioCtx.currentVolume; sfx.play().catch(()=>{}); }
@@ -222,8 +243,19 @@
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
-            if (gameStatus === "waiting") window.renderLobbyUI();
-            else if (gameStatus === "finished") { playSFX('success'); window.renderResultUI(); }
+            
+            if (gameStatus === "waiting") {
+                window.renderLobbyUI();
+            } else if (gameStatus === "finished") {
+                playSFX('success');
+                window.renderResultUI();
+            }
+
+            // 게임 중이 아닐 때는 타이머를 정지하고 숫자를 지움
+            if (gameStatus !== "playing") {
+                if (turnTimer) clearInterval(turnTimer);
+                document.getElementById('timer-display').innerText = "";
+            }
         });
 
         db.ref('currentTurn').on('value', snap => {
@@ -233,6 +265,9 @@
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
             if(isMy && prev !== myName) playSFX('turnAlarm');
             if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
+            
+            // 턴 신호를 받을 때마다 타이머를 리셋하고 시작
+            window.startTurnTimer();
         });
 
         db.ref('board').on('value', snap => {
