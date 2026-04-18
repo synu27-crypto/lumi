@@ -202,19 +202,16 @@
                 listEl.appendChild(badge);
             });
 
-            // 4. 내 권한 및 등록 상태 체크
+// 4. 내 권한 및 등록 상태 체크
             const isHost = (myName === currentHost);
             document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
             document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
             
+            // 유저의 등록 상태 확인
             isRegistered = players[myName]?.registered || false;
             document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
             
-            if (gameStatus === "waiting") window.renderLobbyUI();
-        });
-
-            isRegistered = players[myName]?.registered || false;
-            document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
+            // 대기실 UI 갱신
             if (gameStatus === "waiting") window.renderLobbyUI();
         });
 
