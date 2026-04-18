@@ -350,13 +350,34 @@
         });
     };
 
-    window.dropOnBoard = function(e) {
-        e.preventDefault(); if (currentTurn !== myName) return;
-        const id = e.dataTransfer.getData("text"); const rect = document.getElementById('game-board').getBoundingClientRect();
-        let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+   window.dropOnBoard = function(e) {
+        e.preventDefault();
+        if (currentTurn !== myName) return; // 내 차례가 아니면 무시
+
+        const id = e.dataTransfer.getData("text");
+        const rect = document.getElementById('game-board').getBoundingClientRect();
+        
+        // 마우스 위치에 따른 스냅(격자) 좌표 계산
+        let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2;
+        let sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+
         const inHand = myHandData.find(t => t.id === id);
-        if (inHand) { const up = {}; up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy }; up[`hands/${myName}/${id}`] = null; db.ref('/').update(up); playSFX('tileDrop'); }
-        else if (boardTiles[id]) { db.ref(`board/${id}`).update({ x: sx, sy }); playSFX('tileDrop'); }
+        
+        if (inHand) {
+            // 1. 내 손에서 보드로 타일을 처음 낼 때
+            const up = {};
+            up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy };
+            up[`hands/${myName}/${id}`] = null;
+            db.ref('/').update(up);
+            playSFX('tileDrop');
+        } else {
+            // 2. 이미 보드에 있는 타일을 다른 위치(열)로 옮길 때
+            // 보드판 데이터(boardTiles)에 해당 타일이 있는지 확인 후 좌표 업데이트
+            if (boardTiles && boardTiles[id]) {
+                db.ref(`board/${id}`).update({ x: sx, y: sy });
+                playSFX('tileDrop');
+            }
+        }
     };
 
     window.dropOnRack = function(e) {
