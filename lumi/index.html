@@ -176,18 +176,30 @@
 
         // Listeners
         db.ref('players').on('value', snap => {
-            const players = snap.val() || {};
-            playerList = Object.entries(players).filter(p => p[1].joined).sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0)).map(p => p[0]);
-            const isHost = (myName === currentHost);
-            document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
-            document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
-            const listEl = document.getElementById('player-list-container'); listEl.innerHTML = '';
-            playerList.forEach(name => {
-                const badge = document.createElement('span');
-                badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-                badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${players[name]?.tileCount || 0}</span>`;
-                listEl.appendChild(badge);
-            });
+    const players = snap.val() || {};
+    // 현재 접속 중인 플레이어 리스트 갱신
+    playerList = Object.entries(players)
+        .filter(p => p[1].joined)
+        .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
+        .map(p => p[0]);
+
+    const isHost = (myName === currentHost);
+    
+    // --- [방장 자동 승계 로직 추가] ---
+    // 1. 방장 설정이 비어있거나, 2. 현재 방장이 플레이어 리스트에 없다면 (나갔다면)
+    if (!currentHost || !playerList.includes(currentHost)) {
+        if (playerList.length > 0) {
+            // 리스트의 첫 번째 사람(가장 오래 접속한 사람)을 새 방장으로 선출
+            const newHost = playerList[0];
+            db.ref('settings/host').set(newHost);
+        }
+    }
+    // --------------------------------
+    
+    // 이후 UI 업데이트 로직...
+    document.getElementById('btn-force-lobby').style.display = (myName === currentHost) ? 'inline-block' : 'none';
+    // (중략)
+});
             isRegistered = players[myName]?.registered || false;
             document.getElementById('reg-info').innerText = isRegistered ? "" : "첫 등록 필요 (30점 이상)";
             if (gameStatus === "waiting") window.renderLobbyUI();
