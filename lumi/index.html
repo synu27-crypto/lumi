@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 30.1</title>
+    <title>루미큐브 : Ver 30.2</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -73,7 +73,7 @@
 
 <div id="entry-layer" style="display: none;">
     <div class="modal-card">
-        <h2 style="color:white; margin-bottom:10px;">🎮 루미큐브 : Ver 27.3</h2>
+        <h2 style="color:white; margin-bottom:10px;">🎮 루미큐브 : Ver 27.4</h2>
         <input type="text" id="nick-input" placeholder="닉네임을 입력하세요" style="width: 80%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; outline: none; text-align: center; font-size: 1.1rem;">
         <div style="display: flex; gap: 15px; justify-content: center;">
             <button onclick="handleEntry('player')" style="background: var(--accent-purple); padding: 15px 30px; font-weight: 900; cursor: pointer;">플레이어로 참여</button>
@@ -256,7 +256,6 @@
         if (!firebase.apps.length) firebase.initializeApp(config);
         db = firebase.database();
 
-        // 페이지 새로고침 시 무조건 입력창 띄우고 싶다면 아래 두 줄을 지우시면 됩니다.
         if (window.sessionStorage.getItem('lumi-nick')) { window.handleEntry(null, true); }
         else { document.getElementById('entry-layer').style.display = 'flex'; }
 
@@ -332,7 +331,6 @@
             bEl.querySelectorAll('.tile').forEach(t => t.remove());
             
             Object.entries(boardTiles).forEach(([id, data]) => {
-                // DB 꼬임 방어 코드: 데이터가 비정상적이면 렌더링 무시
                 if (!data || data.num === undefined || data.color === undefined) return; 
 
                 const div = document.createElement('div');
@@ -486,7 +484,6 @@
         if(sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
         pool.sort(() => Math.random() - 0.5);
 
-        // hands: null을 제외하여 경로 충돌을 방지합니다.
         const updates = { 
             'board': null, 
             'currentTurn': playerList[0], 
@@ -494,7 +491,7 @@
             'chats': null 
         };
         
-        const allHands = {}; // 플레이어들의 패를 모을 빈 객체 생성
+        const allHands = {};
         
         playerList.forEach(p => {
             const hand = {};
@@ -502,11 +499,11 @@
                 const t = pool.pop(); 
                 if(t) hand['tile_' + Math.random().toString(36).substr(2,9)] = t; 
             }
-            allHands[p] = hand; // 객체에 개별 플레이어 패 저장
+            allHands[p] = hand;
             updates[`players/${p}/registered`] = false;
         });
         
-        updates['hands'] = allHands; // 묶어둔 패 데이터를 hands 전체에 한 번에 덮어씌움
+        updates['hands'] = allHands;
         
         const poolObj = {};
         pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
@@ -555,9 +552,7 @@
         if(!rEl) return;
         rEl.querySelectorAll('.tile').forEach(t => t.remove());
         myHandData.forEach(t => {
-            // DB 꼬임 방어 코드: 데이터가 비정상적이면 렌더링 무시
             if (!t || t.num === undefined || t.color === undefined) return;
-
             const div = document.createElement('div');
             div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = (myRole === 'player');
             div.ondragstart = (e) => { e.dataTransfer.setData("text", t.id); playSFX('tilePick'); };
@@ -604,7 +599,6 @@
     window.setSortMode = (m) => { sortMode = m; window.applyAutoSort(); };
     window.nextTurnAction = () => { db.ref('currentTurn').set(playerList[(playerList.indexOf(currentTurn) + 1) % playerList.length]); };
     
-    // 리셋 시 예전의 모든 깨진 데이터를 확실하게 강제로 지웁니다 (null 처리)
     window.returnToLobby = () => { 
         if(confirm("방 전체 데이터를 완전히 초기화할까요?")) {
             db.ref('/').update({ 
