@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 21</title>
+    <title>루미큐브 : Ver 28</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -12,36 +12,28 @@
             --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.98); --tile-bg: #f8f5f0;
             --accent-purple: #9d50bb; --accent-green: #2ecc71; --accent-gold: #f1c40f; --accent-red: #e74c3c;
             --turn-blue: #3498db; --chat-bg: rgba(25, 25, 25, 0.98);
-            --chat-text-color: #ffffff; /* 채팅 기본 색상 */
+            --chat-text-color: #ffffff;
         }
         body { background-color: var(--bg-color); color: #e0e0e0; margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; width: 100vw; overflow: hidden; user-select: none; }
-        <div id="entry-layer" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 30000;">
-    <div class="modal-card">
-        <h2 style="color:white; margin-bottom:10px;">🎮 루미큐브 : Ver 27.1</h2>
-        <input type="text" id="nick-input" placeholder="닉네임을 입력하세요" style="width: 80%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; outline: none; text-align: center; font-size: 1.1rem;">
-        <div style="display: flex; gap: 15px; justify-content: center;">
-            <button onclick="handleEntry('player')" style="background: var(--accent-purple); padding: 15px 30px; font-weight: 900; cursor: pointer;">플레이어로 참여</button>
-            <button onclick="handleEntry('spectator')" style="background: var(--accent-green); color: #000; padding: 15px 30px; font-weight: 900; cursor: pointer;">관전자로 참여</button>
-        </div>
-    </div>
-</div>
-#main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
+        
+        #main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
         #ui-layer { height: 60px; padding: 0 20px; background: var(--panel-bg); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
         #game-board { flex: 1; background: #1e1e1e; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 75px; }
         #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.6); }
+        
         .tile { width: 44px; height: 64px; background: var(--tile-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: 800; font-size: 1.3rem; border: 1px solid #d1d1d1; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; cursor: grab; }
         #game-board .tile { position: absolute; }
         #my-rack .tile { position: relative; flex-shrink: 0; }
+        
         .red { color: #d63031 !important; border-bottom: 4px solid #d63031 !important; }
         .blue { color: #0984e3 !important; border-bottom: 4px solid #0984e3 !important; }
         .yellow { color: #f39c12 !important; border-bottom: 4px solid #f39c12 !important; }
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
         
-        /* 채팅 관련 스타일 */
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
         #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; font-size: 0.85rem; }
-        #chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); } /* 색상 선택기 연동 */
+        #chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
         #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
         #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
         
@@ -51,7 +43,6 @@
         #bgm-toggle { background: #444; }
         #bgm-toggle.playing { background: var(--accent-green); color: #000; }
         
-        /* 컨트롤 패널 스타일 */
         .volume-container, .color-picker-container { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .volume-container span, .color-picker-container span { font-size: 0.7rem; color: #aaa; font-weight: bold; }
         #bgm-volume { cursor: pointer; accent-color: var(--accent-green); width: 80px; height: 4px; }
@@ -65,12 +56,25 @@
         .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; }
-        #overlay-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        
+        #overlay-layer, #entry-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+        #entry-layer { z-index: 30000; }
         .modal-card { background: #2a2a2a; padding: 40px; border-radius: 24px; text-align: center; min-width: 400px; border: 1px solid #444; }
         .lobby-player-tag { display: inline-block; padding: 6px 12px; background: #333; border-radius: 20px; margin: 4px; font-size: 0.85rem; border: 1px solid #555; }
     </style>
 </head>
 <body>
+
+<div id="entry-layer" style="display: none;">
+    <div class="modal-card">
+        <h2 style="color:white; margin-bottom:10px;">🎮 루미큐브 : Ver 27.1</h2>
+        <input type="text" id="nick-input" placeholder="닉네임을 입력하세요" style="width: 80%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; outline: none; text-align: center; font-size: 1.1rem;">
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <button onclick="handleEntry('player')" style="background: var(--accent-purple); padding: 15px 30px; font-weight: 900; cursor: pointer;">플레이어로 참여</button>
+            <button onclick="handleEntry('spectator')" style="background: var(--accent-green); color: #000; padding: 15px 30px; font-weight: 900; cursor: pointer;">관전자로 참여</button>
+        </div>
+    </div>
+</div>
 
 <div id="main-container">
     <div id="ui-layer">
@@ -79,7 +83,7 @@
             <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
-<div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
+        <div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
         <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
             <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">강제 턴</button>
@@ -125,11 +129,22 @@
 </div>
 
 <script>
-    let db, myName, currentHost = "";
-let turnTimer = null; // 시계 장치를 담아둘 그릇
-    let timeLeft = 60;    // 남은 시간 연료
-    let playerList = [], currentTurn = "", sortMode = 'color', myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
-    let isRegistered = false, initialBoardState = {};
+    // --- [1] 전역 변수 선언 ---
+    let db; 
+    let myName = "";
+    let myRole = "player";
+    let currentHost = "";
+    let turnTimer = null;
+    let timeLeft = 60;
+    let playerList = [];
+    let currentTurn = "";
+    let sortMode = 'color';
+    let myHandData = [];
+    let gameStatus = "waiting";
+    let boardTiles = {};
+    let gameMode = "normal";
+    let initialBoardState = {};
+    window.latestPlayersData = {};
 
     const SOUND_ASSETS = {
         bgm: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -141,219 +156,150 @@ let turnTimer = null; // 시계 장치를 담아둘 그릇
     };
 
     const audioCtx = { bgm: new Audio(SOUND_ASSETS.bgm), isBGMPlaying: false, currentVolume: 0.5 };
-    audioCtx.bgm.loop = true; audioCtx.bgm.volume = 0.5;
+    audioCtx.bgm.loop = true;
+
+    // --- [2] 유틸리티 및 UI 함수 ---
+
+    function playSFX(key) {
+        const sfx = new Audio(SOUND_ASSETS[key]);
+        sfx.volume = audioCtx.currentVolume;
+        sfx.play().catch(() => {});
+    }
 
     window.updateVolume = (val) => { audioCtx.currentVolume = val; audioCtx.bgm.volume = val; };
     window.updateChatColor = (color) => { 
         document.documentElement.style.setProperty('--chat-text-color', color);
         localStorage.setItem('lumi-chat-color', color);
     };
-window.startTurnTimer = function() {
-        if (turnTimer) clearInterval(turnTimer); // 이미 시계가 가고 있으면 멈추고 새로 시작
-        timeLeft = 60; // 시간을 60으로 리셋
-        const timerEl = document.getElementById('timer-display'); // 숫자를 그릴 화면 위치 찾기
-        
-        turnTimer = setInterval(() => { // 1000ms(1초)마다 아래 내용을 실행해라
-            timeLeft--; // 1씩 깎기
-            timerEl.innerText = timeLeft + "s"; // 화면에 숫자 그리기
-            
-            if (timeLeft <= 0) { // 시간이 다 됐으면?
-                clearInterval(turnTimer); // 시계 멈추고
-                if (currentTurn === myName) { // 하필 그게 내 차례라면?
-                    alert("시간 초과!"); // 경고 띄우고
-                    window.drawTile(); // 강제로 타일 한 개 뽑기 (뽑으면 턴이 자동으로 넘어감)
+
+    window.startTurnTimer = function() {
+        if (turnTimer) clearInterval(turnTimer);
+        timeLeft = 60;
+        const timerEl = document.getElementById('timer-display');
+        turnTimer = setInterval(() => {
+            timeLeft--;
+            if (timerEl) timerEl.innerText = timeLeft + "s";
+            if (timeLeft <= 0) {
+                clearInterval(turnTimer);
+                if (currentTurn === myName && myRole === 'player') {
+                    alert("시간 초과!");
+                    window.drawTile();
                 }
             }
         }, 1000);
     };
 
-    function playSFX(key) { const sfx = new Audio(SOUND_ASSETS[key]); sfx.volume = audioCtx.currentVolume; sfx.play().catch(()=>{}); }
+    window.handleEntry = function(role, isAuto = false) {
+        if (!isAuto) {
+            const nickInput = document.getElementById('nick-input');
+            if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
+            myName = nickInput.value.trim();
+            myRole = role;
+        } else {
+            myName = window.sessionStorage.getItem('lumi-nick');
+            myRole = window.sessionStorage.getItem('lumi-role') || "player";
+        }
+        const ts = window.sessionStorage.getItem('lumi-timestamp') || Date.now();
+        window.sessionStorage.setItem('lumi-nick', myName);
+        window.sessionStorage.setItem('lumi-role', myRole);
+        window.sessionStorage.setItem('lumi-timestamp', ts);
 
-    window.toggleBGM = () => {
-        const btn = document.getElementById('bgm-toggle');
-        if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); btn.innerText = "🎵 BGM OFF"; btn.classList.remove('playing'); }
-        else { audioCtx.bgm.play().catch(() => alert("화면 클릭 후 재생 가능")); btn.innerText = "🎶 BGM ON"; btn.classList.add('playing'); }
-        audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying;
+        const pRef = db.ref('players/' + myName);
+        pRef.update({ joined: true, timestamp: Number(ts), role: myRole });
+        pRef.onDisconnect().remove();
+        document.getElementById('entry-layer').style.display = 'none';
+        if(!isAuto) playSFX('success');
     };
 
-    function isValidSet(tiles) {
-        if (tiles.length < 3) return false;
-        const nonJokers = tiles.filter(t => t.num !== 'J');
-        if (nonJokers.length === 0) return true;
-        const isGroup = () => {
-            const num = nonJokers[0].num; const colors = nonJokers.map(t => t.color);
-            return nonJokers.every(t => t.num === num) && (new Set(colors)).size === colors.length && tiles.length <= 4;
-        };
-        const isRun = () => {
-            const color = nonJokers[0].color; if (!nonJokers.every(t => t.color === color)) return false;
-            let lastNum = -1;
-            for(let t of tiles) { if(t.num !== 'J') { if(lastNum !== -1 && Number(t.num) <= lastNum) return false; lastNum = Number(t.num); } }
-            return true;
-        };
-        return isGroup() || isRun();
-    }
+    window.updatePlayerListUI = function() {
+        const listEl = document.getElementById('player-list-container');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        playerList.forEach(name => {
+            const badge = document.createElement('span');
+            badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+            const count = window.latestPlayersData[name]?.tileCount || 0;
+            badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${count}</span>`;
+            listEl.appendChild(badge);
+        });
+        const isHost = (myName === currentHost);
+        document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
+        document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
+    };
 
-    function validateBoard() {
-        const rows = {}; Object.values(boardTiles).forEach(t => { if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
-        for (let y in rows) {
-            const rowTiles = rows[y].sort((a,b) => a.x - b.x); let currentSet = [];
-            for (let i=0; i<rowTiles.length; i++) {
-                currentSet.push(rowTiles[i]);
-                if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) { if (!isValidSet(currentSet)) return false; currentSet = []; }
+    // --- [3] 게임 로직 ---
+
+    window.onload = function() {
+        const config = { 
+            apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", 
+            authDomain: "lumi-b373e.firebaseapp.com", 
+            databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", 
+            projectId: "lumi-b373e" 
+        };
+        if (!firebase.apps.length) firebase.initializeApp(config);
+        db = firebase.database();
+
+        if (window.sessionStorage.getItem('lumi-nick')) window.handleEntry(null, true);
+
+        db.ref('settings/host').on('value', snap => { 
+            currentHost = snap.val(); 
+            window.updatePlayerListUI();
+            if (gameStatus === "waiting") window.renderLobbyUI();
+        });
+
+        db.ref('players').on('value', snap => {
+            const players = snap.val() || {};
+            window.latestPlayersData = players;
+            playerList = Object.entries(players)
+                .filter(p => p[1].joined && p[1].role === 'player')
+                .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
+                .map(p => p[0]);
+            if (playerList.length > 0) {
+                let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
+                if (currentHost !== targetHost && (currentHost === "" || !playerList.includes(currentHost))) {
+                    db.ref('settings/host').set(targetHost);
+                }
             }
-        }
-        return true;
-    }
-
-// --- 1. 입장 처리 함수 (window.onload 바깥에 두세요) ---
-window.handleEntry = function(role, isAuto = false) {
-    if (!isAuto) {
-        const nickInput = document.getElementById('nick-input');
-        if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
-        myName = nickInput.value.trim();
-        myRole = role;
-    }
-
-    const ts = window.sessionStorage.getItem('lumi-timestamp') || Date.now();
-    
-    // 세션 저장 (새로고침 대비)
-    window.sessionStorage.setItem('lumi-nick', myName);
-    window.sessionStorage.setItem('lumi-role', myRole);
-    window.sessionStorage.setItem('lumi-timestamp', ts);
-
-    // Firebase DB 등록
-    const pRef = db.ref('players/' + myName);
-    pRef.update({ 
-        joined: true, 
-        timestamp: Number(ts), 
-        role: myRole 
-    });
-    pRef.onDisconnect().remove();
-
-    // UI 정리
-    document.getElementById('entry-layer').style.display = 'none';
-    if(!isAuto) playSFX('success');
-};
-
-// --- 2. 메인 로드 함수 ---
-window.onload = function() {window.updatePlayerListUI = function() {
-    const listEl = document.getElementById('player-list-container'); 
-    if (!listEl) return;
-    listEl.innerHTML = '';
-    
-    playerList.forEach(name => {
-        const badge = document.createElement('span');
-        badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-        // 메모장(latestPlayersData)에서 패 개수를 가져옴
-        const count = window.latestPlayersData[name]?.tileCount || 0;
-        // ⭐ 실시간 currentHost 값으로 왕관👑을 붙임
-        badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${count}</span>`;
-        listEl.appendChild(badge);
-    });
-
-    // 방장 전용 버튼 보여주기/숨기기
-    const isHost = (myName === currentHost);
-    const lobbyBtn = document.getElementById('btn-force-lobby');
-    const nextBtn = document.getElementById('btn-force-next');
-    if (lobbyBtn) lobbyBtn.style.display = isHost ? 'inline-block' : 'none';
-    if (nextBtn) nextBtn.style.display = isHost ? 'inline-block' : 'none';
-};
-window.latestPlayersData = {};
-window.latestPlayersData = {};
-    const config = { 
-        apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", 
-        authDomain: "lumi-b373e.firebaseapp.com", 
-        databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", 
-        projectId: "lumi-b373e" 
-    };
-    firebase.initializeApp(config); 
-    db = firebase.database();
-
-    // 세션 정보 확인
-    myName = window.sessionStorage.getItem('lumi-nick');
-    myRole = window.sessionStorage.getItem('lumi-role') || "player";
-
-    // 채팅 색상 로드
-    const savedColor = localStorage.getItem('lumi-chat-color') || "#ffffff";
-    window.updateChatColor(savedColor);
-    document.getElementById('chat-color-input').value = savedColor;
-
-    // 자동 로그인 또는 입장 레이어 표시
-    if (myName) {
-        window.handleEntry(myRole, true); 
-    } else {
-        document.getElementById('entry-layer').style.display = 'flex';
-    }
-
-    // [중요] 호스트 감시
-    db.ref('settings/host').on('value', snap => { 
-    currentHost = snap.val(); 
-    window.updatePlayerListUI(); // 방장 정보 오면 그림 다시 그려!
-    if (gameStatus === "waiting") window.renderLobbyUI();
-});
-
-    // [중요] 플레이어 목록 감시 (플레이어만 게임 리스트에 포함)
-    db.ref('players').on('value', snap => {
-    const players = snap.val() || {};
-    if (myName && !players[myName]) return; // 튕김 방지
-
-    window.latestPlayersData = players; // 메모장에 최신 데이터 적어두기
-    
-    // 리스트 정렬
-    playerList = Object.entries(players)
-        .filter(p => p[1].joined && p[1].role === 'player')
-        .sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0))
-        .map(p => p[0]);
-
-    // 방장 선출 (대표 한 명만 보고)
-    if (playerList.length > 0) {
-        let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
-        if (!playerList.includes(currentHost) || myName === currentHost) {
-            if (currentHost !== targetHost) db.ref('settings/host').set(targetHost);
-        }
-    }
-
-    window.updatePlayerListUI(); // 플레이어 정보 오면 그림 다시 그려!
-    if (gameStatus === "waiting") window.renderLobbyUI();
-});
+            window.updatePlayerListUI();
+        });
 
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
-            
-            if (gameStatus === "waiting") {
-                window.renderLobbyUI();
-            } else if (gameStatus === "finished") {
-                playSFX('success');
-                window.renderResultUI();
-            }
-
-            // 게임 중이 아닐 때는 타이머를 정지하고 숫자를 지움
-            if (gameStatus !== "playing") {
-                if (turnTimer) clearInterval(turnTimer);
+            if (gameStatus === "waiting") window.renderLobbyUI();
+            else if (gameStatus === "finished") window.renderResultUI();
+            if (gameStatus !== "playing" && turnTimer) {
+                clearInterval(turnTimer);
                 document.getElementById('timer-display').innerText = "";
             }
         });
 
         db.ref('currentTurn').on('value', snap => {
-            const isMy = (currentTurn === myName && myRole === 'player'); 
-['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
+            const prev = currentTurn;
+            currentTurn = snap.val();
+            const isMy = (currentTurn === myName && myRole === 'player');
+            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
             ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-            if(isMy && prev !== myName) playSFX('turnAlarm');
+            if(isMy && prev !== myName && prev !== "") playSFX('turnAlarm');
             if(isMy) initialBoardState = JSON.parse(JSON.stringify(boardTiles));
-            
-            // 턴 신호를 받을 때마다 타이머를 리셋하고 시작
             window.startTurnTimer();
+            window.updatePlayerListUI();
         });
 
-        div.ondragstart = (e) => { 
-    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+        db.ref('board').on('value', snap => {
+            boardTiles = snap.val() || {};
+            const bEl = document.getElementById('game-board');
             bEl.querySelectorAll('.tile').forEach(t => t.remove());
             Object.entries(boardTiles).forEach(([id, data]) => {
-                const div = document.createElement('div'); div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num; div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
-                div.draggable = true; div.ondragstart = (e) => { 
-    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault(); e.dataTransfer.setData("text", id); playSFX('tilePick'); };
+                const div = document.createElement('div');
+                div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num;
+                div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
+                div.draggable = true;
+                div.ondragstart = (e) => {
+                    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+                    e.dataTransfer.setData("text", id); playSFX('tilePick');
+                };
                 bEl.appendChild(div);
             });
         });
@@ -364,138 +310,207 @@ window.latestPlayersData = {};
             window.applyAutoSort();
         });
 
-        db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
-        // 채팅 로그를 가져올 때 개별 설정된 색상을 입히는 로직
+        db.ref('pool').on('value', snap => {
+            document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`;
+        });
+
         db.ref('chats').limitToLast(20).on('child_added', snap => {
-            const c = snap.val(); 
+            const c = snap.val();
             const div = document.createElement('div');
-            
-            // 데이터베이스에 저장된 color 값이 있으면 적용, 없으면 기본 흰색(#ffffff) 적용
-            div.style.color = c.color || "#ffffff"; 
+            div.style.color = c.color || "#ffffff";
             div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-            
-            const box = document.getElementById('chat-box'); 
-            box.appendChild(div); 
-            box.scrollTop = box.scrollHeight;
+            const box = document.getElementById('chat-box');
+            box.appendChild(div); box.scrollTop = box.scrollHeight;
         });
     };
 
+    // --- [4] 게임 핵심 규칙 함수 ---
+
+    function isValidSet(tiles) {
+        if (tiles.length < 3) return false;
+        const nonJokers = tiles.filter(t => t.num !== 'J');
+        if (nonJokers.length === 0) return true;
+
+        // 그룹 (같은 숫자, 다른 색상)
+        const isGroup = () => {
+            const num = nonJokers[0].num;
+            const colors = nonJokers.map(t => t.color);
+            return nonJokers.every(t => t.num === num) && (new Set(colors)).size === colors.length && tiles.length <= 4;
+        };
+
+        // 연속 (같은 색상, 연속된 숫자)
+        const isRun = () => {
+            const color = nonJokers[0].color;
+            if (!nonJokers.every(t => t.color === color)) return false;
+            // 조커 포함 연속성 체크 로직
+            let sorted = [...tiles].sort((a,b) => (a.num === 'J' ? 0 : a.num) - (b.num === 'J' ? 0 : b.num));
+            // 단순화된 연속성 검사: 숫자가 오름차순인지 확인
+            let lastNum = -1;
+            for(let t of tiles) {
+                if(t.num !== 'J') {
+                    if(lastNum !== -1 && Number(t.num) <= lastNum) return false;
+                    lastNum = Number(t.num);
+                }
+            }
+            return true;
+        };
+        return isGroup() || isRun();
+    }
+
+    function validateBoard() {
+        const rows = {};
+        Object.values(boardTiles).forEach(t => {
+            if(!rows[t.y]) rows[t.y]=[];
+            rows[t.y].push(t);
+        });
+        for (let y in rows) {
+            const rowTiles = rows[y].sort((a,b) => a.x - b.x);
+            let currentSet = [];
+            for (let i=0; i<rowTiles.length; i++) {
+                currentSet.push(rowTiles[i]);
+                if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
+                    if (!isValidSet(currentSet)) return false;
+                    currentSet = [];
+                }
+            }
+        }
+        return true;
+    }
+
+    window.handleTurnEnd = function() {
+        if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) {
+            return alert("타일을 내거나 뽑아야 합니다.");
+        }
+        if (!validateBoard()) { playSFX('error'); return alert("보드에 유효하지 않은 세트가 있습니다!"); }
+
+        db.ref(`players/${myName}/registered`).once('value', snap => {
+            const isReg = snap.val();
+            if (!isReg) {
+                let pts = 0;
+                Object.entries(boardTiles).forEach(([id, t]) => {
+                    if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num));
+                });
+                if (pts < 30) { playSFX('error'); return alert(`등록 실패! 내놓은 타일의 합이 30점 이상이어야 합니다. (현재: ${pts}점)`); }
+                db.ref(`players/${myName}`).update({ registered: true });
+            }
+            
+            if (myHandData.length === 0) {
+                db.ref('hands').once('value', hSnap => {
+                    const hands = hSnap.val();
+                    const scores = {};
+                    playerList.forEach(p => {
+                        let s = 0;
+                        Object.values(hands[p] || {}).forEach(tile => s += (tile.num === 'J' ? 50 : Number(tile.num)));
+                        scores[p] = s;
+                    });
+                    db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
+                });
+            } else {
+                window.nextTurnAction();
+            }
+        });
+    };
+
+    window.rollbackTurn = function() {
+        if(confirm("이번 턴에 한 모든 동작을 취소하시겠습니까?")) {
+            const up = {};
+            const currentKeys = Object.keys(boardTiles);
+            const initialKeys = Object.keys(initialBoardState);
+            currentKeys.forEach(key => { if(!initialKeys.includes(key)) up[`hands/${myName}/${key}`] = boardTiles[key]; });
+            up['board'] = initialBoardState;
+            db.ref('/').update(up);
+        }
+    };
+
+    window.drawTile = function() {
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("타일을 이미 내셨습니다. 무르거나 턴을 종료하세요.");
+        db.ref('pool').limitToFirst(1).once('value', s => {
+            if (!s.exists()) return window.nextTurnAction();
+            const key = Object.keys(s.val())[0];
+            const up = {};
+            up[`hands/${myName}/tile_${Date.now()}`] = s.val()[key];
+            up[`pool/${key}`] = null;
+            db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
+        });
+    };
+
+    // --- [5] 기타 시스템 함수 ---
+
     window.renderLobbyUI = function() {
-        const modalBody = document.getElementById('modal-body'); const isHost = (myName === currentHost);
+        const modalBody = document.getElementById('modal-body');
+        const isHost = (myName === currentHost);
         let tags = playerList.map(name => `<span class="lobby-player-tag">${name === currentHost ? '👑 ' : ''}${name}</span>`).join('');
-        let html = `<h2 style="color:white;">🎮 루미큐브 대기실</h2><div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${tags}</div>`;
-        html += `<div style="margin-bottom:20px;"><p style="font-size:0.8rem; color:#aaa; margin-bottom:10px;">게임 모드 설정</p>
-            <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
-            <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button></div>`;
-        if (isHost) html += `<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>`;
-        else html += `<p style="color:var(--accent-gold);">방장이 모드를 설정 중입니다...</p>`;
-        modalBody.innerHTML = html;
+        modalBody.innerHTML = `
+            <h2 style="color:white;">🎮 루미큐브 대기실</h2>
+            <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${tags}</div>
+            <div style="margin-bottom:20px;">
+                <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
+                <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button>
+            </div>
+            ${isHost ? '<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>' : '<p style="color:var(--accent-gold);">방장이 게임을 시작하기를 기다리는 중...</p>'}
+        `;
     };
 
     window.renderResultUI = function() {
         db.ref('settings/gameResult').once('value', snap => {
             const data = snap.val(); if (!data) return;
             const modalBody = document.getElementById('modal-body');
-            let html = `<h1 style="color:var(--accent-gold); font-size:2.5rem; margin-bottom:10px;">🎉 WINNER: ${data.winner}! 🎉</h1>`;
-            html += `<p style="color:#aaa; margin-bottom:20px;">남은 패 점수 합계 (낮을수록 좋음)</p><div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; margin-bottom:25px; text-align:left;">`;
-            const sorted = Object.entries(data.scores).sort((a, b) => a[1] - b[1]);
-            sorted.forEach(([name, score]) => {
-                const isWinner = name === data.winner;
-                html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #444; ${isWinner ? 'color:var(--accent-green); font-weight:bold;' : ''}">
-                            <span>${isWinner ? '🏆' : '👤'} ${name}</span><span>${isWinner ? 'WINNER' : '-' + score + '점'}</span></div>`;
+            let html = `<h1 style="color:var(--accent-gold);">🏆 WINNER: ${data.winner}!</h1>`;
+            Object.entries(data.scores).forEach(([name, score]) => {
+                html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #444;">
+                    <span>${name}</span><span>${name === data.winner ? 'WIN' : score + '점'}</span>
+                </div>`;
             });
-            html += `</div>`;
-            if (myName === currentHost) html += `<button onclick="window.returnToLobby()" style="background:var(--accent-purple); color:white; width:100%; padding:15px; font-weight:900;">대기실로 돌아가기</button>`;
-            else html += `<p style="color:var(--accent-gold);">방장이 대기실로 이동시킬 때까지 대기하세요...</p>`;
+            if (myName === currentHost) html += `<button onclick="window.returnToLobby()" style="margin-top:20px; width:100%; padding:10px;">대기실로</button>`;
             modalBody.innerHTML = html;
         });
     };
 
     window.startGame = function() {
-        if (playerList.length < 2) return alert("최소 2명 필요");
-        db.ref('/').once('value', snap => {
-            const pool = []; const colors = ['red', 'blue', 'yellow', 'black']; const sets = (gameMode === 'expert') ? 3 : 2;
-            colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
-            for(let k=0; k<(sets === 3 ? 4 : 2); k++) pool.push({ num: 'J', color: 'joker' });
-            pool.sort(() => Math.random() - 0.5);
-            const up = { 'board': {}, 'currentTurn': playerList[0], 'settings/status': "playing", 'settings/activePlayers': playerList, 'chats': null, 'settings/gameResult': null };
-            playerList.forEach(p => {
-                const hand = {}; for(let i=0; i<14; i++) { const t = pool.pop(); hand['tile_'+Math.random().toString(36).substr(2,9)] = t; }
-                up[`hands/${p}`] = hand; up[`players/${p}/registered`] = false;
-            });
-            up['pool'] = Object.assign({}, pool); db.ref('/').update(up);
+        if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
+        const colors = ['red', 'blue', 'yellow', 'black'];
+        const sets = (gameMode === 'expert') ? 3 : 2;
+        let pool = [];
+        colors.forEach(c => { for(let i=1; i<=13; i++) for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); });
+        for(let k=0; k<(sets === 3 ? 4 : 2); k++) pool.push({ num: 'J', color: 'joker' });
+        pool.sort(() => Math.random() - 0.5);
+
+        const updates = { 'board': {}, 'currentTurn': playerList[0], 'settings/status': "playing", 'settings/activePlayers': playerList, 'chats': null };
+        playerList.forEach(p => {
+            const hand = {};
+            for(let i=0; i<14; i++) { const t = pool.pop(); hand['tile_'+Math.random().toString(36).substr(2,9)] = t; }
+            updates[`hands/${p}`] = hand;
+            updates[`players/${p}/registered`] = false;
         });
+        updates['pool'] = Object.assign({}, pool);
+        db.ref('/').update(updates);
     };
 
-    window.handleTurnEnd = function() {
-        if (!validateBoard()) { playSFX('error'); return alert("유효하지 않은 세트!"); }
-        db.ref(`players/${myName}/registered`).once('value', snap => {
-            if (!snap.val()) {
-                let pts = 0; Object.entries(boardTiles).forEach(([id, t]) => { if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); });
-                if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 필요`); }
-                db.ref('players/' + myName).update({ registered: true });
-            }
-            if (myHandData.length === 0) {
-                db.ref('hands').once('value', hs => {
-                    const res = {}; const hands = hs.val() || {};
-                    playerList.forEach(p => { let s = 0; Object.values(hands[p]||{}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); res[p] = s; });
-                    db.ref('/').update({ "settings/gameResult": { winner: myName, scores: res }, "settings/status": "finished" });
-                });
-            } else window.nextTurnAction();
-        });
-    };
-
-    window.rollbackTurn = function() {
-        if(confirm("무를까요?")) {
-            const up = {}; const cKeys = Object.keys(boardTiles); const iKeys = Object.keys(initialBoardState);
-            cKeys.forEach(id => { if (!iKeys.includes(id)) up[`hands/${myName}/${id}`] = boardTiles[id]; });
-            up['board'] = initialBoardState; db.ref('/').update(up).then(() => playSFX('tilePick'));
-        }
-    };
-
-    window.drawTile = function() {
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("낸 패를 무르거나 종료해야 함");
-        db.ref('pool').limitToFirst(1).once('value', s => {
-            if (!s.exists()) return window.nextTurnAction();
-            const key = Object.keys(s.val())[0]; const up = {};
-            up[`hands/${myName}/tile_${Date.now()}`] = s.val()[key]; up[`pool/${key}`] = null;
-            db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
-        });
-    };
-
-   window.dropOnBoard = function(e) {
+    window.dropOnBoard = function(e) {
         e.preventDefault();
-        if (currentTurn !== myName) return; // 내 차례가 아니면 무시
-
         const id = e.dataTransfer.getData("text");
         const rect = document.getElementById('game-board').getBoundingClientRect();
-        
-        // 마우스 위치에 따른 스냅(격자) 좌표 계산
         let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2;
         let sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
-
         const inHand = myHandData.find(t => t.id === id);
-        
         if (inHand) {
-            // 1. 내 손에서 보드로 타일을 처음 낼 때
-            const up = {};
-            up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy };
-            up[`hands/${myName}/${id}`] = null;
-            db.ref('/').update(up);
-            playSFX('tileDrop');
-        } else {
-            // 2. 이미 보드에 있는 타일을 다른 위치(열)로 옮길 때
-            // 보드판 데이터(boardTiles)에 해당 타일이 있는지 확인 후 좌표 업데이트
-            if (boardTiles && boardTiles[id]) {
-                db.ref(`board/${id}`).update({ x: sx, y: sy });
-                playSFX('tileDrop');
-            }
+            const up = {}; up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy };
+            up[`hands/${myName}/${id}`] = null; db.ref('/').update(up);
+        } else if (boardTiles[id]) {
+            db.ref(`board/${id}`).update({ x: sx, y: sy });
         }
+        playSFX('tileDrop');
     };
 
     window.dropOnRack = function(e) {
-        e.preventDefault(); const id = e.dataTransfer.getData("text");
-        db.ref(`board/${id}`).once('value', s => { if (s.exists()) { const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null; db.ref('/').update(up); playSFX('tilePick'); } });
+        e.preventDefault();
+        const id = e.dataTransfer.getData("text");
+        db.ref(`board/${id}`).once('value', s => {
+            if (s.exists()) {
+                const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null;
+                db.ref('/').update(up); playSFX('tilePick');
+            }
+        });
     };
 
     window.applyAutoSort = function() {
@@ -504,31 +519,24 @@ window.latestPlayersData = {};
             const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num);
             return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]);
         });
-        const rEl = document.getElementById('my-rack'); rEl.querySelectorAll('.tile').forEach(t => t.remove());
+        const rEl = document.getElementById('my-rack');
+        if(!rEl) return;
+        rEl.querySelectorAll('.tile').forEach(t => t.remove());
         myHandData.forEach(t => {
-            const div = document.createElement('div'); div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = true;
-            div.ondragstart = (e) => { e.dataTransfer.setData("text", t.id); playSFX('tilePick'); }; rEl.appendChild(div);
+            const div = document.createElement('div');
+            div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = true;
+            div.ondragstart = (e) => { e.dataTransfer.setData("text", t.id); playSFX('tilePick'); };
+            rEl.appendChild(div);
         });
     };
 
     window.setSortMode = (m) => { sortMode = m; window.applyAutoSort(); };
     window.nextTurnAction = () => { db.ref('settings/activePlayers').once('value', s => { const l = s.val() || []; db.ref('currentTurn').set(l[(l.indexOf(currentTurn) + 1) % l.length]); }); };
-    window.returnToLobby = () => { if(confirm("초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {}, "settings/gameResult": null }); };
-    window.forceNextTurn = () => { if(confirm("강제 이동?")) window.nextTurnAction(); };
+    window.returnToLobby = () => { if(confirm("게임 초기화?")) db.ref('/').update({ "settings/status": "waiting", "board": {}, "hands": {}, "pool": {}, "settings/gameResult": null }); };
+    window.forceNextTurn = () => { if(confirm("강제로 턴을 넘기시겠습니까?")) window.nextTurnAction(); };
     window.toggleChat = () => { const b = document.getElementById('chat-box'); const i = document.getElementById('chat-input-container'); const v = b.style.display === 'block'; b.style.display = v?'none':'block'; i.style.display = v?'none':'flex'; };
-    window.sendChat = () => { 
-    const i = document.getElementById('chat-input'); 
-    const color = document.getElementById('chat-color-input').value; // 내가 고른 색상 가져오기
-    
-    if (i.value.trim()) { 
-        db.ref('chats').push({ 
-            name: myName, 
-            msg: i.value, 
-            color: color // DB에 색상 정보 포함해서 저장
-        }); 
-        i.value = ''; 
-    } 
-};
+    window.sendChat = () => { const i = document.getElementById('chat-input'); const color = document.getElementById('chat-color-input').value; if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value, color: color }); i.value = ''; } };
+    window.toggleBGM = () => { if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); } else { audioCtx.bgm.play(); } audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying; };
 </script>
 </body>
 </html>
