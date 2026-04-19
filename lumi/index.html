@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver 32</title>
+    <title>루미큐브 : Ver 33</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -214,12 +214,13 @@
 
     window.showHint = function() {
         if (myRole !== 'player' || currentTurn !== myName) return alert("내 차례에만 사용할 수 있습니다.");
+
         document.querySelectorAll('.tile').forEach(t => t.classList.remove('hint-target'));
         const sets = [];
         const hand = [...myHandData];
         const isReg = window.latestPlayersData[myName]?.registered;
 
-        // 1. 내 손패 안에서 세트 찾기
+        // 1. 손패 내 세트 찾기
         const numMap = {};
         hand.forEach(t => {
             if (t.num === 'J') return;
@@ -244,7 +245,7 @@
             if (currentRun.length >= 3) sets.push(currentRun.map(t => ({ type: 'rack', id: t.id })));
         });
 
-        // 2. 바닥 패에 붙이는 힌트 (등록 후)
+        // 2. 바닥 패 조합 찾기 (등록 후)
         if (isReg) {
             const rows = {};
             Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y] = []; rows[t.y].push(t); });
@@ -283,13 +284,17 @@
         }
 
         if (sets.length === 0) return alert("낼 수 있는 세트가 없습니다.");
-        const randomSet = sets[Math.floor(Math.random() * sets.length)];
-        randomSet.forEach(item => {
-            let el = (item.type === 'board') ? document.getElementById(item.id) : document.getElementById("rack-" + item.id);
-            if (el) el.classList.add('hint-target');
+
+        sets.forEach(singleSet => {
+            singleSet.forEach(item => {
+                let el = (item.type === 'board') ? document.getElementById(item.id) : document.getElementById("rack-" + item.id);
+                if (el) el.classList.add('hint-target');
+            });
         });
-        setTimeout(() => document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target')), 3000);
-    };
+        // 3초 후 하이라이트 제거
+        setTimeout(() => {
+            document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target'));
+        }, 3000);
 
     window.handleEntry = function(role, isAuto = false) {
         if (!isAuto) {
