@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : 마스터 버전 (Ver 32)</title>
+    <title>루미큐브 : Ver. 33</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -214,19 +214,22 @@
 
     window.showHint = function() {
         if (myRole !== 'player' || currentTurn !== myName) return alert("내 차례에만 사용할 수 있습니다.");
-        document.querySelectorAll('.tile').forEach(t => t.classList.remove('hint-target'));
+        document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target'));
         const sets = [];
         const hand = [...myHandData];
         const isReg = window.latestPlayersData[myName]?.registered;
 
-        // 1. 내 손패 안에서 세트 찾기
+        // 1. 내 손패 안에서 독자적인 세트 찾기
         const numMap = {};
         hand.forEach(t => {
             if (t.num === 'J') return;
             if (!numMap[t.num]) numMap[t.num] = [];
+            // 중복 색상 타일 방지
             if (!numMap[t.num].find(it => it.color === t.color)) numMap[t.num].push(t);
         });
-        Object.values(numMap).forEach(group => { if (group.length >= 3) sets.push(group.map(t => ({ type: 'rack', id: t.id }))); });
+        Object.values(numMap).forEach(group => { 
+            if (group.length >= 3) sets.push(group.map(t => ({ type: 'rack', id: t.id }))); 
+        });
 
         const colorMap = { 'red': [], 'blue': [], 'yellow': [], 'black': [] };
         hand.forEach(t => { if (t.num !== 'J') colorMap[t.color].push(t); });
@@ -244,7 +247,7 @@
             if (currentRun.length >= 3) sets.push(currentRun.map(t => ({ type: 'rack', id: t.id })));
         });
 
-        // 2. 바닥 패에 붙이는 힌트 (등록 후)
+        // 2. 바닥에 놓인 패에 내 타일을 붙일 수 있는지 확인 (첫 등록을 마친 경우만)
         if (isReg) {
             const rows = {};
             Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y] = []; rows[t.y].push(t); });
@@ -253,23 +256,33 @@
                 let currentBoardSet = [];
                 for (let i = 0; i < rowTiles.length; i++) {
                     currentBoardSet.push(rowTiles[i]);
+                    // 타일 사이 간격이 벌어졌거나 줄의 마지막인 경우 세트 판별
                     if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
                         if (currentBoardSet.length >= 3) {
                             const nonJokers = currentBoardSet.filter(t => t.num !== 'J');
                             if (nonJokers.length > 0) {
                                 const isGroup = nonJokers.every(t => t.num === nonJokers[0].num);
                                 hand.forEach(handTile => {
-                                    if (handTile.num === 'J') return;
+                                    if (handTile.num === 'J') return; // 내 패의 조커는 모든 곳에 붙을 수 있어 힌트가 지저분해지므로 제외
+                                    
                                     if (isGroup && currentBoardSet.length < 4) {
+                                        // 그룹(같은 숫자, 다른 색상)에 붙일 때
                                         const boardColors = currentBoardSet.map(t => t.color);
                                         if (handTile.num === nonJokers[0].num && !boardColors.includes(handTile.color)) {
                                             sets.push([{ type: 'rack', id: handTile.id }, ...currentBoardSet.map(t => ({ type: 'board', id: t.id }))]);
                                         }
                                     } else if (!isGroup) {
+                                        // 런(연속된 숫자)에 붙일 때
                                         const color = nonJokers[0].color;
-                                        const minNum = Math.min(...nonJokers.map(t => Number(t.num)));
-                                        const maxNum = Math.max(...nonJokers.map(t => Number(t.num)));
-                                        if (handTile.color === color && (Number(handTile.num) === minNum - 1 || Number(handTile.num) === maxNum + 1)) {
+                                        // 바닥 패 양끝 또는 중간에 조커가 있을 경우를 고려하여 실제 시작/끝 숫자를 정밀하게 계산
+                                        const firstRealIdx = currentBoardSet.findIndex(t => t.num !== 'J');
+                                        const firstRealNum = Number(currentBoardSet[firstRealIdx].num);
+                                        const firstNum = firstRealNum - firstRealIdx; // 세트의 가장 왼쪽 숫자
+                                        const lastNum = firstNum + currentBoardSet.length - 1; // 세트의 가장 오른쪽 숫자
+
+                                        const hn = Number(handTile.num);
+                                        // 내 패가 세트의 앞(-1)이나 뒤(+1)에 연결될 수 있는지 확인 (1~13 범위 내)
+                                        if (handTile.color === color && ((hn === firstNum - 1 && hn >= 1) || (hn === lastNum + 1 && hn <= 13))) {
                                             sets.push([{ type: 'rack', id: handTile.id }, ...currentBoardSet.map(t => ({ type: 'board', id: t.id }))]);
                                         }
                                     }
@@ -282,13 +295,24 @@
             }
         }
 
-        if (sets.length === 0) return alert("낼 수 있는 세트가 없습니다.");
-        const randomSet = sets[Math.floor(Math.random() * sets.length)];
-        randomSet.forEach(item => {
-            let el = (item.type === 'board') ? document.getElementById(item.id) : document.getElementById("rack-" + item.id);
+        if (sets.length === 0) return alert("현재 낼 수 있는 타일이 없습니다.");
+
+        // 3. 무작위 1개가 아닌, 찾아낸 '모든' 조합의 타일 ID를 중복 없이 수집
+        const allTargetIds = new Set();
+        sets.forEach(setInfo => {
+            setInfo.forEach(item => {
+                allTargetIds.add(item.type === 'board' ? item.id : "rack-" + item.id);
+            });
+        });
+
+        // 4. 수집된 모든 타일에 형광(Glow) 효과 적용
+        allTargetIds.forEach(domId => {
+            let el = document.getElementById(domId);
             if (el) el.classList.add('hint-target');
         });
-        setTimeout(() => document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target')), 3000);
+
+        // 전체 힌트이므로 플레이어가 눈으로 확인할 시간을 충분히 주기 위해 3초 -> 5초로 연장
+        setTimeout(() => document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target')), 5000);
     };
 
     window.handleEntry = function(role, isAuto = false) {
