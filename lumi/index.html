@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 33</title>
+    <title>루미큐브 : Ver. 33 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -75,6 +75,27 @@
             animation: hint-glow 1s infinite;
             border: 2px solid var(--accent-gold) !important;
             z-index: 1000 !important;
+        }
+/* 대기실 플레이어 닉네임 태그 디자인 */
+        .lobby-player-tag {
+            display: inline-flex;
+            align-items: center;
+            background: var(--turn-blue);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px; /* 동글동글한 캡슐 모양 */
+            margin: 4px; /* 이름 사이 간격 */
+            font-weight: 800;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        
+        /* 대기실 관전자 닉네임 태그 디자인 */
+        .lobby-player-tag.spec-tag {
+            background: #333;
+            color: #aaa;
+            border: 1px dashed #777;
+            box-shadow: none;
         }
     </style>
 </head>
