@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 34 </title>
+    <title>루미큐브 : Ver. 35 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -202,25 +202,15 @@
         localStorage.setItem('lumi-chat-color', color);
     };
 
-    window.startTurnTimer = function() {
-        if (turnTimer) clearInterval(turnTimer);
-        timeLeft = 60;
-        const timerEl = document.getElementById('timer-display');
-        turnTimer = setInterval(() => {
-            timeLeft--;
-            if (timerEl) timerEl.innerText = timeLeft + "s";
-            if (timeLeft <= 0) {
-                clearInterval(turnTimer);
-                if (currentTurn === myName && myRole === 'player') window.timeOutPenalty();
-            }
-        }, 1000);
-    };
-
     window.timeOutPenalty = function() {
+        if (window.isPenalizing) return; 
+        window.isPenalizing = true;
+
         alert("시간 초과! 바닥 초기화 및 벌칙 타일 3개.");
         const up = {};
         Object.keys(boardTiles).forEach(k => { if(!initialBoardState[k]) up[`hands/${myName}/${k}`] = boardTiles[k]; });
         up['board'] = initialBoardState;
+        
         db.ref('pool').limitToFirst(3).once('value', s => {
             if (s.exists()) {
                 const poolObj = s.val();
@@ -229,7 +219,11 @@
                     up[`pool/${key}`] = null;
                 });
             }
-            db.ref('/').update(up).then(() => { playSFX('error'); window.nextTurnAction(); });
+            db.ref('/').update(up).then(() => { 
+                playSFX('error'); 
+                window.nextTurnAction(); 
+                window.isPenalizing = false;
+            });
         });
     };
 
@@ -409,15 +403,44 @@
             else if (gameStatus === "finished") window.renderResultUI();
             if (gameStatus !== "playing" && turnTimer) { clearInterval(turnTimer); document.getElementById('timer-display').innerText = ""; }
         });
-        db.ref('currentTurn').on('value', snap => {
+
+db.ref('currentTurn').on('value', snap => {
             currentTurn = snap.val();
             const isMy = (currentTurn === myName && myRole === 'player');
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
             ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-            if(isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); window.startTurnTimer(); }
+            if(isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
             window.updatePlayerListUI();
         });
+
+        // window.onload 내부의 db.ref('currentTurn').on 부분을 이 내용으로 교체
+db.ref('settings/turnStartTime').on('value', snap => {
+        const startTime = snap.val();
+        const timerEl = document.getElementById('timer-display');
+        
+        if (!startTime || gameStatus !== "playing") {
+            if (timerEl) timerEl.innerText = "";
+            return;
+        }
+
+        if (turnTimer) clearInterval(turnTimer);
+
+        turnTimer = setInterval(() => {
+            const now = Date.now();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            timeLeft = 60 - elapsed;
+
+            if (timerEl) {
+                timerEl.innerText = (timeLeft > 0 ? timeLeft : 0) + "s";
+            }
+
+            if (timeLeft <= 0 && currentTurn === myName && myRole === 'player') {
+                clearInterval(turnTimer);
+                window.timeOutPenalty();
+            }
+        }, 1000);
+    });
         db.ref('board').on('value', snap => {
             boardTiles = snap.val() || {};
             const bEl = document.getElementById('game-board');
@@ -556,7 +579,9 @@
         pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
         if(sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
         pool.sort(() => Math.random() - 0.5);
-        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null }, allHands = {}; 
+        
+        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null }, allHands = {};
+        
         playerList.forEach(p => {
             const hand = {};
             for(let i=0; i<14; i++) { const t = pool.pop(); if(t) hand['tile_' + Math.random().toString(36).substr(2,9)] = t; }
@@ -565,7 +590,10 @@
         updates['hands'] = allHands;
         const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
         updates['pool'] = poolObj;
-        db.ref('/').update(updates);
+        
+        db.ref('/').update(updates).then(() => {
+            db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
+        });
     };
 
     window.dropOnBoard = function(e) {
@@ -628,7 +656,16 @@
     };
 
     window.setSortMode = (m) => { sortMode = m; if (m === 'manual') manualOrder = myHandData.map(t => t.id); window.applyAutoSort(); };
-    window.nextTurnAction = () => { db.ref('currentTurn').set(playerList[(playerList.indexOf(currentTurn) + 1) % playerList.length]); };
+    window.nextTurnAction = () => {
+    const nextPlayer = playerList[(playerList.indexOf(currentTurn) + 1) % playerList.length];
+    
+    // 1. 다음 사람으로 턴을 넘기고
+    // 2. 동시에 'turnStartTime'이라는 항목을 현재 서버 시각으로 업데이트합니다.
+    db.ref('/').update({
+        'currentTurn': nextPlayer,
+        'settings/turnStartTime': firebase.database.ServerValue.TIMESTAMP
+    });
+};
     window.returnToLobby = () => { if(confirm("방 전체 데이터를 완전히 초기화할까요?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/gameResult": null }); };
     window.moveTileInRack = function(dId, tId) { if (dId === tId) return; if (sortMode !== 'manual') { sortMode = 'manual'; manualOrder = myHandData.map(t => t.id); } const fIdx = manualOrder.indexOf(dId), tIdx = manualOrder.indexOf(tId); if (fIdx > -1 && tIdx > -1) { manualOrder.splice(fIdx, 1); manualOrder.splice(tIdx, 0, dId); playSFX('tileDrop'); window.applyAutoSort(); } };
     window.forceNextTurn = () => { if(confirm("다음 차례로 넘길까요?")) window.nextTurnAction(); };
