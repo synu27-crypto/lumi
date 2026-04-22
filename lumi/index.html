@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.5 </title>
+    <title>루미큐브 : Ver. 35.6 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -35,11 +35,13 @@
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
 
         /* 기존 #chat-wrapper 관련 스타일들을 아래 내용으로 교체 */
-#chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 320px; z-index: 20000; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
-#chat-log-container { display: flex; gap: 5px; height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; display: none; }
+#chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 500px; z-index: 20000; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
+/* resize 속성을 추가하여 우측 상단 모서리를 잡고 크기를 조절할 수 있게 합니다 */
+#chat-log-container { display: flex; gap: 5px; height: 280px; min-height: 100px; min-width: 250px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; display: none; resize: both; overflow: hidden; }
 #game-log { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.8rem; border-right: 1px solid rgba(255,255,255,0.1); color: #ccc; }
 #chat-box { flex: 1.2; padding: 10px; overflow-y: auto; font-size: 0.85rem; }
-#chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+/* word-break 속성을 추가하여 긴 글이나 띄어쓰기 없는 영어도 강제로 다음 줄로 넘깁니다 */
+#chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); word-break: break-all; overflow-wrap: break-word; }
 #log-entry { margin-bottom: 3px; font-family: monospace; }
 #log-time { color: var(--accent-gold); margin-right: 5px; }
 
