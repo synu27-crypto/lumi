@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.7 </title>
+    <title>루미큐브 : Ver. 35.8 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -128,48 +128,6 @@
     z-index: 50 !important;
 }
 
-/* <style> 태그 안의 맨 밑에 넣으세요 */
-
-/* 키티 테마 등 추가 색상 */
-body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; --bg-color: #fff0f5; }
-body[data-theme='dark'] { --tile-bg: #2d2d2d; --tile-text: #fff; }
-
-/* 이모티콘 말풍선 (플레이어 배지 '밑'에 매달리는 위치) */
-.emoji-bubble {
-    position: absolute;
-    top: 45px; /* 플레이어 배지에서 45px 아래에 표시 */
-    left: 50%;
-    transform: translateX(-50%);
-    background: white;
-    color: black;
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-weight: 800;
-    font-size: 1.2rem;
-    white-space: nowrap;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    z-index: 2000;
-    animation: fade-down-out 3s forwards;
-}
-
-/* 말풍선 꼬리 */
-.emoji-bubble::after {
-    content: '';
-    position: absolute;
-    top: -5px; left: 50%;
-    transform: translateX(-50%);
-    border-width: 0 5px 5px;
-    border-style: solid;
-    border-color: transparent transparent white;
-}
-
-@keyframes fade-down-out {
-    0% { opacity: 0; transform: translate(-50%, -10px); }
-    10% { opacity: 1; transform: translate(-50%, 0); }
-    80% { opacity: 1; }
-    100% { opacity: 0; transform: translate(-50%, 15px); }
-}
-
     </style>
 </head>
 <body>
@@ -179,33 +137,24 @@ body[data-theme='dark'] { --tile-bg: #2d2d2d; --tile-text: #fff; }
         <h2 style="color:white; margin-bottom:10px;">🎮 루미큐브</h2>
         <input type="text" id="nick-input" placeholder="닉네임을 입력하세요" style="width: 80%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; outline: none; text-align: center; font-size: 1.1rem;">
         <div style="display: flex; gap: 15px; justify-content: center;">
-            <button onclick="window.handleEntry('player')" style="background: var(--accent-purple); padding: 15px 30px; font-weight: 900; cursor: pointer;">플레이어로 참여</button>
-            <button onclick="window.handleEntry('spectator')" style="background: var(--accent-green); color: #000; padding: 15px 30px; font-weight: 900; cursor: pointer;">관전자로 참여</button>
+            <button onclick="handleEntry('player')" style="background: var(--accent-purple); padding: 15px 30px; font-weight: 900; cursor: pointer;">플레이어로 참여</button>
+            <button onclick="handleEntry('spectator')" style="background: var(--accent-green); color: #000; padding: 15px 30px; font-weight: 900; cursor: pointer;">관전자로 참여</button>
         </div>
     </div>
-</div>
-
-<div id="overlay-layer">
-    <div class="modal-card" id="modal-body"><h2>서버 연결 중...</h2></div>
 </div>
 
 <div id="main-container">
     <div id="ui-layer">
         <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
             <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
-            <div style="display: flex; gap: 5px; margin-left: 10px;">
-                <button class="theme-btn classic" onclick="window.setTheme('classic')">표준</button>
-                <button class="theme-btn dark" onclick="window.setTheme('dark')">다크</button>
-                <button class="theme-btn pink" onclick="window.setTheme('pink')">키티</button>
-            </div>
-            <div id="player-list-container" style="display: flex; gap: 8px; margin-left: 10px;"></div>
+            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
         </div>
         <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
         <div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
         <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
             <button id="btn-hint" onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
-            <span id="reg-score-badge">등록 점수: 0 / 30</span>
+<span id="reg-score-badge">등록 점수: 0 / 30</span>
             <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">강제 턴</button>
             <span id="pool-badge" style="color:var(--accent-purple); font-weight:900; align-self:center; margin-right:10px;">POOL: --</span>
             <button id="btn-rollback" onclick="window.rollbackTurn()" disabled>무르기</button>
@@ -213,39 +162,47 @@ body[data-theme='dark'] { --tile-bg: #2d2d2d; --tile-text: #fff; }
             <button id="btn-end" onclick="window.handleTurnEnd()" disabled style="background:var(--accent-green); color:#000;">종료</button>
         </div>
     </div>
-
+    
     <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)" onmousedown="window.startSelection(event)">
         <div id="reg-info" style="position: absolute; top: 10px; width: 100%; text-align: center; color: var(--accent-gold); font-weight: bold; z-index: 100;"></div>
         <div id="selection-box"></div>
     </div>
-
-    <div id="rack-controls">
-        <div id="quick-emojis" style="display: flex; gap: 5px; margin-right: auto; padding-left: 10px;">
-            <button class="quick-emoji-btn" onclick="window.sendEmoji('⚡')">⚡</button>
-            <button class="quick-emoji-btn" onclick="window.sendEmoji('👍')">👍</button>
-            <button class="quick-emoji-btn" onclick="window.sendEmoji('🤔')">🤔</button>
-            <button class="quick-emoji-btn" onclick="window.sendEmoji('🙇')">🙇</button>
-            <button class="quick-emoji-btn" onclick="window.sendEmoji('😭')">😭</button>
-            <button class="quick-emoji-btn" onclick="window.sendEmoji('🔥')">🔥</button>
-        </div>
-        <button onclick="window.setSortMode('number')">777 숫자</button>
-        <button onclick="window.setSortMode('color')">123 색상</button>
-        <button onclick="window.setSortMode('manual')" style="background:var(--accent-purple);">수동 정렬</button>
-    </div>
-
-    <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)"></div>
-</div>
-
-<div id="chat-wrapper">
+    
+    <div id="chat-wrapper">
     <div id="chat-log-container">
         <div id="game-log"></div>
         <div id="chat-box"></div>
     </div>
     <div id="chat-input-container">
-        <input type="text" id="chat-input" placeholder="연결중 ..." onkeypress="if(event.keyCode==13) window.sendChat()">
+        <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
     </div>
     <div id="audio-controls">
+        <div class="color-picker-container">
+            <span>TXT</span>
+            <input type="color" id="chat-color-input" value="#ffffff" oninput="window.updateChatColor(this.value)">
         </div>
+        <div class="volume-container">
+            <span>VOL</span>
+            <input type="range" id="bgm-volume" min="0" max="1" step="0.01" value="0.5" oninput="window.updateVolume(this.value)">
+        </div>
+        <div id="audio-buttons">
+            <button id="bgm-toggle" onclick="window.toggleBGM()">🎵 BGM OFF</button>
+            <button id="chat-toggle" onclick="window.toggleChat()">📜 로그/채팅</button>
+        </div>
+    </div>
+</div>
+    
+    <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
+        <div id="rack-controls">
+            <button onclick="window.setSortMode('number')">777 숫자</button>
+            <button onclick="window.setSortMode('color')">123 색상</button>
+            <button onclick="window.setSortMode('manual')" style="background:var(--accent-purple);">수동 정렬</button>
+        </div>
+    </div>
+</div>
+
+<div id="overlay-layer">
+    <div class="modal-card" id="modal-body"><h2>서버 연결 중...</h2></div>
 </div>
 
 <script>
@@ -456,8 +413,6 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         const isHost = (myName === currentHost);
         document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
         document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
-        const btnClearLogs = document.getElementById('btn-clear-logs');
-        if (btnClearLogs) btnClearLogs.style.display = isHost ? 'inline-block' : 'none';
         const regInfoEl = document.getElementById('reg-info');
         if (myRole === 'spectator') { regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)"; regInfoEl.style.color = "#aaa"; }
         else {
@@ -571,11 +526,7 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
             const logBox = document.getElementById('game-log');
             if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
         });
-
-        // 누군가(방장이) 로그를 지우면 화면에서도 싹 비우기
-        db.ref('chats').on('value', snap => { if (!snap.exists()) { const box = document.getElementById('chat-box'); if (box) box.innerHTML = ''; } });
-        db.ref('logs').on('value', snap => { if (!snap.exists()) { const logBox = document.getElementById('game-log'); if (logBox) logBox.innerHTML = ''; } });
-    };
+    }; 
 
     function isValidSet(tiles) {
         if (tiles.length < 3) return false;
@@ -680,28 +631,15 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
     };
 
     window.drawTile = function() {
-        if (myRole !== 'player' || currentTurn !== myName) return; // 내 턴인지도 확실히 체크
-        
-        // 1. 방금 패를 보드에 하나라도 내려놓았다면 뽑기 금지
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) {
-            playSFX('error');
-            return alert("패를 내려놓은 상태에서는 뽑을 수 없습니다. 무르거나 턴을 종료하세요.");
-        }
-
-        // ⭐ 2. 버그 수정: 바닥 패를 만지작거려서 보드 상태가 망가졌다면 무르기를 강제함
-        if (!validateBoard()) { 
-            playSFX('error'); 
-            return alert("바닥 패 배치가 어긋나 있습니다! '무르기'를 누른 후 타일을 뽑아주세요."); 
-        }
-
-        // 3. 정상 상태일 때만 타일 뽑기 진행
+        if (myRole !== 'player') return;
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) return alert("패를 냈다면 무르거나 종료해야 합니다.");
         db.ref('pool').limitToFirst(1).once('value', s => {
             if (!s.exists()) return window.nextTurnAction();
             const poolObj = s.val(), key = Object.keys(poolObj)[0], up = {};
             up[`hands/${myName}/tile_${Date.now()}`] = poolObj[key];
             up[`pool/${key}`] = null;
             window.addGameLog(`🎴 ${myName}님이 타일을 1개 뽑았습니다.`);
-            db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
+db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
         });
     };
 
@@ -714,7 +652,7 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
         if(sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
         pool.sort(() => Math.random() - 0.5);
         
-        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing" }, allHands = {};
+        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null }, allHands = {};
         
         playerList.forEach(p => {
             const hand = {};
@@ -724,6 +662,7 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
         updates['hands'] = allHands;
         const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
         updates['pool'] = poolObj;
+updates['logs'] = null; // 게임 시작 시 로그 초기화
         window.addGameLog(`📢 게임이 시작되었습니다!`);
         
         db.ref('/').update(updates).then(() => {
@@ -1098,45 +1037,6 @@ document.addEventListener('mouseup', function() {
             });
         }
     };
-
-// === 방장 전용 채팅/로그 초기화 ===
-    window.clearAllLogs = function() {
-        if (myName !== currentHost) return;
-        if (confirm("🗑️ 모든 채팅과 게임 로그를 지우시겠습니까?")) {
-            db.ref('chats').remove();
-            db.ref('logs').remove();
-        }
-    };
-
-//* <script> 태그 안의 맨 밑에 넣으세요 */
-
-// 이모티콘 표시 기능
-window.showEmojiOnScreen = function(senderName, msg) {
-    const badges = document.querySelectorAll('.player-badge');
-    let targetBadge = null;
-    badges.forEach(b => { if (b.innerText.includes(senderName)) targetBadge = b; });
-
-    if (targetBadge) {
-        const oldBubble = targetBadge.querySelector('.emoji-bubble');
-        if (oldBubble) oldBubble.remove();
-
-        const bubble = document.createElement('div');
-        bubble.className = 'emoji-bubble';
-        bubble.innerText = msg;
-        targetBadge.style.position = 'relative'; 
-        targetBadge.appendChild(bubble);
-
-        setTimeout(() => bubble.remove(), 3000);
-    }
-};
-
-// 서버 이모티콘 신호 감지 (window.onload 안에 넣거나, 따로 두어도 작동함)
-db.ref('emoji_events').on('child_added', snap => {
-    const event = snap.val();
-    if (Date.now() - event.time < 3000) {
-        window.showEmojiOnScreen(event.name, event.msg);
-    }
-});
 
 </script>
 </body>
