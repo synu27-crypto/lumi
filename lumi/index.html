@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.6 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -130,18 +130,6 @@ body[data-theme='pink'] {
         #audio-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; margin-top: 5px; pointer-events: auto; }
         #audio-buttons { display: flex; gap: 5px; }
         #chat-toggle, #bgm-toggle { background: var(--accent-purple); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
-/* 버튼을 허공에 띄우고 위치를 고정하는 코드 */
-#chat-toggle {
-    position: fixed;
-    bottom: 220px; /* 수동 정렬 버튼 바로 위 높이 */
-    right: 20px;   /* 오른쪽 벽에서 띄움 */
-    z-index: 20001; /* 다른 요소보다 위에 오도록 */
-}
-
-/* 채팅창이 버튼이랑 겹치지 않게 위로 올림 */
-#chat-wrapper {
-    bottom: 270px !important; 
-}
         #bgm-toggle { background: #888; }
         #bgm-toggle.playing { background: var(--accent-green); color: #000; }
 
@@ -151,21 +139,7 @@ body[data-theme='pink'] {
         #chat-color-input { cursor: pointer; border: none; width: 20px; height: 20px; background: none; padding: 0; }
 
         /* === 하단 랙 컨트롤 === */
-        #my-rack {
-    height: 210px;
-    background: var(--rack-bg);
-    border-top: 2px solid rgba(0,0,0,0.1);
-    position: relative; /* 좌표 기준점 */
-    padding: 15px;
-    z-index: 600;
-    overflow: hidden; /* 밖으로 나가는 타일 숨김 */
-    transition: background 0.3s;
-    /* display: flex; 등 자동 정렬 관련 속성은 제거하거나 무시됩니다. */
-}
-
-#my-rack .tile {
-    position: absolute; /* 자유로운 배치 가능 */
-}
+        #my-rack { height: 210px; background: var(--rack-bg); border-top: 2px solid rgba(0,0,0,0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; transition: background 0.3s; }
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: var(--rack-bg); padding-bottom: 10px; transition: background 0.3s; }
         
         /* 일반 버튼들 */
@@ -385,35 +359,30 @@ body[data-theme='pink'] #game-board {
 
 <body data-theme="classic"> <div id="main-container">
     <div id="ui-layer">
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <div id="player-list-container" style="display: flex; gap: 8px;"></div>
-    </div>
-
-    <div style="flex: 1;"></div>
-
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <div id="turn-info" style="font-weight: 800; color: var(--turn-blue); min-width: 80px; text-align: right;"></div>
-        <div id="timer-display" style="font-weight: 800; color: var(--accent-red); width: 45px; text-align: center; font-size: 1.1rem;"></div>
-        <span id="reg-info" style="font-size: 0.75rem; font-weight: 700; background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 8px;"></span>
-
-        <div class="theme-selector" style="display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 4px; border-radius: 20px; margin: 0 10px;">
-            <button class="theme-btn classic" onclick="window.setTheme('classic')" title="클래식">⚪</button>
-            <button class="theme-btn dark" onclick="window.setTheme('dark')" title="다크">⚫</button>
-            <button class="theme-btn pink" onclick="window.setTheme('pink')" title="키티">🎀</button>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
+            <div id="turn-info" style="font-weight: 800; color: var(--turn-blue); min-width: 80px;"></div>
+            <div id="timer-display" style="font-weight: 800; color: var(--accent-red); width: 40px; text-align: center;"></div>
+            <span id="reg-info" style="font-size: 0.75rem; font-weight: 600;"></span>
         </div>
 
-        <span id="reg-score-badge"></span>
-        <span id="pool-badge" class="player-badge" style="background:var(--accent-purple); color:white; border:none;">POOL: 0</span>
-        
-        <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
-        <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
-        
-        <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
-        <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
-        <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
-        <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="theme-selector" style="display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 4px; border-radius: 20px; margin-right: 10px;">
+                <button class="theme-btn classic" onclick="window.setTheme('classic')" title="클래식">⚪</button>
+                <button class="theme-btn dark" onclick="window.setTheme('dark')" title="다크">⚫</button>
+                <button class="theme-btn pink" onclick="window.setTheme('pink')" title="키티">🎀</button>
+            </div>
+
+            <span id="reg-score-badge"></span>
+            <span id="pool-badge" class="player-badge" style="background:var(--accent-purple); color:white; border:none;">POOL: 0</span>
+            <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
+            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
+            <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
+            <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
+            <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
+            <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
+        </div>
     </div>
-</div>
 
     <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)" onmousedown="window.startSelection(event)">
         <div id="selection-box"></div>
@@ -430,8 +399,6 @@ body[data-theme='pink'] #game-board {
             <div id="emote-picker"></div>
         </div>
         </div>
-
-<button onclick="window.toggleChat()" style="position: fixed; bottom: 220px; right: 20px; z-index: 9999; background: var(--accent-purple); color: white; border-radius: 20px; padding: 10px 20px; font-weight: bold; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">📜 로그/채팅</button>
 
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
         <div id="rack-controls">
@@ -784,16 +751,11 @@ body[data-theme='pink'] #game-board {
         
         db.ref('logs').limitToLast(30).on('child_added', snap => {
             const log = snap.val();
-            // applyAutoSort 내부 타일 생성 부분 수정
-const div = document.createElement('div');
-div.id = "rack-" + t.id;
-div.className = `tile ${t.color}`;
-div.innerText = t.num;
-// 저장된 좌표가 있다면 적용
-if (t.x !== undefined && t.y !== undefined) {
-    div.style.left = t.x + 'px';
-    div.style.top = t.y + 'px';
-}
+            const div = document.createElement('div');
+            div.id = 'log-entry';
+            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
+            const logBox = document.getElementById('game-log');
+            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
         });
 
         db.ref('emotes').limitToLast(10).on('child_added', snap => {
@@ -1005,31 +967,11 @@ if (t.x !== undefined && t.y !== undefined) {
     };
 
     window.dropOnRack = function(e) {
-    e.preventDefault();
-    if (myRole !== 'player') return;
-
-    const id = e.dataTransfer.getData("text");
-    const rect = document.getElementById('my-rack').getBoundingClientRect();
-    
-    // 드롭한 위치의 좌표 계산
-    let dropX = e.clientX - rect.left - 22;
-    let dropY = e.clientY - rect.top - 32;
-
-    db.ref(`board/${id}`).once('value', s => {
-        const up = {};
-        if (s.exists()) {
-            // 보드에서 랙으로 들어올 때 좌표 저장
-            up[`hands/${myName}/${id}`] = { ...s.val(), x: dropX, y: dropY };
-            up[`board/${id}`] = null;
-        } else {
-            // 랙 내부에서 이동할 때 좌표 업데이트
-            up[`hands/${myName}/${id}/x`] = dropX;
-            up[`hands/${myName}/${id}/y`] = dropY;
-        }
-        db.ref('/').update(up);
-        playSFX('tilePick');
-    });
-};
+        e.preventDefault();
+        if (myRole !== 'player') return;
+        const id = e.dataTransfer.getData("text");
+        db.ref(`board/${id}`).once('value', s => { if (s.exists()) { const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null; db.ref('/').update(up); playSFX('tilePick'); } });
+    };
 
     window.applyAutoSort = function() {
         const rEl = document.getElementById('my-rack');
