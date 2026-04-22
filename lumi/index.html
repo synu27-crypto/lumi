@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.9</title>
+    <title>루미큐브 : Ver. 36.5 (말풍선 & 테마 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -92,28 +92,28 @@
         #selection-box { position: absolute; border: 1px solid rgba(52, 152, 219, 0.8); background: rgba(52, 152, 219, 0.2); pointer-events: none; display: none; z-index: 9999; }
         .selected-tile { box-shadow: 0 0 10px 3px var(--turn-blue) !important; transform: scale(1.05); z-index: 50 !important; }
 
-/* === 테마 설정 === */
-    body[data-theme='classic'] { --tile-bg: #f8f5f0; --tile-text: #000; }
-    body[data-theme='dark'] { --tile-bg: #2d2d2d; --tile-text: #fff; }
-    body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; }
+        /* === 테마 설정 === */
+        body[data-theme='classic'] { --tile-bg: #f8f5f0; --tile-text: #000; }
+        body[data-theme='dark'] { --tile-bg: #2d2d2d; --tile-text: #fff; }
+        body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; }
 
-    /* 타일 스타일 덮어쓰기 (테마 변수 적용) */
-    .tile { 
-        width: 44px; height: 64px; 
-        background: var(--tile-bg) !important; color: var(--tile-text); /* <- 이 부분이 핵심입니다 */
-        border-radius: 6px; display: flex; justify-content: center; align-items: center; 
-        font-weight: 800; font-size: 1.3rem; 
-        border: 1px solid rgba(0,0,0,0.1); 
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-        z-index: 10; cursor: grab; 
-        transition: background 0.3s, color 0.3s; 
-    }
+        /* 타일 스타일 덮어쓰기 (테마 변수 적용) */
+        .tile { 
+            width: 44px; height: 64px; 
+            background: var(--tile-bg) !important; color: var(--tile-text);
+            border-radius: 6px; display: flex; justify-content: center; align-items: center; 
+            font-weight: 800; font-size: 1.3rem; 
+            border: 1px solid rgba(0,0,0,0.1); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            z-index: 10; cursor: grab; 
+            transition: background 0.3s, color 0.3s; 
+        }
 
-    /* 테마 선택 버튼 스타일 */
-    .theme-btn { padding: 5px 10px; font-size: 0.7rem; border-radius: 5px; border: 1px solid #555; cursor: pointer; }
-    .theme-btn.classic { background: #f8f5f0; color: #000; }
-    .theme-btn.dark { background: #2d2d2d; color: #fff; }
-    .theme-btn.pink { background: #ffeaf2; color: #ff4d94; }
+        /* 테마 선택 버튼 스타일 */
+        .theme-btn { padding: 5px 10px; font-size: 0.7rem; border-radius: 5px; border: 1px solid #555; cursor: pointer; }
+        .theme-btn.classic { background: #f8f5f0; color: #000; }
+        .theme-btn.dark { background: #2d2d2d; color: #fff; }
+        .theme-btn.pink { background: #ffeaf2; color: #ff4d94; }
 
         /* === 말풍선 애니메이션 & 스타일 === */
         .emoji-bubble {
@@ -181,7 +181,14 @@
     <div id="ui-layer">
         <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
             <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
-            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
+            
+            <div style="display: flex; gap: 5px; margin-left: 10px;">
+                <button class="theme-btn classic" onclick="window.setTheme('classic')">표준</button>
+                <button class="theme-btn dark" onclick="window.setTheme('dark')">다크</button>
+                <button class="theme-btn pink" onclick="window.setTheme('pink')">키티</button>
+            </div>
+            
+            <div id="player-list-container" style="display: flex; gap: 8px; margin-left: 10px;"></div>
         </div>
         <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
         <div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
@@ -272,6 +279,12 @@
     window.updateChatColor = (color) => { 
         document.documentElement.style.setProperty('--chat-text-color', color);
         localStorage.setItem('lumi-chat-color', color);
+    };
+
+    // ⭐ 테마 적용 함수
+    window.setTheme = function(themeName) {
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('lumi-theme', themeName); 
     };
 
     window.timeOutPenalty = function() {
@@ -421,7 +434,6 @@
         listEl.innerHTML = '';
         playerList.forEach(name => {
             const badge = document.createElement('span');
-            // ⭐ 뱃지에 ID를 부여해서 말풍선이 뜰 위치를 잡습니다
             badge.id = `badge-${name}`; 
             badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
             if (myRole === 'spectator') badge.style.cursor = 'pointer'; 
@@ -451,6 +463,11 @@
         const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
         if (!firebase.apps.length) firebase.initializeApp(config);
         db = firebase.database();
+        
+        // ⭐ 접속 시 저장된 테마 불러오기
+        const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
+        window.setTheme(savedTheme);
+
         if (window.sessionStorage.getItem('lumi-nick')) window.handleEntry(null, true);
         else document.getElementById('entry-layer').style.display = 'flex';
 
@@ -553,10 +570,9 @@
             if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
         });
 
-        // ⭐ 이모티콘 데이터 수신기 (로그창에는 안 띄우고 말풍선으로만 띄웁니다)
+        // ⭐ 이모티콘 데이터 수신기 (채팅 로그창에는 절대 안 남습니다)
         db.ref('emotes').limitToLast(10).on('child_added', snap => {
             const data = snap.val();
-            // 새로고침 시 옛날 데이터가 우르르 뜨는 걸 방지 (10초 이내만)
             if (Date.now() - data.time > 10000) return;
             window.showBubble(data.name, data.emote);
         });
@@ -1032,7 +1048,7 @@ document.addEventListener('mouseup', function() {
         }
     };
 
-    // ⭐ 이모티콘 동작 함수들 (말풍선 전용)
+    // ⭐ 이모티콘 동작 함수들 (말풍선 전용, 채팅에 안 남음)
     const EMOTES = ['😀', '😂', '😍', '😎', '🤔', '😭', '😡', '👍', '👎', '🎉', '🔥', '👀'];
 
     window.toggleEmotePicker = function() {
@@ -1055,27 +1071,27 @@ document.addEventListener('mouseup', function() {
 
     window.sendEmote = function(emote) {
         if (!myName) return;
-        // 로그창이나 채팅창에는 올리지 않고 emotes 경로에만 데이터 푸시
+        // 🚨 오직 이모티콘 채널(emotes)에만 보냅니다. 채팅창(chats)이나 로그(logs)에는 안 남아요!
         db.ref('emotes').push({ name: myName, emote: emote, time: Date.now() });
         document.getElementById('emote-picker').style.display = 'none';
     };
 
     window.showBubble = function(playerName, emote) {
         const badge = document.getElementById(`badge-${playerName}`);
-        if (!badge) return; // 해당 플레이어 뱃지가 안 보이면 무시
+        if (!badge) return; // 뱃지가 화면에 없으면 무시
 
-        // 기존에 떠있는 말풍선이 있다면 먼저 지워줌
+        // 기존 말풍선 지우기
         const existingBubble = badge.querySelector('.emoji-bubble');
         if (existingBubble) existingBubble.remove();
 
-        // 새 말풍선 생성
+        // 새 말풍선 만들기
         const bubble = document.createElement('div');
         bubble.className = 'emoji-bubble';
         bubble.innerText = emote;
         
         badge.appendChild(bubble);
 
-        // 2.5초 뒤 애니메이션이 끝나면 삭제
+        // 2.5초 뒤 스르륵 사라짐
         setTimeout(() => {
             if (bubble.parentNode) bubble.remove();
         }, 2500);
