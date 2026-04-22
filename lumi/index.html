@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 </title>
+    <title>루미큐브 : Ver. 36.6 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -325,6 +325,10 @@ body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; }
             <button onclick="window.setSortMode('color')">123 색상</button>
             <button onclick="window.setSortMode('manual')" style="background:var(--accent-purple);">수동 정렬</button>
         </div>
+<div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)"></div>
+<div id="overlay-layer">
+    <div class="modal-card" id="modal-body"><h2>서버 연결 중...</h2></div>
+</div>
 
 <div id="overlay-layer">
     <div class="modal-card" id="modal-body"><h2>서버 연결 중...</h2></div>
