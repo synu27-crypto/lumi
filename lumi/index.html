@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.3 </title>
+    <title>루미큐브 : Ver. 35.4 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -103,6 +103,12 @@
             border: 1px dashed #777;
             box-shadow: none;
         }
+/* 실시간 점수 표시 스타일 */
+#reg-score-badge { background: rgba(241, 196, 15, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 5px 12px; border-radius: 15px; font-weight: 800; font-size: 0.8rem; margin-right: 10px; display: none; }
+/* 전적 테이블 스타일 */
+.rank-table { width: 100%; margin-top: 15px; border-collapse: collapse; color: white; font-size: 0.9rem; }
+.rank-table th { border-bottom: 1px solid #555; padding: 8px; color: var(--accent-gold); }
+.rank-table td { padding: 8px; border-bottom: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -129,6 +135,7 @@
         <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
             <button id="btn-hint" onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
+<span id="reg-score-badge">등록 점수: 0 / 30</span>
             <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">강제 턴</button>
             <span id="pool-badge" style="color:var(--accent-purple); font-weight:900; align-self:center; margin-right:10px;">POOL: --</span>
             <button id="btn-rollback" onclick="window.rollbackTurn()" disabled>무르기</button>
@@ -431,6 +438,7 @@ db.ref('currentTurn').on('value', snap => {
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
             if(isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
             window.updatePlayerListUI();
+window.updateRegScoreUI();
         });
 
         // window.onload 내부의 db.ref('currentTurn').on 부분을 이 내용으로 교체
@@ -462,6 +470,7 @@ db.ref('settings/turnStartTime').on('value', snap => {
     });
         db.ref('board').on('value', snap => {
             boardTiles = snap.val() || {};
+window.updateRegScoreUI();
             const bEl = document.getElementById('game-board');
             if(!bEl) return;
             bEl.querySelectorAll('.tile').forEach(t => t.remove());
@@ -573,10 +582,13 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
                 db.ref('hands').once('value', hSnap => {
                     const allHands = hSnap.val(), scores = {};
                     playerList.forEach(p => { let s = 0; Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); scores[p] = s; });
+                    
+                    // ⭐ 여기에 우승 기록 코드가 들어갔습니다!
+                    window.recordWin(myName);
+                    
                     db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
                 });
             } else { 
-                // === 여기에 로그 로직이 안전하게 들어갑니다 ===
                 if (!isReg) {
                     window.addGameLog(`⭐ ${myName}님이 첫 등록에 성공했습니다!`);
                 } else {
@@ -728,10 +740,36 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
         });
     };
 
-    window.renderLobbyUI = function() {
-        const modalBody = document.getElementById('modal-body'), isHost = (myName === currentHost), allUsers = Object.entries(window.latestPlayersData);
-        let tags = allUsers.map(([name, data]) => { if(!data.joined) return ''; const isSpec = data.role === 'spectator'; return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`; }).join('');
-        modalBody.innerHTML = `<h2 style="color:white;">🎮 루미큐브 대기실</h2><div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">${tags}</div><div style="margin-bottom:20px;"><button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button><button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button></div>${isHost ? '<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>' : '<p style="color:var(--accent-gold);">방장이 게임을 시작하기를 기다리는 중...</p>'}`;
+    window.renderLobbyUI = async function() { // ⭐ async가 추가되었습니다
+        const modalBody = document.getElementById('modal-body');
+        const isHost = (myName === currentHost);
+        const allUsers = Object.entries(window.latestPlayersData);
+        
+        let tags = allUsers.map(([name, data]) => { 
+            if(!data.joined) return ''; 
+            const isSpec = data.role === 'spectator'; 
+            return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`; 
+        }).join('');
+        
+        // ⭐ 서버에서 전적 표(HTML)를 만들어올 때까지 기다립니다
+        const rankHtml = await window.getRankHtml(); 
+
+        // ⭐ 대기실 화면 UI 그리기 (명예의 전당 테이블 삽입)
+        modalBody.innerHTML = `
+            <h2 style="color:white;">🎮 루미큐브 대기실</h2>
+            <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">
+                ${tags}
+            </div>
+            
+            <h3 style="color:var(--accent-gold); margin-bottom:5px;">🏆 명예의 전당</h3>
+            ${rankHtml}
+
+            <div style="margin-top:20px; margin-bottom:20px;">
+                <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
+                <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button>
+            </div>
+            ${isHost ? '<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>' : '<p style="color:var(--accent-gold);">방장이 게임을 시작하기를 기다리는 중...</p>'}
+        `;
     };
 
     window.renderResultUI = function() {
@@ -808,6 +846,51 @@ window.viewPlayerHand = function(targetName) {
         const v = c.style.display === 'flex'; 
         c.style.display = v ? 'none' : 'flex'; 
         i.style.display = v ? 'none' : 'flex'; 
+    };
+
+// === 2번: 실시간 등록 점수 계산기 ===
+    window.updateRegScoreUI = function() {
+        const scoreBadge = document.getElementById('reg-score-badge');
+        const isReg = window.latestPlayersData[myName]?.registered;
+        
+        // 이미 등록했거나 내 차례가 아니면 숨김
+        if (isReg || currentTurn !== myName || myRole !== 'player') {
+            scoreBadge.style.display = 'none';
+            return;
+        }
+
+        let currentPts = 0;
+        Object.entries(boardTiles).forEach(([id, t]) => {
+            if (!initialBoardState[id]) {
+                currentPts += (t.num === 'J' ? 30 : Number(t.num));
+            }
+        });
+
+        scoreBadge.innerText = `등록 점수: ${currentPts} / 30`;
+        scoreBadge.style.display = 'inline-block';
+        scoreBadge.style.borderColor = currentPts >= 30 ? 'var(--accent-green)' : 'var(--accent-gold)';
+        scoreBadge.style.color = currentPts >= 30 ? 'var(--accent-green)' : 'var(--accent-gold)';
+    };
+
+    // === 5번: 누적 전적 저장 및 불러오기 ===
+    window.recordWin = function(winnerName) {
+        db.ref(`stats/${winnerName}/wins`).transaction(curr => (curr || 0) + 1);
+    };
+
+    window.getRankHtml = function() {
+        return new Promise(resolve => {
+            db.ref('stats').once('value', snap => {
+                const stats = snap.val() || {};
+                let html = `<table class="rank-table"><tr><th>이름</th><th>누적 승리</th></tr>`;
+                const sorted = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
+                if (sorted.length === 0) html += `<tr><td colspan="2">전적이 없습니다.</td></tr>`;
+                sorted.forEach(([name, data]) => {
+                    html += `<tr><td>${name}</td><td>${data.wins}회</td></tr>`;
+                });
+                html += `</table>`;
+                resolve(html);
+            });
+        });
     };
 
 </script>
