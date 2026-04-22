@@ -479,7 +479,7 @@ db.ref('settings/turnStartTime').on('value', snap => {
             });
         });
         db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
-        db.ref('chats').limitToLast(20).on('child_added', snap => {
+db.ref('chats').limitToLast(20).on('child_added', snap => {
             const c = snap.val();
             const div = document.createElement('div');
             div.style.color = c.color || "#ffffff";
@@ -487,8 +487,8 @@ db.ref('settings/turnStartTime').on('value', snap => {
             const box = document.getElementById('chat-box');
             if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
         });
-    };
-// 게임 로그 실시간 감시
+        
+        // 게임 로그 실시간 감시
         db.ref('logs').limitToLast(30).on('child_added', snap => {
             const log = snap.val();
             const div = document.createElement('div');
@@ -497,6 +497,7 @@ db.ref('settings/turnStartTime').on('value', snap => {
             const logBox = document.getElementById('game-log');
             if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
         });
+    }; 
 
     function isValidSet(tiles) {
         if (tiles.length < 3) return false;
