@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 42 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -151,7 +151,21 @@ body[data-theme='pink'] {
         #chat-color-input { cursor: pointer; border: none; width: 20px; height: 20px; background: none; padding: 0; }
 
         /* === 하단 랙 컨트롤 === */
-        #my-rack { height: 210px; background: var(--rack-bg); border-top: 2px solid rgba(0,0,0,0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; transition: background 0.3s; }
+        #my-rack {
+    height: 210px;
+    background: var(--rack-bg);
+    border-top: 2px solid rgba(0,0,0,0.1);
+    position: relative; /* 좌표 기준점 */
+    padding: 15px;
+    z-index: 600;
+    overflow: hidden; /* 밖으로 나가는 타일 숨김 */
+    transition: background 0.3s;
+    /* display: flex; 등 자동 정렬 관련 속성은 제거하거나 무시됩니다. */
+}
+
+#my-rack .tile {
+    position: absolute; /* 자유로운 배치 가능 */
+}
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: var(--rack-bg); padding-bottom: 10px; transition: background 0.3s; }
         
         /* 일반 버튼들 */
