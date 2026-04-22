@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.7 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.8 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -301,22 +301,8 @@ body[data-theme='pink'] #game-board {
             <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
             <div id="emote-picker"></div>
         </div>
-        <div id="audio-controls">
-            <div class="color-picker-container">
-                <span>TXT</span>
-                <input type="color" id="chat-color-input" value="#ffffff" oninput="window.updateChatColor(this.value)">
-            </div>
-            <div class="volume-container">
-                <span>VOL</span>
-                <input type="range" id="bgm-volume" min="0" max="1" step="0.01" value="0.5" oninput="window.updateVolume(this.value)">
-            </div>
-            <div id="audio-buttons">
-                <button id="bgm-toggle" onclick="window.toggleBGM()">🎵 BGM OFF</button>
-                <button id="chat-toggle" onclick="window.toggleChat()">📜 로그/채팅</button>
-            </div>
         </div>
-    </div>
-    
+
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
         <div id="rack-controls">
             <button onclick="window.setSortMode('number')">777 숫자</button>
@@ -324,21 +310,23 @@ body[data-theme='pink'] #game-board {
             <button onclick="window.setSortMode('manual')" style="background:var(--accent-purple); color:white;">수동 정렬</button>
         </div>
     </div>
-</div>
 
-<div id="entry-layer">
-    <div class="modal-card">
-        <h2>🎮 루미큐브 입장</h2>
-        <input type="text" id="nick-input" placeholder="닉네임 입력..." maxlength="10" style="padding:10px; width:80%; margin-bottom:15px;">
-        <br>
-        <button onclick="window.handleEntry('player')" style="background:var(--accent-purple); color:white; width:45%;">플레이어로 입장</button>
-        <button onclick="window.handleEntry('spectator')" style="background:#555; color:white; width:45%;">관전자로 입장</button>
+    <div id="overlay-layer">
+        <div class="modal-card" id="modal-body"><h2>서버 연결 중...</h2></div>
     </div>
-</div>
 
-<div id="overlay-layer">
-    <div class="modal-card" id="modal-body"><h2>서버 연결 중...</h2></div>
-</div>
+    <div id="entry-layer" style="display:none;">
+        <div class="modal-card">
+            <h2 style="color:var(--main-text);">🎮 루미큐브 입장</h2>
+            <input type="text" id="nick-input" placeholder="닉네임 입력..." maxlength="10" 
+                   style="padding:12px; width:80%; margin-bottom:15px; border-radius:10px; border:1px solid #ccc;">
+            <br>
+            <button onclick="window.handleEntry('player')" style="background:var(--accent-purple); color:white; width:45%; padding:12px;">플레이어 입장</button>
+            <button onclick="window.handleEntry('spectator')" style="background:#555; color:white; width:45%; padding:12px;">관전자 입장</button>
+        </div>
+    </div>
+
+</div> 
 
 <script>
     let db; 
@@ -550,41 +538,36 @@ body[data-theme='pink'] #game-board {
         if (!firebase.apps.length) firebase.initializeApp(config);
         db = firebase.database();
         
-        // 1. 테마 먼저 적용
-        const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
-        window.setTheme(savedTheme);
+        // 1. 테마 적용
+    const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
+    window.setTheme(savedTheme);
 
-        // 2. ⭐ 에러 방지용 체크: 요소가 있을 때만 style이나 value를 건드림
-        const chatColorInput = document.getElementById('chat-color-input');
-        if (chatColorInput) {
-            const savedColor = localStorage.getItem('lumi-chat-color') || '#ffffff';
-            chatColorInput.value = savedColor;
-            document.documentElement.style.setProperty('--chat-text-color', savedColor);
+    // 2. 안전하게 UI 요소 초기화 (요소가 없어도 에러 안 나게 처리)
+    const chatInput = document.getElementById('chat-color-input');
+    if(chatInput) chatInput.value = localStorage.getItem('lumi-chat-color') || "#ffffff";
+    
+    const bgmVol = document.getElementById('bgm-volume');
+    if(bgmVol) bgmVol.value = audioCtx.currentVolume;
+
+    // 3. 서버 데이터 연결 및 입장창 제어 (핵심!)
+    setTimeout(() => {
+        const entryLayer = document.getElementById('entry-layer');
+        if (window.sessionStorage.getItem('lumi-nick')) {
+            window.handleEntry(null, true);
+        } else if (entryLayer) {
+            entryLayer.style.display = 'flex';
         }
+    }, 200);
 
-        const bgmVolInput = document.getElementById('bgm-volume');
-        if (bgmVolInput) {
-            bgmVolInput.value = audioCtx.currentVolume;
-        }
-
-        // 3. 서버 데이터 연결 (에러 방지 안전 코드)
-setTimeout(() => {
-    const entryLayer = document.getElementById('entry-layer');
-    const savedNick = window.sessionStorage.getItem('lumi-nick');
-
-    if (savedNick) {
-        // 이미 접속 정보가 있다면 자동 입장
-        window.handleEntry(null, true);
-    } else if (entryLayer) {
-        // 정보가 없고 요소가 존재하면 입장창 표시
-        entryLayer.style.display = 'flex';
-    } else {
-        // 만약 여기까지 왔는데도 없다면, 강제로 생성하거나 경고 (디버깅용)
-        console.error("Critical: entry-layer를 찾을 수 없어 대기실로 진입할 수 없습니다.");
-        // 서버 연결 중 화면이라도 지우고 싶다면 아래 주석 해제
-        // document.getElementById('overlay-layer').style.display = 'none';
-    }
-}, 200); // 0.2초 여유를 줌
+    // 4. 대기실 리스너 (여기가 돌아가야 대기실이 보입니다)
+    db.ref('settings/status').on('value', snap => {
+        gameStatus = snap.val() || "waiting";
+        const overlay = document.getElementById('overlay-layer');
+        if (overlay) overlay.style.display = (gameStatus === "playing") ? 'none' : 'flex';
+        
+        if (gameStatus === "waiting") window.renderLobbyUI();
+        else if (gameStatus === "finished") window.renderResultUI();
+    });
 
         db.ref('settings/host').on('value', snap => { currentHost = snap.val(); window.updatePlayerListUI(); if (gameStatus === "waiting") window.renderLobbyUI(); });
         db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || 'normal'; if (gameStatus === "waiting") window.renderLobbyUI(); });
