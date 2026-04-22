@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.7 </title>
+    <title>루미큐브 : Ver. 35.8 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -801,6 +801,9 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
             return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`; 
         }).join('');
 
+        // 방장에게만 보이는 전적 초기화 버튼
+        const resetRankBtn = isHost ? `<button onclick="window.resetRank()" style="background:#333; color:#aaa; padding:5px 10px; font-size:0.8rem; margin-top:10px; border:1px solid #555;">전적 초기화</button>` : '';
+
         // 1. 대기실 틀과 닉네임을 딜레이 없이 즉시 그립니다.
         modalBody.innerHTML = `
             <h2 style="color:white;">🎮 루미큐브 대기실</h2>
@@ -810,6 +813,7 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
             
             <h3 style="color:var(--accent-gold); margin-bottom:5px;">🏆 명예의 전당</h3>
             <div id="rank-container" style="color:#aaa; font-size:0.9rem;">전적 로딩 중...</div>
+            ${resetRankBtn}
 
             <div style="margin-top:20px; margin-bottom:20px;">
                 <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
@@ -1024,6 +1028,15 @@ document.addEventListener('mouseup', function() {
         document.getElementById('selection-box').style.display = 'none';
     }
 });
+
+// === 전적 초기화 함수 (방장 전용) ===
+    window.resetRank = function() {
+        if (confirm("🏆 모든 명예의 전당 기록을 영구적으로 초기화할까요?")) {
+            db.ref('stats').remove().then(() => {
+                window.renderLobbyUI(); // 삭제 후 화면 즉시 갱신
+            });
+        }
+    };
 
 </script>
 </body>
