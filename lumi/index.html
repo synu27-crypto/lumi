@@ -34,11 +34,17 @@
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
 
-        #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 280px; z-index: 20000; display: flex; flex-direction: column; pointer-events: none; }
-        #chat-box { height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px 12px 0 0; border: 1px solid rgba(255,255,255,0.15); overflow-y: auto; padding: 10px; pointer-events: auto; display: none; font-size: 0.85rem; }
-        #chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-        #chat-input-container { display: none; background: #1a1a1a; border-radius: 0 0 12px 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
-        #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
+        /* 기존 #chat-wrapper 관련 스타일들을 아래 내용으로 교체 */
+#chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 320px; z-index: 20000; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
+#chat-log-container { display: flex; gap: 5px; height: 180px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; display: none; }
+#game-log { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.8rem; border-right: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+#chat-box { flex: 1.2; padding: 10px; overflow-y: auto; font-size: 0.85rem; }
+#chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+#log-entry { margin-bottom: 3px; font-family: monospace; }
+#log-time { color: var(--accent-gold); margin-right: 5px; }
+
+#chat-input-container { display: none; background: #1a1a1a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
+#chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
 
         #audio-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; margin-top: 5px; pointer-events: auto; }
         #audio-buttons { display: flex; gap: 5px; }
@@ -136,25 +142,28 @@
     </div>
     
     <div id="chat-wrapper">
+    <div id="chat-log-container">
+        <div id="game-log"></div>
         <div id="chat-box"></div>
-        <div id="chat-input-container">
-            <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
+    </div>
+    <div id="chat-input-container">
+        <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
+    </div>
+    <div id="audio-controls">
+        <div class="color-picker-container">
+            <span>TXT</span>
+            <input type="color" id="chat-color-input" value="#ffffff" oninput="window.updateChatColor(this.value)">
         </div>
-        <div id="audio-controls">
-            <div class="color-picker-container">
-                <span>TXT</span>
-                <input type="color" id="chat-color-input" value="#ffffff" oninput="window.updateChatColor(this.value)">
-            </div>
-            <div class="volume-container">
-                <span>VOL</span>
-                <input type="range" id="bgm-volume" min="0" max="1" step="0.01" value="0.5" oninput="window.updateVolume(this.value)">
-            </div>
-            <div id="audio-buttons">
-                <button id="bgm-toggle" onclick="window.toggleBGM()">🎵 BGM OFF</button>
-                <button id="chat-toggle" onclick="window.toggleChat()">💬 채팅</button>
-            </div>
+        <div class="volume-container">
+            <span>VOL</span>
+            <input type="range" id="bgm-volume" min="0" max="1" step="0.01" value="0.5" oninput="window.updateVolume(this.value)">
+        </div>
+        <div id="audio-buttons">
+            <button id="bgm-toggle" onclick="window.toggleBGM()">🎵 BGM OFF</button>
+            <button id="chat-toggle" onclick="window.toggleChat()">📜 로그/채팅</button>
         </div>
     </div>
+</div>
     
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
         <div id="rack-controls">
@@ -760,6 +769,24 @@ window.viewPlayerHand = function(targetName) {
             });
         });
     };
+
+// === 게임 로그 함수 ===
+    window.addGameLog = function(message) {
+        if (!myName) return;
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        db.ref('logs').push({ time: timeStr, msg: message });
+    };
+
+    // UI 토글 함수 업데이트 (로그창과 채팅창을 같이 열고 닫음)
+    window.toggleChat = () => { 
+        const c = document.getElementById('chat-log-container');
+        const i = document.getElementById('chat-input-container');
+        const v = c.style.display === 'flex'; 
+        c.style.display = v ? 'none' : 'flex'; 
+        i.style.display = v ? 'none' : 'flex'; 
+    };
+
 </script>
 </body>
 </html>
