@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.8 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 40 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -257,6 +257,36 @@
 body[data-theme='pink'] #game-board {
     background-image: radial-gradient(circle, rgba(255, 102, 163, 0.15) 1px, transparent 1px) !important;
 }
+
+/* 대기실/결과창을 화면 전체에 꽉 차게 띄우는 설정 */
+#overlay-layer, #entry-layer { 
+    position: fixed; /* 화면에 고정 */
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    background: rgba(0, 0, 0, 0.85); /* 배경 어둡게 */
+    backdrop-filter: blur(10px); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 10000; /* 다른 요소보다 위에 배치 */
+}
+
+#entry-layer { z-index: 30000; } /* 입장창은 대기실보다 더 위로 */
+
+/* 중앙에 보일 하얀 박스 */
+.modal-card { 
+    background: var(--modal-bg); 
+    color: var(--main-text); 
+    padding: 40px; 
+    border-radius: 24px; 
+    text-align: center; 
+    min-width: 400px; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
     </style>
 </head>
 
@@ -278,12 +308,12 @@ body[data-theme='pink'] #game-board {
 
             <span id="reg-score-badge"></span>
             <span id="pool-badge" class="player-badge" style="background:var(--accent-purple); color:white; border:none;">POOL: 0</span>
+            <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
+            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
+            <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
             <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
             <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
             <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
-            <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">NEXT</button>
-            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">EXIT</button>
-            <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">HINT</button>
         </div>
     </div>
 
@@ -561,13 +591,17 @@ body[data-theme='pink'] #game-board {
 
     // 4. 대기실 리스너 (여기가 돌아가야 대기실이 보입니다)
     db.ref('settings/status').on('value', snap => {
-        gameStatus = snap.val() || "waiting";
-        const overlay = document.getElementById('overlay-layer');
-        if (overlay) overlay.style.display = (gameStatus === "playing") ? 'none' : 'flex';
-        
-        if (gameStatus === "waiting") window.renderLobbyUI();
-        else if (gameStatus === "finished") window.renderResultUI();
-    });
+    gameStatus = snap.val() || "waiting";
+    const overlay = document.getElementById('overlay-layer');
+    
+    if (overlay) {
+        // 게임 중일 때만 레이어를 숨기고, 대기/종료 시에는 다시 화면 가득 띄움
+        overlay.style.display = (gameStatus === "playing") ? 'none' : 'flex';
+    }
+    
+    if (gameStatus === "waiting") window.renderLobbyUI();
+    else if (gameStatus === "finished") window.renderResultUI();
+});
 
         db.ref('settings/host').on('value', snap => { currentHost = snap.val(); window.updatePlayerListUI(); if (gameStatus === "waiting") window.renderLobbyUI(); });
         db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || 'normal'; if (gameStatus === "waiting") window.renderLobbyUI(); });
