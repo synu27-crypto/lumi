@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.2 </title>
+    <title>루미큐브 : Ver. 35.3 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -216,6 +216,7 @@
         window.isPenalizing = true;
 
         alert("시간 초과! 바닥 초기화 및 벌칙 타일 3개.");
+window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 받았습니다.`);
         const up = {};
         Object.keys(boardTiles).forEach(k => { if(!initialBoardState[k]) up[`hands/${myName}/${k}`] = boardTiles[k]; });
         up['board'] = initialBoardState;
@@ -487,6 +488,15 @@ db.ref('settings/turnStartTime').on('value', snap => {
             if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
         });
     };
+// 게임 로그 실시간 감시
+        db.ref('logs').limitToLast(30).on('child_added', snap => {
+            const log = snap.val();
+            const div = document.createElement('div');
+            div.id = 'log-entry';
+            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
+            const logBox = document.getElementById('game-log');
+            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+        });
 
     function isValidSet(tiles) {
         if (tiles.length < 3) return false;
@@ -533,6 +543,7 @@ db.ref('settings/turnStartTime').on('value', snap => {
         if (myRole !== 'player') return;
         if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) return alert("패를 내거나 뽑으세요.");
         if (!validateBoard()) { playSFX('error'); return alert("보드 배치가 유효하지 않습니다!"); }
+        
         db.ref(`players/${myName}/registered`).once('value', snap => {
             const isReg = snap.val();
             if (!isReg) {
@@ -556,13 +567,22 @@ db.ref('settings/turnStartTime').on('value', snap => {
                 if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); }
                 db.ref(`players/${myName}`).update({ registered: true });
             }
+            
             if (myHandData.length === 0) {
                 db.ref('hands').once('value', hSnap => {
                     const allHands = hSnap.val(), scores = {};
                     playerList.forEach(p => { let s = 0; Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); scores[p] = s; });
                     db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
                 });
-            } else { window.nextTurnAction(); }
+            } else { 
+                // === 여기에 로그 로직이 안전하게 들어갑니다 ===
+                if (!isReg) {
+                    window.addGameLog(`⭐ ${myName}님이 첫 등록에 성공했습니다!`);
+                } else {
+                    window.addGameLog(`🔄 ${myName}님이 턴을 마쳤습니다.`);
+                }
+                window.nextTurnAction(); 
+            }
         });
     };
 
@@ -585,7 +605,8 @@ db.ref('settings/turnStartTime').on('value', snap => {
             const poolObj = s.val(), key = Object.keys(poolObj)[0], up = {};
             up[`hands/${myName}/tile_${Date.now()}`] = poolObj[key];
             up[`pool/${key}`] = null;
-            db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
+            window.addGameLog(`🎴 ${myName}님이 타일을 1개 뽑았습니다.`);
+db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
         });
     };
 
@@ -608,6 +629,8 @@ db.ref('settings/turnStartTime').on('value', snap => {
         updates['hands'] = allHands;
         const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
         updates['pool'] = poolObj;
+updates['logs'] = null; // 게임 시작 시 로그 초기화
+        window.addGameLog(`📢 게임이 시작되었습니다!`);
         
         db.ref('/').update(updates).then(() => {
             db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
@@ -735,7 +758,6 @@ db.ref('settings/turnStartTime').on('value', snap => {
     window.returnToLobby = () => { if(confirm("방 전체 데이터를 완전히 초기화할까요?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/gameResult": null }); };
     window.moveTileInRack = function(dId, tId) { if (dId === tId) return; if (sortMode !== 'manual') { sortMode = 'manual'; manualOrder = myHandData.map(t => t.id); } const fIdx = manualOrder.indexOf(dId), tIdx = manualOrder.indexOf(tId); if (fIdx > -1 && tIdx > -1) { manualOrder.splice(fIdx, 1); manualOrder.splice(tIdx, 0, dId); playSFX('tileDrop'); window.applyAutoSort(); } };
     window.forceNextTurn = () => { if(confirm("다음 차례로 넘길까요?")) window.nextTurnAction(); };
-    window.toggleChat = () => { const b = document.getElementById('chat-box'), i = document.getElementById('chat-input-container'), v = b.style.display === 'block'; b.style.display = v?'none':'block'; i.style.display = v?'none':'flex'; };
     window.sendChat = () => { const i = document.getElementById('chat-input'), color = document.getElementById('chat-color-input').value; if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value, color: color }); i.value = ''; } };
     window.toggleBGM = () => { if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); } else { audioCtx.bgm.play().catch(()=>{}); } audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying; };
 window.viewPlayerHand = function(targetName) {
