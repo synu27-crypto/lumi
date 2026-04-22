@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 40 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -359,30 +359,35 @@ body[data-theme='pink'] #game-board {
 
 <body data-theme="classic"> <div id="main-container">
     <div id="ui-layer">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
-            <div id="turn-info" style="font-weight: 800; color: var(--turn-blue); min-width: 80px;"></div>
-            <div id="timer-display" style="font-weight: 800; color: var(--accent-red); width: 40px; text-align: center;"></div>
-            <span id="reg-info" style="font-size: 0.75rem; font-weight: 600;"></span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <div class="theme-selector" style="display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 4px; border-radius: 20px; margin-right: 10px;">
-                <button class="theme-btn classic" onclick="window.setTheme('classic')" title="클래식">⚪</button>
-                <button class="theme-btn dark" onclick="window.setTheme('dark')" title="다크">⚫</button>
-                <button class="theme-btn pink" onclick="window.setTheme('pink')" title="키티">🎀</button>
-            </div>
-
-            <span id="reg-score-badge"></span>
-            <span id="pool-badge" class="player-badge" style="background:var(--accent-purple); color:white; border:none;">POOL: 0</span>
-            <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
-            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
-            <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
-            <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
-            <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
-            <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
-        </div>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div id="player-list-container" style="display: flex; gap: 8px;"></div>
     </div>
+
+    <div style="flex: 1;"></div>
+
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div id="turn-info" style="font-weight: 800; color: var(--turn-blue); min-width: 80px; text-align: right;"></div>
+        <div id="timer-display" style="font-weight: 800; color: var(--accent-red); width: 45px; text-align: center; font-size: 1.1rem;"></div>
+        <span id="reg-info" style="font-size: 0.75rem; font-weight: 700; background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 8px;"></span>
+
+        <div class="theme-selector" style="display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 4px; border-radius: 20px; margin: 0 10px;">
+            <button class="theme-btn classic" onclick="window.setTheme('classic')" title="클래식">⚪</button>
+            <button class="theme-btn dark" onclick="window.setTheme('dark')" title="다크">⚫</button>
+            <button class="theme-btn pink" onclick="window.setTheme('pink')" title="키티">🎀</button>
+        </div>
+
+        <span id="reg-score-badge"></span>
+        <span id="pool-badge" class="player-badge" style="background:var(--accent-purple); color:white; border:none;">POOL: 0</span>
+        
+        <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
+        <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
+        
+        <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
+        <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
+        <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
+        <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
+    </div>
+</div>
 
     <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)" onmousedown="window.startSelection(event)">
         <div id="selection-box"></div>
