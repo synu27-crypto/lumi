@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.6 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.7 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -112,8 +112,19 @@
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
         .tile-count { background: var(--main-text); color: var(--bg-color); padding: 1px 6px; border-radius: 5px; font-weight: 900; }
         
-        #overlay-layer, #entry-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 10000; }
-        #entry-layer { z-index: 30000; }
+        #entry-layer { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    background: rgba(0, 0, 0, 0.9); 
+    backdrop-filter: blur(10px); 
+    display: flex; /* none이 아니라 flex여야 처음에 보입니다 */
+    justify-content: center; 
+    align-items: center; 
+    z-index: 30000; 
+}
         .modal-card { background: var(--modal-bg); color: var(--main-text); padding: 40px; border-radius: 24px; text-align: center; min-width: 400px; border: 1px solid rgba(0,0,0,0.1); transition: background 0.3s, color 0.3s; }
 
         @keyframes hint-glow {
@@ -312,6 +323,16 @@ body[data-theme='pink'] #game-board {
             <button onclick="window.setSortMode('color')">123 색상</button>
             <button onclick="window.setSortMode('manual')" style="background:var(--accent-purple); color:white;">수동 정렬</button>
         </div>
+    </div>
+</div>
+
+<div id="entry-layer">
+    <div class="modal-card">
+        <h2>🎮 루미큐브 입장</h2>
+        <input type="text" id="nick-input" placeholder="닉네임 입력..." maxlength="10" style="padding:10px; width:80%; margin-bottom:15px;">
+        <br>
+        <button onclick="window.handleEntry('player')" style="background:var(--accent-purple); color:white; width:45%;">플레이어로 입장</button>
+        <button onclick="window.handleEntry('spectator')" style="background:#555; color:white; width:45%;">관전자로 입장</button>
     </div>
 </div>
 
@@ -552,17 +573,18 @@ setTimeout(() => {
     const savedNick = window.sessionStorage.getItem('lumi-nick');
 
     if (savedNick) {
-        // 세션 정보가 있으면 바로 입장 시도
-        console.log("기존 접속 정보 확인됨:", savedNick);
+        // 이미 접속 정보가 있다면 자동 입장
         window.handleEntry(null, true);
     } else if (entryLayer) {
-        // 정보가 없으면 닉네임 입력창 표시
+        // 정보가 없고 요소가 존재하면 입장창 표시
         entryLayer.style.display = 'flex';
     } else {
-        // 만약 entry-layer 자체를 못 찾았다면 에러 로그 출력 (디버깅용)
-        console.error("오류: 'entry-layer' 요소를 찾을 수 없습니다.");
+        // 만약 여기까지 왔는데도 없다면, 강제로 생성하거나 경고 (디버깅용)
+        console.error("Critical: entry-layer를 찾을 수 없어 대기실로 진입할 수 없습니다.");
+        // 서버 연결 중 화면이라도 지우고 싶다면 아래 주석 해제
+        // document.getElementById('overlay-layer').style.display = 'none';
     }
-}, 100); // 0.1초 정도 여유를 주어 HTML 로드를 확실히 함
+}, 200); // 0.2초 여유를 줌
 
         db.ref('settings/host').on('value', snap => { currentHost = snap.val(); window.updatePlayerListUI(); if (gameStatus === "waiting") window.renderLobbyUI(); });
         db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || 'normal'; if (gameStatus === "waiting") window.renderLobbyUI(); });
