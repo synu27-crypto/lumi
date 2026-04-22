@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36 </title>
+    <title>루미큐브 : Ver. 36.1 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -239,11 +239,13 @@ body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; }
 <div id="ui-layer">
     <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
         <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
+        
         <div style="display: flex; gap: 5px; margin-left: 10px;">
             <button class="theme-btn classic" onclick="window.setTheme('classic')">표준</button>
             <button class="theme-btn dark" onclick="window.setTheme('dark')">다크</button>
             <button class="theme-btn pink" onclick="window.setTheme('pink')">키티</button>
         </div>
+        
         <div id="player-list-container" style="display: flex; gap: 8px; margin-left: 10px;"></div>
     </div>
     <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
