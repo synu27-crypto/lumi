@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.9 </title>
+    <title>루미큐브 : Ver. 36 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -128,6 +128,99 @@
     z-index: 50 !important;
 }
 
+/* === 테마 설정 === */
+body[data-theme='classic'] { --tile-bg: #f8f5f0; --tile-text: #000; }
+body[data-theme='dark'] { --tile-bg: #2d2d2d; --tile-text: #fff; }
+body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; }
+
+/* 타일 스타일 수정 (기존 .tile 클래스를 아래 내용으로 덮어쓰거나 수정하세요) */
+.tile { 
+    width: 44px; height: 64px; 
+    background: var(--tile-bg) !important; /* 테마 변수 적용 */
+    border-radius: 6px; display: flex; justify-content: center; align-items: center; 
+    font-weight: 800; font-size: 1.3rem; 
+    border: 1px solid rgba(0,0,0,0.1); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+    z-index: 10; cursor: grab; 
+    transition: background 0.3s, color 0.3s; /* 부드러운 전환 */
+}
+
+/* 테마 선택 버튼 스타일 */
+.theme-btn { padding: 5px 10px; font-size: 0.7rem; border-radius: 5px; border: 1px solid #555; cursor: pointer; }
+.theme-btn.classic { background: #f8f5f0; color: #000; }
+.theme-btn.dark { background: #2d2d2d; color: #fff; }
+.theme-btn.pink { background: #ffeaf2; color: #ff4d94; }
+
+/* === 이모티콘 말풍선 스타일 === */
+.emoji-bubble {
+    position: absolute;
+    background: white;
+    color: black;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: 800;
+    font-size: 1.2rem;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+    animation: fade-up-out 3s forwards;
+}
+.emoji-bubble::after { /* 말풍선 꼬리 */
+    content: '';
+    position: absolute;
+    bottom: -5px; left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px 5px 0;
+    border-style: solid;
+    border-color: white transparent transparent;
+}
+@keyframes fade-up-out {
+    0% { opacity: 0; transform: translate(-50%, 10px); }
+    10% { opacity: 1; transform: translate(-50%, 0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+/* 퀵 버튼 스타일 */
+.quick-emoji-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 5px;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+.quick-emoji-btn:hover { background: var(--accent-purple); }
+
+/* === 타일 개수 위험 알림 스타일 === */
+.danger-player {
+    animation: danger-pulse 1.5s infinite; /* 빨간색으로 깜빡이는 효과 */
+    border: 2px solid #ff4d4d !important;
+    position: relative;
+}
+
+.danger-tag {
+    position: absolute;
+    top: -12px;
+    right: -5px;
+    background: #ff4d4d;
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+@keyframes danger-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7); background-color: rgba(255, 77, 77, 0.1); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); background-color: rgba(255, 77, 77, 0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+}
+
     </style>
 </head>
 <body>
@@ -143,25 +236,29 @@
     </div>
 </div>
 
-<div id="main-container">
-    <div id="ui-layer">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
-            <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
-            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
+<div id="ui-layer">
+    <div style="display: flex; align-items: center; gap: 15px; flex: 1.5;">
+        <span style="font-weight: 900; font-size: 1.2rem; color: #fff;">루미큐브</span>
+        <div style="display: flex; gap: 5px; margin-left: 10px;">
+            <button class="theme-btn classic" onclick="window.setTheme('classic')">표준</button>
+            <button class="theme-btn dark" onclick="window.setTheme('dark')">다크</button>
+            <button class="theme-btn pink" onclick="window.setTheme('pink')">키티</button>
         </div>
-        <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
-        <div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
-        <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
-            <button id="btn-hint" onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
-            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
-<span id="reg-score-badge">등록 점수: 0 / 30</span>
-            <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">강제 턴</button>
-            <span id="pool-badge" style="color:var(--accent-purple); font-weight:900; align-self:center; margin-right:10px;">POOL: --</span>
-            <button id="btn-rollback" onclick="window.rollbackTurn()" disabled>무르기</button>
-            <button id="btn-draw" onclick="window.drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
-            <button id="btn-end" onclick="window.handleTurnEnd()" disabled style="background:var(--accent-green); color:#000;">종료</button>
-        </div>
+        <div id="player-list-container" style="display: flex; gap: 8px; margin-left: 10px;"></div>
     </div>
+    <div id="turn-info" style="font-weight: bold; color: var(--turn-blue); flex: 1; text-align: center;">연결 중...</div>
+    <div id="timer-display" style="font-weight: 900; color: var(--accent-red); font-size: 1.5rem; flex: 0.5; text-align: center;"></div>
+    <div style="display: flex; gap: 8px; flex: 1.5; justify-content: flex-end;">
+        <button id="btn-hint" onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
+        <button id="btn-force-lobby" onclick="window.returnToLobby()" style="background:var(--accent-red); display:none;">리셋</button>
+        <span id="reg-score-badge">등록 점수: 0 / 30</span>
+        <button id="btn-force-next" onclick="window.forceNextTurn()" style="background:var(--accent-gold); color:#000; display:none;">강제 턴</button>
+        <span id="pool-badge" style="color:var(--accent-purple); font-weight:900; align-self:center; margin-right:10px;">POOL: --</span>
+        <button id="btn-rollback" onclick="window.rollbackTurn()" disabled>무르기</button>
+        <button id="btn-draw" onclick="window.drawTile()" disabled style="background:var(--accent-purple);">뽑기</button>
+        <button id="btn-end" onclick="window.handleTurnEnd()" disabled style="background:var(--accent-green); color:#000;">종료</button>
+    </div>
+</div>
     
     <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)" onmousedown="window.startSelection(event)">
         <div id="reg-info" style="position: absolute; top: 10px; width: 100%; text-align: center; color: var(--accent-gold); font-weight: bold; z-index: 100;"></div>
@@ -192,15 +289,20 @@
         </div>
     </div>
 </div>
-    
-    <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
-        <div id="rack-controls">
+
+<div id="rack-controls">
+            <div id="quick-emojis" style="display: flex; gap: 5px; margin-right: auto; padding-left: 10px;">
+                <button class="quick-emoji-btn" onclick="window.sendEmoji('빨리요! ⚡')">⚡</button>
+                <button class="quick-emoji-btn" onclick="window.sendEmoji('오.. 대박 👍')">👍</button>
+                <button class="quick-emoji-btn" onclick="window.sendEmoji('?? 🤔')">🤔</button>
+                <button class="quick-emoji-btn" onclick="window.sendEmoji('감사합니다 🙇')">🙇</button>
+                <button class="quick-emoji-btn" onclick="window.sendEmoji('ㅠㅠ 😭')">😭</button>
+                <button class="quick-emoji-btn" onclick="window.sendEmoji('나이스! 🔥')">🔥</button>
+            </div>
             <button onclick="window.setSortMode('number')">777 숫자</button>
             <button onclick="window.setSortMode('color')">123 색상</button>
             <button onclick="window.setSortMode('manual')" style="background:var(--accent-purple);">수동 정렬</button>
         </div>
-    </div>
-</div>
 
 <div id="overlay-layer">
     <div class="modal-card" id="modal-body"><h2>서버 연결 중...</h2></div>
@@ -392,33 +494,40 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
     };
 
     window.updatePlayerListUI = function() {
-        const listEl = document.getElementById('player-list-container');
-        if (!listEl) return;
-        listEl.innerHTML = '';
-        playerList.forEach(name => {
-            const badge = document.createElement('span');
-            // 관전자일 경우 클릭하면 패를 볼 수 있다는 걸 알리기 위해 커서 스타일 추가
-            badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-            if (myRole === 'spectator') badge.style.cursor = 'pointer'; 
-            
-            const pData = window.latestPlayersData[name] || {};
-            badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
-            
-            // 관전자 전용 클릭 이벤트
-            badge.onclick = () => {
-                if (myRole === 'spectator') window.viewPlayerHand(name);
-            };
-            
-            listEl.appendChild(badge);
-        });
+    const listEl = document.getElementById('player-list-container');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    
+    playerList.forEach(name => {
+        const pData = window.latestPlayersData[name] || {};
+        const tileCount = pData.tileCount || 0;
+        
+        const badge = document.createElement('span');
+        badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+        
+        // 1. 여기서 DANGER 체크
+        if (tileCount > 0 && tileCount <= 3) {
+            badge.classList.add('danger-player');
+            badge.innerHTML = `<div class="danger-tag">DANGER</div>`;
+        }
+
+        // 2. 이름과 개수 넣기
+        badge.innerHTML += `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${tileCount}</span>`;
+        
+        listEl.appendChild(badge);
+    });
+
         const isHost = (myName === currentHost);
         document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
         document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
         const btnClearLogs = document.getElementById('btn-clear-logs');
         if (btnClearLogs) btnClearLogs.style.display = isHost ? 'inline-block' : 'none';
+
         const regInfoEl = document.getElementById('reg-info');
-        if (myRole === 'spectator') { regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)"; regInfoEl.style.color = "#aaa"; }
-        else {
+        if (myRole === 'spectator') { 
+            regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)"; 
+            regInfoEl.style.color = "#aaa"; 
+        } else {
             const isReg = window.latestPlayersData[myName]?.registered;
             regInfoEl.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
             regInfoEl.style.color = "var(--accent-gold)";
@@ -431,6 +540,23 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         db = firebase.database();
         if (window.sessionStorage.getItem('lumi-nick')) window.handleEntry(null, true);
         else document.getElementById('entry-layer').style.display = 'flex';
+// 게임 로그 실시간 감시
+        db.ref('logs').limitToLast(30).on('child_added', snap => {
+            const log = snap.val();
+            const div = document.createElement('div');
+            div.id = 'log-entry';
+            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
+            const logBox = document.getElementById('game-log');
+            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+        });
+
+        // 누군가(방장이) 로그를 지우면 화면에서도 싹 비우기
+        db.ref('chats').on('value', snap => { if (!snap.exists()) { const box = document.getElementById('chat-box'); if (box) box.innerHTML = ''; } });
+        db.ref('logs').on('value', snap => { if (!snap.exists()) { const logBox = document.getElementById('game-log'); if (logBox) logBox.innerHTML = ''; } });
+
+        // 페이지 로드 시 기존 테마 적용
+        const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
+        window.setTheme(savedTheme);
 
         db.ref('settings/host').on('value', snap => { currentHost = snap.val(); window.updatePlayerListUI(); if (gameStatus === "waiting") window.renderLobbyUI(); });
         db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || 'normal'; if (gameStatus === "waiting") window.renderLobbyUI(); });
@@ -445,6 +571,7 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
             window.updatePlayerListUI();
             if (gameStatus === "waiting") window.renderLobbyUI();
         });
+
         db.ref('settings/status').on('value', snap => {
             gameStatus = snap.val() || "waiting";
             document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
@@ -1065,6 +1192,54 @@ document.addEventListener('mouseup', function() {
             db.ref('logs').remove();
         }
     };
+
+// === 테마 설정 함수 ===
+    window.setTheme = function(themeName) {
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('lumi-theme', themeName); // 설정 저장
+    };
+
+    // 페이지 로드 시 기존에 설정했던 테마 불러오기
+    const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
+    window.setTheme(savedTheme);
+
+// 이모티콘 전송 (DB 저장)
+    window.sendEmoji = function(msg) {
+        if (!myName) return;
+        db.ref('emoji_events').push({
+            name: myName,
+            msg: msg,
+            time: firebase.database.ServerValue.TIMESTAMP
+        });
+        // 내 채팅창에도 기록
+        db.ref('chats').push({ name: myName, msg: msg, color: '#f1c40f' });
+    };
+
+    // 화면에 말풍선 띄우기
+    window.showEmojiOnScreen = function(senderName, msg) {
+        // 상단 플레이어 리스트에서 해당 유저의 배지 찾기
+        const badges = document.querySelectorAll('.player-badge');
+        let targetBadge = null;
+        badges.forEach(b => {
+            if (b.innerText.includes(senderName)) targetBadge = b;
+        });
+
+        if (targetBadge) {
+            // 이미 떠있는 말풍선 제거
+            const oldBubble = targetBadge.querySelector('.emoji-bubble');
+            if (oldBubble) oldBubble.remove();
+
+            const bubble = document.createElement('div');
+            bubble.className = 'emoji-bubble';
+            bubble.innerText = msg;
+            targetBadge.style.position = 'relative'; // 배지 기준으로 띄우기 위함
+            targetBadge.appendChild(bubble);
+
+            setTimeout(() => bubble.remove(), 3000);
+        }
+    };
+
+
 
 </script>
 </body>
