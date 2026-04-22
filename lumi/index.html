@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 41</title>
+    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -353,20 +353,20 @@ body[data-theme='pink'] #game-board {
     };
 
     window.setTheme = function(themeName) {
-    // 1. 바디의 data-theme 속성 변경 (CSS 변수 적용)
-    document.body.setAttribute('data-theme', themeName);
-    
-    // 2. 브라우저 저장소에 선택 기록 (새로고침해도 유지)
-    localStorage.setItem('lumi-theme', themeName);
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('lumi-theme', themeName);
 
-    // 3. 버튼들 중 현재 테마 버튼에 'active' 클래스 추가
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.classList.contains(themeName)) {
-            btn.classList.add('active');
+        // 버튼이 아직 생성되지 않았을 경우를 대비해 체크
+        const buttons = document.querySelectorAll('.theme-btn');
+        if (buttons && buttons.length > 0) {
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.classList.contains(themeName)) {
+                    btn.classList.add('active');
+                }
+            });
         }
-    });
-};
+    };
 
     window.timeOutPenalty = function() {
         if (window.isPenalizing) return; 
@@ -529,9 +529,24 @@ body[data-theme='pink'] #game-board {
         if (!firebase.apps.length) firebase.initializeApp(config);
         db = firebase.database();
         
+        // 1. 테마 먼저 적용
         const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
         window.setTheme(savedTheme);
 
+        // 2. ⭐ 에러 방지용 체크: 요소가 있을 때만 style이나 value를 건드림
+        const chatColorInput = document.getElementById('chat-color-input');
+        if (chatColorInput) {
+            const savedColor = localStorage.getItem('lumi-chat-color') || '#ffffff';
+            chatColorInput.value = savedColor;
+            document.documentElement.style.setProperty('--chat-text-color', savedColor);
+        }
+
+        const bgmVolInput = document.getElementById('bgm-volume');
+        if (bgmVolInput) {
+            bgmVolInput.value = audioCtx.currentVolume;
+        }
+
+        // 3. 서버 데이터 연결 (에러가 나면 여기까지 도달하지 못했었음)
         if (window.sessionStorage.getItem('lumi-nick')) window.handleEntry(null, true);
         else document.getElementById('entry-layer').style.display = 'flex';
 
