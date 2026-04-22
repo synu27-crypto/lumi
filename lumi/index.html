@@ -111,6 +111,23 @@
 .rank-table { width: 100%; margin-top: 15px; border-collapse: collapse; color: white; font-size: 0.9rem; }
 .rank-table th { border-bottom: 1px solid #555; padding: 8px; color: var(--accent-gold); }
 .rank-table td { padding: 8px; border-bottom: 1px solid #333; }
+
+/* === 드래그 선택 박스 스타일 === */
+#selection-box {
+    position: absolute;
+    border: 1px solid rgba(52, 152, 219, 0.8);
+    background: rgba(52, 152, 219, 0.2);
+    pointer-events: none; /* 마우스 이벤트 방해 금지 */
+    display: none;
+    z-index: 9999;
+}
+/* 선택된 타일 강조 효과 */
+.selected-tile {
+    box-shadow: 0 0 10px 3px var(--turn-blue) !important;
+    transform: scale(1.05);
+    z-index: 50 !important;
+}
+
     </style>
 </head>
 <body>
@@ -146,8 +163,9 @@
         </div>
     </div>
     
-    <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)">
+    <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)" onmousedown="window.startSelection(event)">
         <div id="reg-info" style="position: absolute; top: 10px; width: 100%; text-align: center; color: var(--accent-gold); font-weight: bold; z-index: 100;"></div>
+        <div id="selection-box"></div>
     </div>
     
     <div id="chat-wrapper">
@@ -693,23 +711,53 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
             }
         }
 
-        // 3. 내 타일을 보드에 놓기
+        // 3. 내 타일을 보드에 놓기 (다중 선택 처리 포함)
         const inHand = myHandData.find(t => t.id === id);
         
         if (inHand) {
-            // 랙에서 보드로 이동
+            // 랙에서 보드로 1개 가져오기 (기존과 동일)
             up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: dropX, y: dropY };
             up[`hands/${myName}/${id}`] = null; 
             db.ref('/').update(up); 
             playSFX('tileDrop');
         } else if (boardTiles[id]) {
-            // 보드 내에서 이동
+            // 보드 내부 이동
             if (!window.latestPlayersData[myName]?.registered && initialBoardState[id]) { 
                 playSFX('error'); 
                 return alert("등록 전에는 바닥 패를 조작할 수 없습니다."); 
             }
-            up[`board/${id}/x`] = dropX;
-            up[`board/${id}/y`] = dropY;
+
+            // [추가된 로직] 만약 이동시키려는 타일이 '선택된 묶음' 중 하나라면?
+            if (selectedTiles.includes(id)) {
+                // 기준 타일(현재 드래그한 타일)의 원래 위치
+                const originX = boardTiles[id].x;
+                const originY = boardTiles[id].y;
+                
+                // 마우스가 이동한 거리 (Delta) 계산
+                const dx = dropX - originX;
+                const dy = dropY - originY;
+
+                // 선택된 모든 타일을 똑같은 거리(Delta)만큼 일괄 이동
+                selectedTiles.forEach(tileId => {
+                    if (!boardTiles[tileId]) return;
+                    // 등록 전 패널티 체크
+                    if (!window.latestPlayersData[myName]?.registered && initialBoardState[tileId]) return;
+                    
+                    const newX = boardTiles[tileId].x + dx;
+                    const newY = boardTiles[tileId].y + dy;
+                    up[`board/${tileId}/x`] = newX;
+                    up[`board/${tileId}/y`] = newY;
+                });
+                
+                // 이동 후 선택 해제
+                selectedTiles = [];
+                document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+            } else {
+                // 그룹이 아닌 단일 타일 이동 (기존과 동일)
+                up[`board/${id}/x`] = dropX;
+                up[`board/${id}/y`] = dropY;
+            }
+
             db.ref('/').update(up); 
             playSFX('tileDrop');
         }
@@ -897,6 +945,85 @@ window.viewPlayerHand = function(targetName) {
             });
         });
     };
+
+// === 그룹 선택 및 이동 로직 ===
+let isSelecting = false;
+let startX, startY;
+let selectedTiles = []; // 현재 선택된 타일 ID 목록
+
+// 1. 드래그 시작 (보드 빈 공간 클릭)
+window.startSelection = function(e) {
+    if (myRole !== 'player' || currentTurn !== myName) return;
+    // 타일 위를 클릭한 거라면 선택 취소하지 않음 (이동을 위해)
+    if (e.target.classList.contains('tile')) return;
+
+    isSelecting = true;
+    const board = document.getElementById('game-board');
+    const rect = board.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+
+    const selBox = document.getElementById('selection-box');
+    selBox.style.left = startX + 'px';
+    selBox.style.top = startY + 'px';
+    selBox.style.width = '0px';
+    selBox.style.height = '0px';
+    selBox.style.display = 'block';
+
+    // 기존 선택 초기화
+    selectedTiles = [];
+    document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+};
+
+// 2. 드래그 중 (박스 그리기 및 타일 포함 여부 계산)
+document.addEventListener('mousemove', function(e) {
+    if (!isSelecting) return;
+    
+    const board = document.getElementById('game-board');
+    const rect = board.getBoundingClientRect();
+    let currentX = e.clientX - rect.left;
+    let currentY = e.clientY - rect.top;
+
+    // 보드 밖으로 마우스가 나가면 제한
+    currentX = Math.max(0, Math.min(currentX, rect.width));
+    currentY = Math.max(0, Math.min(currentY, rect.height));
+
+    const selBox = document.getElementById('selection-box');
+    const left = Math.min(startX, currentX);
+    const top = Math.min(startY, currentY);
+    const width = Math.abs(currentX - startX);
+    const height = Math.abs(currentY - startY);
+
+    selBox.style.left = left + 'px';
+    selBox.style.top = top + 'px';
+    selBox.style.width = width + 'px';
+    selBox.style.height = height + 'px';
+
+    // 실시간으로 박스 안에 들어온 타일 찾기
+    selectedTiles = [];
+    document.querySelectorAll('#game-board .tile').forEach(tile => {
+        const tX = parseInt(tile.style.left);
+        const tY = parseInt(tile.style.top);
+        const tRight = tX + 44; // 타일 너비
+        const tBottom = tY + 64; // 타일 높이
+
+        // 겹치는지 확인
+        if (!(tRight < left || tX > left + width || tBottom < top || tY > top + height)) {
+            tile.classList.add('selected-tile');
+            selectedTiles.push(tile.id);
+        } else {
+            tile.classList.remove('selected-tile');
+        }
+    });
+});
+
+// 3. 드래그 종료
+document.addEventListener('mouseup', function() {
+    if (isSelecting) {
+        isSelecting = false;
+        document.getElementById('selection-box').style.display = 'none';
+    }
+});
 
 </script>
 </body>
