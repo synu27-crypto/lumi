@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.8 (이모티콘 말풍선 추가)</title>
+    <title>루미큐브 : Ver. 35.9</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -91,6 +91,29 @@
 
         #selection-box { position: absolute; border: 1px solid rgba(52, 152, 219, 0.8); background: rgba(52, 152, 219, 0.2); pointer-events: none; display: none; z-index: 9999; }
         .selected-tile { box-shadow: 0 0 10px 3px var(--turn-blue) !important; transform: scale(1.05); z-index: 50 !important; }
+
+/* === 테마 설정 === */
+    body[data-theme='classic'] { --tile-bg: #f8f5f0; --tile-text: #000; }
+    body[data-theme='dark'] { --tile-bg: #2d2d2d; --tile-text: #fff; }
+    body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; }
+
+    /* 타일 스타일 덮어쓰기 (테마 변수 적용) */
+    .tile { 
+        width: 44px; height: 64px; 
+        background: var(--tile-bg) !important; color: var(--tile-text); /* <- 이 부분이 핵심입니다 */
+        border-radius: 6px; display: flex; justify-content: center; align-items: center; 
+        font-weight: 800; font-size: 1.3rem; 
+        border: 1px solid rgba(0,0,0,0.1); 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+        z-index: 10; cursor: grab; 
+        transition: background 0.3s, color 0.3s; 
+    }
+
+    /* 테마 선택 버튼 스타일 */
+    .theme-btn { padding: 5px 10px; font-size: 0.7rem; border-radius: 5px; border: 1px solid #555; cursor: pointer; }
+    .theme-btn.classic { background: #f8f5f0; color: #000; }
+    .theme-btn.dark { background: #2d2d2d; color: #fff; }
+    .theme-btn.pink { background: #ffeaf2; color: #ff4d94; }
 
         /* === 말풍선 애니메이션 & 스타일 === */
         .emoji-bubble {
