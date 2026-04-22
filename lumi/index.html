@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 37 </title>
+    <title>루미큐브 : Ver. 1 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -707,18 +707,28 @@ let currentSpectatingTarget = null; // 현재 누구를 보고 있는지 저장
 
 window.viewPlayerHand = function(targetName) {
     if (myRole !== 'spectator') return;
-    
-    // 이전에 보던 사람이 있다면 그 사람의 리스너만 정확히 끄기
-    if (currentSpectatingTarget) {
-        db.ref('hands/' + currentSpectatingTarget).off();
-    }
-    currentSpectatingTarget = targetName; // 새로운 타겟 저장
+    if (currentSpectatingTarget) db.ref('hands/' + currentSpectatingTarget).off();
+    currentSpectatingTarget = targetName;
 
     const regInfoEl = document.getElementById('reg-info');
     regInfoEl.innerText = `👀 ${targetName} 님의 패 실시간 관전 중...`;
+    regInfoEl.style.color = "var(--turn-blue)";
 
     db.ref('hands/' + targetName).on('value', snap => {
-        // ... (이하 렌더링 로직 동일)
+        const handData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
+        const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+        handData.sort((a, b) => {
+            const vA = a.num === 'J' ? 99 : Number(a.num);
+            const vB = b.num === 'J' ? 99 : Number(b.num);
+            return coMap[a.color] - coMap[b.color] || vA - vB;
+        });
+        const rEl = document.getElementById('my-rack');
+        rEl.innerHTML = '';
+        handData.forEach(t => {
+            const div = document.createElement('div');
+            div.className = `tile ${t.color}`; div.innerText = t.num;
+            rEl.appendChild(div);
+        });
     });
 };
 
@@ -1049,13 +1059,58 @@ window.viewPlayerHand = function(targetName) {
                 window.nextTurnAction(); 
             }
         });
-    };
+
+window.rollbackTurn = function() {
+    if (myRole !== 'player' || currentTurn !== myName) return;
+    
+    if (confirm("이번 턴에 수정한 내용을 모두 되돌릴까요?")) {
+        db.ref('board').set(initialBoardState).then(() => {
+            playSFX('tileDrop');
+            window.addGameLog(`↩️ ${myName}님이 보드를 되돌렸습니다.`);
+        });
+    }
+};
+
+        db.ref('pool').on('value', snap => { 
+            const poolBadge = document.getElementById('pool-badge');
+            if(poolBadge) poolBadge.innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; 
+        });
+
+        db.ref('chats').limitToLast(20).on('child_added', snap => {
+            const c = snap.val();
+            const div = document.createElement('div');
+            div.style.color = c.color || "#ffffff";
+            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
+            const box = document.getElementById('chat-box');
+            if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
+        });
+
+        db.ref('logs').limitToLast(30).on('child_added', snap => {
+            const log = snap.val();
+            const div = document.createElement('div');
+            div.id = 'log-entry';
+            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
+            const logBox = document.getElementById('game-log');
+            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+        });
+
+        db.ref('chats').on('value', snap => { if (!snap.exists()) { const box = document.getElementById('chat-box'); if (box) box.innerHTML = ''; } });
+        db.ref('logs').on('value', snap => { if (!snap.exists()) { const logBox = document.getElementById('game-log'); if (logBox) logBox.innerHTML = ''; } });
+        
+        // 이모티콘 수신 리스너
+        db.ref('emoji_events').on('child_added', snap => {
+            const event = snap.val();
+            // 3초 이내의 최신 이벤트만 처리
+            if (Date.now() - event.time < 3000) {
+                window.showEmojiOnScreen(event.name, event.msg);
+            }
+        });
+    }; 
 
 
     // ==========================================
     // 2. 페이지 로딩 완료 시 실행되는 초기화 로직
     // ==========================================
-    window.onload = function() {
         const config = { 
             apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", 
             authDomain: "lumi-b373e.firebaseapp.com", 
@@ -1161,52 +1216,6 @@ window.viewPlayerHand = function(targetName) {
             });
         });
 
-window.rollbackTurn = function() {
-    if (myRole !== 'player' || currentTurn !== myName) return;
-    
-    if (confirm("이번 턴에 수정한 내용을 모두 되돌릴까요?")) {
-        db.ref('board').set(initialBoardState).then(() => {
-            playSFX('tileDrop');
-            window.addGameLog(`↩️ ${myName}님이 보드를 되돌렸습니다.`);
-        });
-    }
-};
-
-        db.ref('pool').on('value', snap => { 
-            const poolBadge = document.getElementById('pool-badge');
-            if(poolBadge) poolBadge.innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; 
-        });
-
-        db.ref('chats').limitToLast(20).on('child_added', snap => {
-            const c = snap.val();
-            const div = document.createElement('div');
-            div.style.color = c.color || "#ffffff";
-            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-            const box = document.getElementById('chat-box');
-            if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
-        });
-
-        db.ref('logs').limitToLast(30).on('child_added', snap => {
-            const log = snap.val();
-            const div = document.createElement('div');
-            div.id = 'log-entry';
-            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
-            const logBox = document.getElementById('game-log');
-            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
-        });
-
-        db.ref('chats').on('value', snap => { if (!snap.exists()) { const box = document.getElementById('chat-box'); if (box) box.innerHTML = ''; } });
-        db.ref('logs').on('value', snap => { if (!snap.exists()) { const logBox = document.getElementById('game-log'); if (logBox) logBox.innerHTML = ''; } });
-        
-        // 이모티콘 수신 리스너
-        db.ref('emoji_events').on('child_added', snap => {
-            const event = snap.val();
-            // 3초 이내의 최신 이벤트만 처리
-            if (Date.now() - event.time < 3000) {
-                window.showEmojiOnScreen(event.name, event.msg);
-            }
-        });
-    }; 
 </script>
 </body>
 </html>
