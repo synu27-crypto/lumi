@@ -3,50 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 40 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 35 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
 
     <style>
-        /* === 통합 테마 변수 설정 (여기서 모든 배경색을 통제합니다) === */
-        :root {
-            --bg-color: #121212; 
-            --panel-bg: rgba(30, 30, 30, 0.98); 
-            --board-bg: #1e1e1e;
-            --rack-bg: #151515;
-            --modal-bg: #2a2a2a;
-            --main-text: #e0e0e0;
-            --tile-bg: #2d2d2d; 
-            --tile-text: #ffffff;
-            
-            --accent-purple: #9d50bb; 
-            --accent-green: #2ecc71; 
-            --accent-gold: #f1c40f; 
-            --accent-red: #e74c3c;
-            --turn-blue: #3498db; 
-            --chat-bg: rgba(25, 25, 25, 0.98);
-        }
+        /* === 통합 테마 변수 설정 === */
+:root {
+    /* 기본값 (다크 기준) */
+    --bg-color: #121212; 
+    --panel-bg: #1e1e1e; 
+    --board-bg: #181818;
+    --rack-bg: #121212;
+    --modal-bg: #252525;
+    --main-text: #e0e0e0;
+    --tile-bg: #ffffff;      /* 타일 기본 바탕은 흰색 계열 */
+    --tile-text-black: #2d3436; /* 검은색 숫자의 색상 */
+    --accent-purple: #9d50bb; 
+    --accent-green: #2ecc71; 
+    --accent-gold: #f1c40f; 
+    --accent-red: #e74c3c;
+    --turn-blue: #3498db; 
+    --chat-bg: rgba(20, 20, 20, 0.95);
+    --btn-bg: rgba(255, 255, 255, 0.1);
+}
 
-        body[data-theme='classic'] { 
-            --bg-color: #e6e6e6; --panel-bg: #d4d4d4; --board-bg: #f0f0f0; --rack-bg: #bfbfbf; 
-            --modal-bg: #eeeeee; --main-text: #111111; --tile-bg: #ffffff; --tile-text: #000000;
-            --chat-bg: rgba(255, 255, 255, 0.9);
-        }
-        body[data-theme='dark'] { 
-            --bg-color: #121212; --panel-bg: rgba(30, 30, 30, 0.98); --board-bg: #1e1e1e; --rack-bg: #151515; 
-            --modal-bg: #2a2a2a; --main-text: #e0e0e0; --tile-bg: #2d2d2d; --tile-text: #ffffff;
-            --chat-bg: rgba(25, 25, 25, 0.98);
-        }
-        /* ⭐ 키티 테마 완벽 적용 (배경, 패널, 글자색 모두 핑크빛으로) */
-        body[data-theme='pink'] { 
-            --bg-color: #ffe6ee; --panel-bg: #ffb3c6; --board-bg: #fff0f5; --rack-bg: #ff99b3; 
-            --modal-bg: #ffd1dc; --main-text: #660029; --tile-bg: #ffffff; --tile-text: #ff4d94;
-            --chat-bg: rgba(255, 230, 238, 0.95);
-            --turn-blue: #ff3385; 
-            --accent-purple: #ff66a3;
-        }
+body[data-theme='classic'] { 
+    --bg-color: #f0f2f5; 
+    --panel-bg: #ffffff; 
+    --board-bg: #e4e6eb; 
+    --rack-bg: #d8dadf; 
+    --modal-bg: #ffffff; 
+    --main-text: #1c1e21; 
+    --tile-bg: #ffffff;
+    --tile-text-black: #000000;
+    --chat-bg: rgba(255, 255, 255, 0.95);
+    --btn-bg: rgba(0, 0, 0, 0.05);
+}
+
+body[data-theme='dark'] { 
+    --bg-color: #0f1011; 
+    --panel-bg: #1c1e20; 
+    --board-bg: #141618; 
+    --rack-bg: #0f1011; 
+    --modal-bg: #24272a; 
+    --main-text: #f0f0f0; 
+    --tile-bg: #e0e0e0;      /* 타일이 너무 쌩하얗지 않게 */
+    --tile-text-black: #111111; /* 숫자는 아주 진하게 */
+    --chat-bg: rgba(30, 33, 36, 0.98);
+    --btn-bg: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme='pink'] { 
+    --bg-color: #fff0f5;    /* 연한 라벤더 핑크 */
+    --panel-bg: #ffdae9;    /* 중간 핑크 */
+    --board-bg: #ffe4ee;    /* 보드 판 색상 */
+    --rack-bg: #ffc1d7;     /* 하단 거치대 */
+    --modal-bg: #ffffff; 
+    --main-text: #a32a58;    /* 진분홍 텍스트 */
+    --tile-bg: #ffffff;
+    --tile-text-black: #333333;
+    --chat-bg: rgba(255, 245, 248, 0.95);
+    --btn-bg: #ffffff;
+    --turn-blue: #ff3385; 
+    --accent-purple: #f06292;
+    --accent-green: #81c784;
+}
 
         /* === 레이아웃 및 뼈대 === */
         body { background-color: var(--bg-color); color: var(--main-text); margin: 0; font-family: 'Inter', 'Pretendard', sans-serif; height: 100vh; width: 100vw; overflow: hidden; user-select: none; transition: background 0.3s, color 0.3s; }
@@ -57,23 +81,39 @@
         #game-board { flex: 1; background: var(--board-bg); position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(128,128,128,0.15) 1px, transparent 1px); background-size: 50px 75px; transition: background 0.3s; }
         #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.8); }
 
-        /* === 타일 스타일 === */
-        .tile { 
-            width: 44px; height: 64px; 
-            background: var(--tile-bg) !important; color: var(--tile-text);
-            border-radius: 6px; display: flex; justify-content: center; align-items: center; 
-            font-weight: 800; font-size: 1.3rem; 
-            border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
-            z-index: 10; cursor: grab; transition: background 0.3s, color 0.3s; 
-        }
-        #game-board .tile { position: absolute; }
-        #my-rack .tile { position: relative; flex-shrink: 0; }
+        /* === 타일 스타일 개선 === */
+.tile { 
+    width: 44px; height: 64px; 
+    background: var(--tile-bg) !important; 
+    color: var(--tile-text);
+    border-radius: 6px; 
+    display: flex; justify-content: center; align-items: center; 
+    font-weight: 800; font-size: 1.4rem; 
+    /* 입체감을 위한 이중 그림자 */
+    box-shadow: 0 3px 0 #bbb, 0 4px 10px rgba(0,0,0,0.2); 
+    border: 1px solid rgba(0,0,0,0.1);
+    z-index: 10; cursor: grab; transition: transform 0.1s; 
+}
 
-        .red { color: #d63031 !important; border-bottom: 4px solid #d63031 !important; }
-        .blue { color: #0984e3 !important; border-bottom: 4px solid #0984e3 !important; }
-        .yellow { color: #f39c12 !important; border-bottom: 4px solid #f39c12 !important; }
-        .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
-        .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
+/* 숫자 색상 강조 (다크모드 대응) */
+.red { color: #e44d26 !important; border-bottom: 4px solid #e44d26 !important; }
+.blue { color: #2980b9 !important; border-bottom: 4px solid #2980b9 !important; }
+.yellow { color: #f39c12 !important; border-bottom: 4px solid #f39c12 !important; }
+
+/* ⭐ 검은색 타일: 배경이 어두워도 보이게 보정 */
+.black { 
+    color: var(--tile-text-black) !important; 
+    border-bottom: 4px solid #333 !important; 
+    /* 다크모드에서 검은 숫자가 잘 보이도록 타일 배경을 아주 살짝 밝게 유지 */
+}
+
+.joker { color: #8e44ad !important; font-size: 1.8rem !important; }
+
+/* 선택 시 하이라이트 */
+.selected-tile { 
+    box-shadow: 0 0 0 3px var(--turn-blue) !important; 
+    transform: translateY(-5px); 
+}
 
         /* === 채팅 및 로그 === */
         #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 500px; z-index: 20000; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
@@ -102,10 +142,37 @@
         #my-rack { height: 210px; background: var(--rack-bg); border-top: 2px solid rgba(0,0,0,0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; transition: background 0.3s; }
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: var(--rack-bg); padding-bottom: 10px; transition: background 0.3s; }
         
-        button { padding: 8px 16px; font-weight: 700; cursor: pointer; border-radius: 8px; border: none; background: rgba(128,128,128,0.2); color: var(--main-text); transition: background 0.3s, color 0.3s; }
-        button:disabled { opacity: 0.3; cursor: not-allowed; }
-        .mode-btn { border: 1px solid #555; background: rgba(128,128,128,0.1); margin: 0 5px; font-size: 0.8rem; }
-        .mode-btn.selected { background: var(--accent-purple); color: white; border-color: transparent; }
+        /* 일반 버튼들 */
+button { 
+    padding: 8px 16px; 
+    font-weight: 700; 
+    cursor: pointer; 
+    border-radius: 8px; 
+    border: 1px solid rgba(128,128,128,0.2); 
+    background: var(--btn-bg); 
+    color: var(--main-text); 
+    transition: all 0.2s; 
+}
+
+button:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+/* 상단 정보 영역 */
+#ui-layer {
+    background: var(--panel-bg);
+    color: var(--main-text);
+    border-bottom: 1px solid rgba(128,128,128,0.1);
+}
+
+/* 채팅/로그 박스 */
+#chat-log-container {
+    background: var(--chat-bg);
+    color: var(--main-text);
+    border: 1px solid rgba(128,128,128,0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
         
         /* === 플레이어 뱃지 및 로비 === */
         .player-badge { background: rgba(128,128,128,0.1); color: var(--main-text); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(0, 0, 0, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; position: relative; transition: background 0.3s; }
@@ -311,8 +378,8 @@ body[data-theme='pink'] #game-board {
             <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
             <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
             <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
-            <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
             <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
+            <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
             <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
         </div>
     </div>
