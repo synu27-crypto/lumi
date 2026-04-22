@@ -672,7 +672,7 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
         if(sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
         pool.sort(() => Math.random() - 0.5);
         
-        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null }, allHands = {};
+        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing" }, allHands = {};
         
         playerList.forEach(p => {
             const hand = {};
@@ -682,7 +682,6 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
         updates['hands'] = allHands;
         const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
         updates['pool'] = poolObj;
-updates['logs'] = null; // 게임 시작 시 로그 초기화
         window.addGameLog(`📢 게임이 시작되었습니다!`);
         
         db.ref('/').update(updates).then(() => {
