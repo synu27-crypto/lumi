@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35 </title>
+    <title>루미큐브 : Ver. 35.1 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -359,16 +359,25 @@
         listEl.innerHTML = '';
         playerList.forEach(name => {
             const badge = document.createElement('span');
+            // 관전자일 경우 클릭하면 패를 볼 수 있다는 걸 알리기 위해 커서 스타일 추가
             badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+            if (myRole === 'spectator') badge.style.cursor = 'pointer'; 
+            
             const pData = window.latestPlayersData[name] || {};
             badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
+            
+            // 관전자 전용 클릭 이벤트
+            badge.onclick = () => {
+                if (myRole === 'spectator') window.viewPlayerHand(name);
+            };
+            
             listEl.appendChild(badge);
         });
         const isHost = (myName === currentHost);
         document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
         document.getElementById('btn-force-next').style.display = isHost ? 'inline-block' : 'none';
         const regInfoEl = document.getElementById('reg-info');
-        if (myRole === 'spectator') { regInfoEl.innerText = "👀 관전 모드"; regInfoEl.style.color = "#aaa"; }
+        if (myRole === 'spectator') { regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)"; regInfoEl.style.color = "#aaa"; }
         else {
             const isReg = window.latestPlayersData[myName]?.registered;
             regInfoEl.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
@@ -672,6 +681,37 @@ db.ref('settings/turnStartTime').on('value', snap => {
     window.toggleChat = () => { const b = document.getElementById('chat-box'), i = document.getElementById('chat-input-container'), v = b.style.display === 'block'; b.style.display = v?'none':'block'; i.style.display = v?'none':'flex'; };
     window.sendChat = () => { const i = document.getElementById('chat-input'), color = document.getElementById('chat-color-input').value; if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value, color: color }); i.value = ''; } };
     window.toggleBGM = () => { if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); } else { audioCtx.bgm.play().catch(()=>{}); } audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying; };
+window.viewPlayerHand = function(targetName) {
+        if (myRole !== 'spectator') return;
+        
+        // 누구의 패를 보고 있는지 표시
+        const regInfoEl = document.getElementById('reg-info');
+        regInfoEl.innerText = `👀 ${targetName} 님의 패 관전 중...`;
+        regInfoEl.style.color = "var(--turn-blue)";
+
+        db.ref('hands/' + targetName).once('value', snap => {
+            const handData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
+            
+            // 정렬 로직 (색상 기준)
+            const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+            handData.sort((a, b) => { 
+                const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); 
+                return coMap[a.color] - coMap[b.color] || vA - vB;
+            });
+
+            const rEl = document.getElementById('my-rack');
+            rEl.querySelectorAll('.tile').forEach(t => t.remove());
+            
+            handData.forEach(t => {
+                const div = document.createElement('div');
+                div.className = `tile ${t.color}`;
+                div.innerText = t.num;
+                // 관전자는 패를 옮길 수 없으므로 draggable은 false
+                div.draggable = false;
+                rEl.appendChild(div);
+            });
+        });
+    };
 </script>
 </body>
 </html>
