@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.8 </title>
+    <title>루미큐브 : Ver. 36.7 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1108,15 +1108,13 @@ document.addEventListener('mouseup', function() {
         }
     };
 
-/* === 스크립트 맨 아랫부분을 이렇게 정리하세요 === */
+//* <script> 태그 안의 맨 밑에 넣으세요 */
 
-// 1. 이모티콘 표시 기능 (이건 바깥에 있어도 상관없음)
+// 이모티콘 표시 기능
 window.showEmojiOnScreen = function(senderName, msg) {
     const badges = document.querySelectorAll('.player-badge');
     let targetBadge = null;
-    badges.forEach(b => { 
-        if (b.innerText.includes(senderName)) targetBadge = b; 
-    });
+    badges.forEach(b => { if (b.innerText.includes(senderName)) targetBadge = b; });
 
     if (targetBadge) {
         const oldBubble = targetBadge.querySelector('.emoji-bubble');
@@ -1132,18 +1130,13 @@ window.showEmojiOnScreen = function(senderName, msg) {
     }
 };
 
-// 2. window.onload 내부 맨 끝에 아래 내용을 추가하세요. 
-// (이미 window.onload가 닫혔다면, 그 안으로 옮겨주는 게 안전합니다)
-
-/* window.onload 함수 맨 끝부분(닫기 중괄호 직전)에 넣을 내용:
-   
-   db.ref('emoji_events').on('child_added', snap => {
-       const event = snap.val();
-       if (Date.now() - event.time < 3000) {
-           window.showEmojiOnScreen(event.name, event.msg);
-       }
-   });
-*/
+// 서버 이모티콘 신호 감지 (window.onload 안에 넣거나, 따로 두어도 작동함)
+db.ref('emoji_events').on('child_added', snap => {
+    const event = snap.val();
+    if (Date.now() - event.time < 3000) {
+        window.showEmojiOnScreen(event.name, event.msg);
+    }
+});
 
 </script>
 </body>
