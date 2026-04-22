@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.6 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -784,11 +784,16 @@ body[data-theme='pink'] #game-board {
         
         db.ref('logs').limitToLast(30).on('child_added', snap => {
             const log = snap.val();
-            const div = document.createElement('div');
-            div.id = 'log-entry';
-            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
-            const logBox = document.getElementById('game-log');
-            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+            // applyAutoSort 내부 타일 생성 부분 수정
+const div = document.createElement('div');
+div.id = "rack-" + t.id;
+div.className = `tile ${t.color}`;
+div.innerText = t.num;
+// 저장된 좌표가 있다면 적용
+if (t.x !== undefined && t.y !== undefined) {
+    div.style.left = t.x + 'px';
+    div.style.top = t.y + 'px';
+}
         });
 
         db.ref('emotes').limitToLast(10).on('child_added', snap => {
@@ -1000,11 +1005,31 @@ body[data-theme='pink'] #game-board {
     };
 
     window.dropOnRack = function(e) {
-        e.preventDefault();
-        if (myRole !== 'player') return;
-        const id = e.dataTransfer.getData("text");
-        db.ref(`board/${id}`).once('value', s => { if (s.exists()) { const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null; db.ref('/').update(up); playSFX('tilePick'); } });
-    };
+    e.preventDefault();
+    if (myRole !== 'player') return;
+
+    const id = e.dataTransfer.getData("text");
+    const rect = document.getElementById('my-rack').getBoundingClientRect();
+    
+    // 드롭한 위치의 좌표 계산
+    let dropX = e.clientX - rect.left - 22;
+    let dropY = e.clientY - rect.top - 32;
+
+    db.ref(`board/${id}`).once('value', s => {
+        const up = {};
+        if (s.exists()) {
+            // 보드에서 랙으로 들어올 때 좌표 저장
+            up[`hands/${myName}/${id}`] = { ...s.val(), x: dropX, y: dropY };
+            up[`board/${id}`] = null;
+        } else {
+            // 랙 내부에서 이동할 때 좌표 업데이트
+            up[`hands/${myName}/${id}/x`] = dropX;
+            up[`hands/${myName}/${id}/y`] = dropY;
+        }
+        db.ref('/').update(up);
+        playSFX('tilePick');
+    });
+};
 
     window.applyAutoSort = function() {
         const rEl = document.getElementById('my-rack');
