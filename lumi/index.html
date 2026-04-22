@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.3 </title>
+    <title>루미큐브 : Ver. 36.5 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -357,35 +357,68 @@ body[data-theme='pink'] { --tile-bg: #ffeaf2; --tile-text: #ff4d94; }
         sfx.play().catch(() => {});
     }
 
+    // ==========================================
+    // 1. 전역 함수 선언부 (HTML 버튼들이 이 함수들을 찾습니다)
+    // ==========================================
     window.updateVolume = (val) => { audioCtx.currentVolume = val; audioCtx.bgm.volume = val; };
     window.updateChatColor = (color) => { 
         document.documentElement.style.setProperty('--chat-text-color', color);
         localStorage.setItem('lumi-chat-color', color);
     };
 
-    window.timeOutPenalty = function() {
-        if (window.isPenalizing) return; 
-        window.isPenalizing = true;
+    window.setTheme = function(themeName) {
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('lumi-theme', themeName); 
+    };
 
-        alert("시간 초과! 바닥 초기화 및 벌칙 타일 3개.");
-window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 받았습니다.`);
-        const up = {};
-        Object.keys(boardTiles).forEach(k => { if(!initialBoardState[k]) up[`hands/${myName}/${k}`] = boardTiles[k]; });
-        up['board'] = initialBoardState;
+    window.handleEntry = function(role, isAuto = false) {
+        if (!isAuto) {
+            const nickInput = document.getElementById('nick-input');
+            if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
+            myName = nickInput.value.trim(); myRole = role; 
+        } else {
+            myName = window.sessionStorage.getItem('lumi-nick');
+            myRole = window.sessionStorage.getItem('lumi-role') || "player";
+        }
         
-        db.ref('pool').limitToFirst(3).once('value', s => {
-            if (s.exists()) {
-                const poolObj = s.val();
-                Object.keys(poolObj).forEach(key => {
-                    up[`hands/${myName}/tile_${Date.now()}_${Math.random().toString(36).substr(2,5)}`] = poolObj[key];
-                    up[`pool/${key}`] = null;
-                });
-            }
-            db.ref('/').update(up).then(() => { 
-                playSFX('error'); 
-                window.nextTurnAction(); 
-                window.isPenalizing = false;
-            });
+        window.sessionStorage.setItem('lumi-nick', myName);
+        window.sessionStorage.setItem('lumi-role', myRole);
+        
+        db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
+        db.ref('players/' + myName).onDisconnect().remove();
+        document.getElementById('entry-layer').style.display = 'none';
+        if(!isAuto) playSFX('success');
+
+        db.ref('hands/' + myName).on('value', snap => {
+            myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
+            db.ref('players/' + myName).update({ tileCount: myHandData.length });
+            window.applyAutoSort();
+        });
+    };
+
+    window.startGame = function() {
+        if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
+        const colors = ['red', 'blue', 'yellow', 'black'], sets = (gameMode === 'expert') ? 3 : 2;
+        let pool = [];
+        colors.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) { pool.push({ num: i, color: c }); } } });
+        pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
+        if(sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
+        pool.sort(() => Math.random() - 0.5);
+        
+        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing" }, allHands = {};
+        
+        playerList.forEach(p => {
+            const hand = {};
+            for(let i=0; i<14; i++) { const t = pool.pop(); if(t) hand['tile_' + Math.random().toString(36).substr(2,9)] = t; }
+            allHands[p] = hand; updates[`players/${p}/registered`] = false;
+        });
+        updates['hands'] = allHands;
+        const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
+        updates['pool'] = poolObj;
+        window.addGameLog(`📢 게임이 시작되었습니다!`);
+        
+        db.ref('/').update(updates).then(() => {
+            db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
         });
     };
 
@@ -396,12 +429,10 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         const hand = [...myHandData];
         const isReg = window.latestPlayersData[myName]?.registered;
 
-        // 1. 내 손패 안에서 독자적인 세트 찾기
         const numMap = {};
         hand.forEach(t => {
             if (t.num === 'J') return;
             if (!numMap[t.num]) numMap[t.num] = [];
-            // 중복 색상 타일 방지
             if (!numMap[t.num].find(it => it.color === t.color)) numMap[t.num].push(t);
         });
         Object.values(numMap).forEach(group => { 
@@ -424,7 +455,6 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
             if (currentRun.length >= 3) sets.push(currentRun.map(t => ({ type: 'rack', id: t.id })));
         });
 
-        // 2. 바닥에 놓인 패에 내 타일을 붙일 수 있는지 확인 (첫 등록을 마친 경우만)
         if (isReg) {
             const rows = {};
             Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y] = []; rows[t.y].push(t); });
@@ -433,32 +463,25 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
                 let currentBoardSet = [];
                 for (let i = 0; i < rowTiles.length; i++) {
                     currentBoardSet.push(rowTiles[i]);
-                    // 타일 사이 간격이 벌어졌거나 줄의 마지막인 경우 세트 판별
                     if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
                         if (currentBoardSet.length >= 3) {
                             const nonJokers = currentBoardSet.filter(t => t.num !== 'J');
                             if (nonJokers.length > 0) {
                                 const isGroup = nonJokers.every(t => t.num === nonJokers[0].num);
                                 hand.forEach(handTile => {
-                                    if (handTile.num === 'J') return; // 내 패의 조커는 모든 곳에 붙을 수 있어 힌트가 지저분해지므로 제외
-                                    
+                                    if (handTile.num === 'J') return;
                                     if (isGroup && currentBoardSet.length < 4) {
-                                        // 그룹(같은 숫자, 다른 색상)에 붙일 때
                                         const boardColors = currentBoardSet.map(t => t.color);
                                         if (handTile.num === nonJokers[0].num && !boardColors.includes(handTile.color)) {
                                             sets.push([{ type: 'rack', id: handTile.id }, ...currentBoardSet.map(t => ({ type: 'board', id: t.id }))]);
                                         }
                                     } else if (!isGroup) {
-                                        // 런(연속된 숫자)에 붙일 때
                                         const color = nonJokers[0].color;
-                                        // 바닥 패 양끝 또는 중간에 조커가 있을 경우를 고려하여 실제 시작/끝 숫자를 정밀하게 계산
                                         const firstRealIdx = currentBoardSet.findIndex(t => t.num !== 'J');
                                         const firstRealNum = Number(currentBoardSet[firstRealIdx].num);
-                                        const firstNum = firstRealNum - firstRealIdx; // 세트의 가장 왼쪽 숫자
-                                        const lastNum = firstNum + currentBoardSet.length - 1; // 세트의 가장 오른쪽 숫자
-
+                                        const firstNum = firstRealNum - firstRealIdx;
+                                        const lastNum = firstNum + currentBoardSet.length - 1;
                                         const hn = Number(handTile.num);
-                                        // 내 패가 세트의 앞(-1)이나 뒤(+1)에 연결될 수 있는지 확인 (1~13 범위 내)
                                         if (handTile.color === color && ((hn === firstNum - 1 && hn >= 1) || (hn === lastNum + 1 && hn <= 13))) {
                                             sets.push([{ type: 'rack', id: handTile.id }, ...currentBoardSet.map(t => ({ type: 'board', id: t.id }))]);
                                         }
@@ -474,7 +497,6 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
 
         if (sets.length === 0) return alert("현재 낼 수 있는 타일이 없습니다.");
 
-        // 3. 무작위 1개가 아닌, 찾아낸 '모든' 조합의 타일 ID를 중복 없이 수집
         const allTargetIds = new Set();
         sets.forEach(setInfo => {
             setInfo.forEach(item => {
@@ -482,62 +504,158 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
             });
         });
 
-        // 4. 수집된 모든 타일에 형광(Glow) 효과 적용
         allTargetIds.forEach(domId => {
             let el = document.getElementById(domId);
             if (el) el.classList.add('hint-target');
         });
 
-        // 전체 힌트이므로 플레이어가 눈으로 확인할 시간을 충분히 주기 위해 3초 -> 5초로 연장
         setTimeout(() => document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target')), 5000);
     };
 
-    window.handleEntry = function(role, isAuto = false) {
-        if (!isAuto) {
-            const nickInput = document.getElementById('nick-input');
-            if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
-            myName = nickInput.value.trim(); myRole = role; 
-        } else {
-            myName = window.sessionStorage.getItem('lumi-nick');
-            myRole = window.sessionStorage.getItem('lumi-role') || "player";
-        }
-        window.sessionStorage.setItem('lumi-nick', myName);
-        window.sessionStorage.setItem('lumi-role', myRole);
-        db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
-        db.ref('players/' + myName).onDisconnect().remove();
-        document.getElementById('entry-layer').style.display = 'none';
-        if(!isAuto) playSFX('success');
+    window.dropOnBoard = function(e) {
+        e.preventDefault();
+        if (myRole !== 'player' || currentTurn !== myName) return;
+        
+        const id = e.dataTransfer.getData("text");
+        const rect = document.getElementById('game-board').getBoundingClientRect();
+        const TILE_WIDTH = 50; 
+        const TILE_HEIGHT = 75;
+        let dropX = Math.round((e.clientX - rect.left - 22) / TILE_WIDTH) * TILE_WIDTH + 2;
+        let dropY = Math.round((e.clientY - rect.top - 32) / TILE_HEIGHT) * TILE_HEIGHT + 2;
 
-        db.ref('hands/' + myName).on('value', snap => {
-            myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
-            db.ref('players/' + myName).update({ tileCount: myHandData.length });
-            window.applyAutoSort();
+        const tilesOnSameRow = Object.values(boardTiles).filter(t => t.y === dropY);
+        const up = {}; 
+
+        const overlappingTiles = tilesOnSameRow.filter(t => t.x >= dropX);
+        if (overlappingTiles.length > 0 && overlappingTiles.some(t => t.x === dropX)) {
+            overlappingTiles.sort((a, b) => a.x - b.x);
+            let currentShiftX = dropX;
+            for (let i = 0; i < overlappingTiles.length; i++) {
+                const t = overlappingTiles[i];
+                if (t.x === currentShiftX) {
+                    const originalId = Object.keys(boardTiles).find(key => boardTiles[key] === t);
+                    up[`board/${originalId}/x`] = t.x + TILE_WIDTH;
+                    currentShiftX += TILE_WIDTH;
+                } else break;
+            }
+        }
+
+        const inHand = myHandData.find(t => t.id === id);
+        if (inHand) {
+            up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: dropX, y: dropY };
+            up[`hands/${myName}/${id}`] = null; 
+            db.ref('/').update(up); 
+            playSFX('tileDrop');
+        } else if (boardTiles[id]) {
+            if (!window.latestPlayersData[myName]?.registered && initialBoardState[id]) { 
+                playSFX('error'); 
+                return alert("등록 전에는 바닥 패를 조작할 수 없습니다."); 
+            }
+            if (selectedTiles.includes(id)) {
+                const originX = boardTiles[id].x;
+                const originY = boardTiles[id].y;
+                const dx = dropX - originX;
+                const dy = dropY - originY;
+
+                selectedTiles.forEach(tileId => {
+                    if (!boardTiles[tileId]) return;
+                    if (!window.latestPlayersData[myName]?.registered && initialBoardState[tileId]) return;
+                    up[`board/${tileId}/x`] = boardTiles[tileId].x + dx;
+                    up[`board/${tileId}/y`] = boardTiles[tileId].y + dy;
+                });
+                selectedTiles = [];
+                document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+            } else {
+                up[`board/${id}/x`] = dropX;
+                up[`board/${id}/y`] = dropY;
+            }
+            db.ref('/').update(up); 
+            playSFX('tileDrop');
+        }
+    };
+
+    window.dropOnRack = function(e) {
+        e.preventDefault();
+        if (myRole !== 'player') return;
+        const id = e.dataTransfer.getData("text");
+        db.ref(`board/${id}`).once('value', s => { if (s.exists()) { const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null; db.ref('/').update(up); playSFX('tilePick'); } });
+    };
+
+    window.applyAutoSort = function() {
+        const rEl = document.getElementById('my-rack');
+        if(!rEl) return;
+        if (sortMode === 'manual' && manualOrder.length > 0) { myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); }
+        else {
+            const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+            myHandData.sort((a, b) => { const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]); });
+        }
+        rEl.querySelectorAll('.tile').forEach(t => t.remove());
+        myHandData.forEach(t => {
+            if (!t || t.num === undefined) return;
+            const div = document.createElement('div');
+            div.id = "rack-" + t.id; div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = (myRole === 'player');
+            div.ondragstart = (e) => { if (myRole !== 'player') return e.preventDefault(); e.dataTransfer.setData("text", t.id); e.dataTransfer.setData("source", "rack"); playSFX('tilePick'); };
+            div.ondragover = (e) => e.preventDefault();
+            div.ondrop = (e) => { e.preventDefault(); e.stopPropagation(); const dId = e.dataTransfer.getData("text"), src = e.dataTransfer.getData("source"); if (src === "rack") window.moveTileInRack(dId, t.id); else window.dropOnRack(e); };
+            rEl.appendChild(div);
+        });
+    };
+
+    window.renderLobbyUI = function() { 
+        const modalBody = document.getElementById('modal-body');
+        if(!modalBody) return;
+        const isHost = (myName === currentHost);
+        const allUsers = Object.entries(window.latestPlayersData);
+        
+        let tags = allUsers.map(([name, data]) => { 
+            if(!data.joined) return ''; 
+            const isSpec = data.role === 'spectator'; 
+            return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`; 
+        }).join('');
+
+        const resetRankBtn = isHost ? `<button onclick="window.resetRank()" style="background:#333; color:#aaa; padding:5px 10px; font-size:0.8rem; margin-top:10px; border:1px solid #555;">전적 초기화</button>` : '';
+
+        modalBody.innerHTML = `
+            <h2 style="color:white;">🎮 루미큐브 대기실</h2>
+            <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">
+                ${tags}
+            </div>
+            
+            <h3 style="color:var(--accent-gold); margin-bottom:5px;">🏆 명예의 전당</h3>
+            <div id="rank-container" style="color:#aaa; font-size:0.9rem;">전적 로딩 중...</div>
+            ${resetRankBtn}
+
+            <div style="margin-top:20px; margin-bottom:20px;">
+                <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
+                <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button>
+            </div>
+            ${isHost ? '<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>' : '<p style="color:var(--accent-gold);">방장이 게임을 시작하기를 기다리는 중...</p>'}
+        `;
+
+        window.getRankHtml().then(html => {
+            const rankBox = document.getElementById('rank-container');
+            if(rankBox) rankBox.innerHTML = html;
         });
     };
 
     window.updatePlayerListUI = function() {
-    const listEl = document.getElementById('player-list-container');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-    
-    playerList.forEach(name => {
-        const pData = window.latestPlayersData[name] || {};
-        const tileCount = pData.tileCount || 0;
+        const listEl = document.getElementById('player-list-container');
+        if (!listEl) return;
+        listEl.innerHTML = '';
         
-        const badge = document.createElement('span');
-        badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
-        
-        // 1. 여기서 DANGER 체크
-        if (tileCount > 0 && tileCount <= 3) {
-            badge.classList.add('danger-player');
-            badge.innerHTML = `<div class="danger-tag">DANGER</div>`;
-        }
-
-        // 2. 이름과 개수 넣기
-        badge.innerHTML += `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${tileCount}</span>`;
-        
-        listEl.appendChild(badge);
-    });
+        playerList.forEach(name => {
+            const pData = window.latestPlayersData[name] || {};
+            const tileCount = pData.tileCount || 0;
+            const badge = document.createElement('span');
+            badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+            
+            if (tileCount > 0 && tileCount <= 3) {
+                badge.classList.add('danger-player');
+                badge.innerHTML = `<div class="danger-tag">DANGER</div>`;
+            }
+            badge.innerHTML += `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${tileCount}</span>`;
+            listEl.appendChild(badge);
+        });
 
         const isHost = (myName === currentHost);
         document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
@@ -556,114 +674,260 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         }
     };
 
-    window.onload = function() {
-        const config = { apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", authDomain: "lumi-b373e.firebaseapp.com", databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", projectId: "lumi-b373e" };
-        if (!firebase.apps.length) firebase.initializeApp(config);
-        db = firebase.database();
-        
-        if (window.sessionStorage.getItem('lumi-nick')) window.handleEntry(null, true);
-        else document.getElementById('entry-layer').style.display = 'flex';
-
-        // 페이지 로드 시 기존 테마 적용
-        const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
-        window.setTheme(savedTheme);
-        db.ref('settings/host').on('value', snap => { currentHost = snap.val(); window.updatePlayerListUI(); if (gameStatus === "waiting") window.renderLobbyUI(); });
-        db.ref('settings/gameMode').on('value', snap => { gameMode = snap.val() || 'normal'; if (gameStatus === "waiting") window.renderLobbyUI(); });
-        
-        db.ref('players').on('value', snap => {
-            const players = snap.val() || {};
-            window.latestPlayersData = players;
-            playerList = Object.entries(players).filter(p => p[1].joined && p[1].role === 'player').sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0)).map(p => p[0]);
-            if (playerList.length > 0) {
-                let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
-                if (currentHost !== targetHost) db.ref('settings/host').set(targetHost);
-            } else if (Object.keys(players).length === 0) { db.ref('settings/host').set(""); }
-            window.updatePlayerListUI();
-            if (gameStatus === "waiting") window.renderLobbyUI();
+    window.renderResultUI = function() {
+        db.ref('settings/gameResult').once('value', snap => {
+            const data = snap.val(); if (!data) return;
+            const modalBody = document.getElementById('modal-body');
+            let html = `<h1 style="color:var(--accent-gold);">🏆 WINNER: ${data.winner}!</h1>`;
+            Object.entries(data.scores).sort((a,b)=>a[1]-b[1]).forEach(([name, score]) => { html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #444;"><span>${name}</span><span>${name === data.winner ? 'WINNER' : score + '점'}</span></div>`; });
+            if (myName === currentHost) html += `<button onclick="window.returnToLobby()" style="margin-top:20px; width:100%; padding:10px;">대기실로 돌아가기</button>`;
+            modalBody.innerHTML = html;
         });
+    };
 
-        db.ref('settings/status').on('value', snap => {
-            gameStatus = snap.val() || "waiting";
-            document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
-            if (gameStatus === "waiting") window.renderLobbyUI();
-            else if (gameStatus === "finished") window.renderResultUI();
-            if (gameStatus !== "playing" && turnTimer) { clearInterval(turnTimer); document.getElementById('timer-display').innerText = ""; }
+    window.setSortMode = (m) => { sortMode = m; if (m === 'manual') manualOrder = myHandData.map(t => t.id); window.applyAutoSort(); };
+    window.nextTurnAction = () => {
+        const nextPlayer = playerList[(playerList.indexOf(currentTurn) + 1) % playerList.length];
+        db.ref('/').update({
+            'currentTurn': nextPlayer,
+            'settings/turnStartTime': firebase.database.ServerValue.TIMESTAMP
         });
+    };
+    window.returnToLobby = () => { if(confirm("방 전체 데이터를 완전히 초기화할까요?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/gameResult": null }); };
+    window.moveTileInRack = function(dId, tId) { if (dId === tId) return; if (sortMode !== 'manual') { sortMode = 'manual'; manualOrder = myHandData.map(t => t.id); } const fIdx = manualOrder.indexOf(dId), tIdx = manualOrder.indexOf(tId); if (fIdx > -1 && tIdx > -1) { manualOrder.splice(fIdx, 1); manualOrder.splice(tIdx, 0, dId); playSFX('tileDrop'); window.applyAutoSort(); } };
+    window.forceNextTurn = () => { if(confirm("다음 차례로 넘길까요?")) window.nextTurnAction(); };
+    window.sendChat = () => { const i = document.getElementById('chat-input'), color = document.getElementById('chat-color-input').value; if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value, color: color }); i.value = ''; } };
+    window.toggleBGM = () => { if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); } else { audioCtx.bgm.play().catch(()=>{}); } audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying; };
+    
+    window.viewPlayerHand = function(targetName) {
+        if (myRole !== 'spectator') return;
+        const regInfoEl = document.getElementById('reg-info');
+        regInfoEl.innerText = `👀 ${targetName} 님의 패 관전 중...`;
+        regInfoEl.style.color = "var(--turn-blue)";
 
-        db.ref('currentTurn').on('value', snap => {
-            currentTurn = snap.val();
-            const isMy = (currentTurn === myName && myRole === 'player');
-            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-            ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
-            document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-            if(isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
-            window.updatePlayerListUI();
-            window.updateRegScoreUI();
-        });
+        db.ref('hands/' + targetName).once('value', snap => {
+            const handData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
+            const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+            handData.sort((a, b) => { 
+                const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); 
+                return coMap[a.color] - coMap[b.color] || vA - vB;
+            });
 
-        db.ref('settings/turnStartTime').on('value', snap => {
-            const startTime = snap.val();
-            const timerEl = document.getElementById('timer-display');
-            if (!startTime || gameStatus !== "playing") {
-                if (timerEl) timerEl.innerText = "";
-                return;
-            }
-            if (turnTimer) clearInterval(turnTimer);
-            turnTimer = setInterval(() => {
-                const now = Date.now();
-                const elapsed = Math.floor((now - startTime) / 1000);
-                timeLeft = 60 - elapsed;
-                if (timerEl) { timerEl.innerText = (timeLeft > 0 ? timeLeft : 0) + "s"; }
-                if (timeLeft <= 0 && currentTurn === myName && myRole === 'player') {
-                    clearInterval(turnTimer);
-                    window.timeOutPenalty();
-                }
-            }, 1000);
-        });
-
-        db.ref('board').on('value', snap => {
-            boardTiles = snap.val() || {};
-            window.updateRegScoreUI();
-            const bEl = document.getElementById('game-board');
-            if(!bEl) return;
-            bEl.querySelectorAll('.tile').forEach(t => t.remove());
-            Object.entries(boardTiles).forEach(([id, data]) => {
-                if (!data || data.num === undefined) return; 
+            const rEl = document.getElementById('my-rack');
+            rEl.querySelectorAll('.tile').forEach(t => t.remove());
+            
+            handData.forEach(t => {
                 const div = document.createElement('div');
-                div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num;
-                div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
-                div.draggable = (myRole === 'player');
-                div.ondragstart = (e) => {
-                    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
-                    e.dataTransfer.setData("text", id); playSFX('tilePick');
-                };
-                bEl.appendChild(div);
+                div.className = `tile ${t.color}`;
+                div.innerText = t.num;
+                div.draggable = false;
+                rEl.appendChild(div);
             });
         });
+    };
 
-        db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
+    window.addGameLog = function(message) {
+        if (!myName) return;
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        db.ref('logs').push({ time: timeStr, msg: message });
+    };
 
-        db.ref('chats').limitToLast(20).on('child_added', snap => {
-            const c = snap.val();
-            const div = document.createElement('div');
-            div.style.color = c.color || "#ffffff";
-            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-            const box = document.getElementById('chat-box');
-            if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
+    window.toggleChat = () => { 
+        const c = document.getElementById('chat-log-container');
+        const i = document.getElementById('chat-input-container');
+        const v = c.style.display === 'flex'; 
+        c.style.display = v ? 'none' : 'flex'; 
+        i.style.display = v ? 'none' : 'flex'; 
+    };
+
+    window.updateRegScoreUI = function() {
+        const scoreBadge = document.getElementById('reg-score-badge');
+        const isReg = window.latestPlayersData[myName]?.registered;
+        
+        if (isReg || currentTurn !== myName || myRole !== 'player') {
+            scoreBadge.style.display = 'none';
+            return;
+        }
+
+        let currentPts = 0;
+        Object.entries(boardTiles).forEach(([id, t]) => {
+            if (!initialBoardState[id]) {
+                currentPts += (t.num === 'J' ? 30 : Number(t.num));
+            }
         });
 
-        db.ref('logs').limitToLast(30).on('child_added', snap => {
-            const log = snap.val();
-            const div = document.createElement('div');
-            div.id = 'log-entry';
-            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
-            const logBox = document.getElementById('game-log');
-            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+        scoreBadge.innerText = `등록 점수: ${currentPts} / 30`;
+        scoreBadge.style.display = 'inline-block';
+        scoreBadge.style.borderColor = currentPts >= 30 ? 'var(--accent-green)' : 'var(--accent-gold)';
+        scoreBadge.style.color = currentPts >= 30 ? 'var(--accent-green)' : 'var(--accent-gold)';
+    };
+
+    window.recordWin = function(winnerName) {
+        db.ref(`stats/${winnerName}/wins`).transaction(curr => (curr || 0) + 1);
+    };
+
+    window.getRankHtml = function() {
+        return new Promise(resolve => {
+            db.ref('stats').once('value', snap => {
+                const stats = snap.val() || {};
+                let html = `<table class="rank-table"><tr><th>이름</th><th>누적 승리</th></tr>`;
+                const sorted = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
+                if (sorted.length === 0) html += `<tr><td colspan="2">전적이 없습니다.</td></tr>`;
+                sorted.forEach(([name, data]) => {
+                    html += `<tr><td>${name}</td><td>${data.wins}회</td></tr>`;
+                });
+                html += `</table>`;
+                resolve(html);
+            });
+        });
+    };
+
+    let isSelecting = false;
+    let startX, startY;
+    let selectedTiles = []; 
+
+    window.startSelection = function(e) {
+        if (myRole !== 'player' || currentTurn !== myName) return;
+        if (e.target.classList.contains('tile')) return;
+
+        isSelecting = true;
+        const board = document.getElementById('game-board');
+        const rect = board.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+
+        const selBox = document.getElementById('selection-box');
+        selBox.style.left = startX + 'px';
+        selBox.style.top = startY + 'px';
+        selBox.style.width = '0px';
+        selBox.style.height = '0px';
+        selBox.style.display = 'block';
+
+        selectedTiles = [];
+        document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+    };
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isSelecting) return;
+        
+        const board = document.getElementById('game-board');
+        const rect = board.getBoundingClientRect();
+        let currentX = e.clientX - rect.left;
+        let currentY = e.clientY - rect.top;
+
+        currentX = Math.max(0, Math.min(currentX, rect.width));
+        currentY = Math.max(0, Math.min(currentY, rect.height));
+
+        const selBox = document.getElementById('selection-box');
+        const left = Math.min(startX, currentX);
+        const top = Math.min(startY, currentY);
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+
+        selBox.style.left = left + 'px';
+        selBox.style.top = top + 'px';
+        selBox.style.width = width + 'px';
+        selBox.style.height = height + 'px';
+
+        selectedTiles = [];
+        document.querySelectorAll('#game-board .tile').forEach(tile => {
+            const tX = parseInt(tile.style.left);
+            const tY = parseInt(tile.style.top);
+            const tRight = tX + 44; 
+            const tBottom = tY + 64; 
+
+            if (!(tRight < left || tX > left + width || tBottom < top || tY > top + height)) {
+                tile.classList.add('selected-tile');
+                selectedTiles.push(tile.id);
+            } else {
+                tile.classList.remove('selected-tile');
+            }
+        });
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isSelecting) {
+            isSelecting = false;
+            document.getElementById('selection-box').style.display = 'none';
+        }
+    });
+
+    window.resetRank = function() {
+        if (confirm("🏆 모든 명예의 전당 기록을 영구적으로 초기화할까요?")) {
+            db.ref('stats').remove().then(() => {
+                window.renderLobbyUI(); 
+            });
+        }
+    };
+
+    window.clearAllLogs = function() {
+        if (myName !== currentHost) return;
+        if (confirm("🗑️ 모든 채팅과 게임 로그를 지우시겠습니까?")) {
+            db.ref('chats').remove();
+            db.ref('logs').remove();
+        }
+    };
+
+    window.sendEmoji = function(msg) {
+        if (!myName) return;
+        db.ref('emoji_events').push({
+            name: myName,
+            msg: msg,
+            time: firebase.database.ServerValue.TIMESTAMP
+        });
+        db.ref('chats').push({ name: myName, msg: msg, color: '#f1c40f' });
+    };
+
+    window.showEmojiOnScreen = function(senderName, msg) {
+        const badges = document.querySelectorAll('.player-badge');
+        let targetBadge = null;
+        badges.forEach(b => {
+            if (b.innerText.includes(senderName)) targetBadge = b;
         });
 
-        db.ref('chats').on('value', snap => { if (!snap.exists()) { const box = document.getElementById('chat-box'); if (box) box.innerHTML = ''; } });
-        db.ref('logs').on('value', snap => { if (!snap.exists()) { const logBox = document.getElementById('game-log'); if (logBox) logBox.innerHTML = ''; } });
+        if (targetBadge) {
+            const oldBubble = targetBadge.querySelector('.emoji-bubble');
+            if (oldBubble) oldBubble.remove();
 
+            const bubble = document.createElement('div');
+            bubble.className = 'emoji-bubble';
+            bubble.innerText = msg;
+            targetBadge.style.position = 'relative'; 
+            targetBadge.appendChild(bubble);
+
+            setTimeout(() => bubble.remove(), 3000);
+        }
+    };
+
+    // 타임아웃 페널티 로직
+    window.timeOutPenalty = function() {
+        if (window.isPenalizing) return; 
+        window.isPenalizing = true;
+
+        alert("시간 초과! 바닥 초기화 및 벌칙 타일 3개.");
+        window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 받았습니다.`);
+        const up = {};
+        Object.keys(boardTiles).forEach(k => { if(!initialBoardState[k]) up[`hands/${myName}/${k}`] = boardTiles[k]; });
+        up['board'] = initialBoardState;
+        
+        db.ref('pool').limitToFirst(3).once('value', s => {
+            if (s.exists()) {
+                const poolObj = s.val();
+                Object.keys(poolObj).forEach(key => {
+                    up[`hands/${myName}/tile_${Date.now()}_${Math.random().toString(36).substr(2,5)}`] = poolObj[key];
+                    up[`pool/${key}`] = null;
+                });
+            }
+            db.ref('/').update(up).then(() => { 
+                playSFX('error'); 
+                window.nextTurnAction(); 
+                window.isPenalizing = false;
+            });
+        });
+    };
+
+    // 보드 검증 로직
     function isValidSet(tiles) {
         if (tiles.length < 3) return false;
         const nonJokers = tiles.filter(t => t.num !== 'J');
@@ -705,6 +969,29 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         return true;
     }
 
+    window.drawTile = function() {
+        if (myRole !== 'player' || currentTurn !== myName) return; 
+        
+        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) {
+            playSFX('error');
+            return alert("패를 내려놓은 상태에서는 뽑을 수 없습니다. 무르거나 턴을 종료하세요.");
+        }
+
+        if (!validateBoard()) { 
+            playSFX('error'); 
+            return alert("바닥 패 배치가 어긋나 있습니다! '무르기'를 누른 후 타일을 뽑아주세요."); 
+        }
+
+        db.ref('pool').limitToFirst(1).once('value', s => {
+            if (!s.exists()) return window.nextTurnAction();
+            const poolObj = s.val(), key = Object.keys(poolObj)[0], up = {};
+            up[`hands/${myName}/tile_${Date.now()}`] = poolObj[key];
+            up[`pool/${key}`] = null;
+            window.addGameLog(`🎴 ${myName}님이 타일을 1개 뽑았습니다.`);
+            db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
+        });
+    };
+
     window.handleTurnEnd = function() {
         if (myRole !== 'player') return;
         if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) return alert("패를 내거나 뽑으세요.");
@@ -739,7 +1026,6 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
                     const allHands = hSnap.val(), scores = {};
                     playerList.forEach(p => { let s = 0; Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); scores[p] = s; });
                     
-                    // ⭐ 여기에 우승 기록 코드가 들어갔습니다!
                     window.recordWin(myName);
                     
                     db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
@@ -755,494 +1041,151 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         });
     };
 
-    window.rollbackTurn = function() {
-        if (myRole !== 'player') return;
-        if(confirm("모든 동작을 취소할까요?")) {
-            const up = {};
-            Object.keys(boardTiles).forEach(k => { if(!initialBoardState[k]) up[`hands/${myName}/${k}`] = boardTiles[k]; });
-            up['board'] = initialBoardState;
-            db.ref('/').update(up);
-            playSFX('tilePick');
-        }
-    };
 
-    window.drawTile = function() {
-        if (myRole !== 'player' || currentTurn !== myName) return; // 내 턴인지도 확실히 체크
+    // ==========================================
+    // 2. 페이지 로딩 완료 시 실행되는 초기화 로직
+    // ==========================================
+    window.onload = function() {
+        const config = { 
+            apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", 
+            authDomain: "lumi-b373e.firebaseapp.com", 
+            databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", 
+            projectId: "lumi-b373e" 
+        };
+        if (!firebase.apps.length) firebase.initializeApp(config);
+        db = firebase.database();
         
-        // 1. 방금 패를 보드에 하나라도 내려놓았다면 뽑기 금지
-        if (Object.keys(boardTiles).length > Object.keys(initialBoardState).length) {
-            playSFX('error');
-            return alert("패를 내려놓은 상태에서는 뽑을 수 없습니다. 무르거나 턴을 종료하세요.");
-        }
+        const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
+        window.setTheme(savedTheme);
 
-        // ⭐ 2. 버그 수정: 바닥 패를 만지작거려서 보드 상태가 망가졌다면 무르기를 강제함
-        if (!validateBoard()) { 
-            playSFX('error'); 
-            return alert("바닥 패 배치가 어긋나 있습니다! '무르기'를 누른 후 타일을 뽑아주세요."); 
-        }
-
-        // 3. 정상 상태일 때만 타일 뽑기 진행
-        db.ref('pool').limitToFirst(1).once('value', s => {
-            if (!s.exists()) return window.nextTurnAction();
-            const poolObj = s.val(), key = Object.keys(poolObj)[0], up = {};
-            up[`hands/${myName}/tile_${Date.now()}`] = poolObj[key];
-            up[`pool/${key}`] = null;
-            window.addGameLog(`🎴 ${myName}님이 타일을 1개 뽑았습니다.`);
-            db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction(); });
-        });
-    };
-
-    window.startGame = function() {
-        if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
-        const colors = ['red', 'blue', 'yellow', 'black'], sets = (gameMode === 'expert') ? 3 : 2;
-        let pool = [];
-        colors.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) { pool.push({ num: i, color: c }); } } });
-        pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
-        if(sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
-        pool.sort(() => Math.random() - 0.5);
-        
-        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing" }, allHands = {};
-        
-        playerList.forEach(p => {
-            const hand = {};
-            for(let i=0; i<14; i++) { const t = pool.pop(); if(t) hand['tile_' + Math.random().toString(36).substr(2,9)] = t; }
-            allHands[p] = hand; updates[`players/${p}/registered`] = false;
-        });
-        updates['hands'] = allHands;
-        const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
-        updates['pool'] = poolObj;
-        window.addGameLog(`📢 게임이 시작되었습니다!`);
-        
-        db.ref('/').update(updates).then(() => {
-            db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
-        });
-    };
-
-    window.dropOnBoard = function(e) {
-        e.preventDefault();
-        if (myRole !== 'player' || currentTurn !== myName) return;
-        
-        const id = e.dataTransfer.getData("text");
-        const rect = document.getElementById('game-board').getBoundingClientRect();
-        
-        // 1. 50x75 그리드에 정확히 맞추기 (Snap to Grid)
-        const TILE_WIDTH = 50; 
-        const TILE_HEIGHT = 75;
-        let dropX = Math.round((e.clientX - rect.left - 22) / TILE_WIDTH) * TILE_WIDTH + 2;
-        let dropY = Math.round((e.clientY - rect.top - 32) / TILE_HEIGHT) * TILE_HEIGHT + 2;
-
-        // 드롭된 위치(dropY 줄)에 있는 기존 타일들 찾기
-        const tilesOnSameRow = Object.values(boardTiles).filter(t => t.y === dropY);
-        
-        const up = {}; // Firebase 업데이트용 객체
-
-        // 2. 타일 밀어내기 (Insert & Split 로직)
-        // 내가 놓으려는 x좌표(dropX)와 같거나 그보다 오른쪽에 있는 타일들이 있다면
-        const overlappingTiles = tilesOnSameRow.filter(t => t.x >= dropX);
-        
-        // 빈칸이 아니라 타일이 연달아 붙어있는(간격이 50px인) 덩어리라면 같이 밀어냅니다.
-        if (overlappingTiles.length > 0 && overlappingTiles.some(t => t.x === dropX)) {
-            overlappingTiles.sort((a, b) => a.x - b.x);
-            let currentShiftX = dropX;
-            
-            for (let i = 0; i < overlappingTiles.length; i++) {
-                const t = overlappingTiles[i];
-                // 타일이 연속해서 붙어있는 경우에만 뒤로 밉니다.
-                if (t.x === currentShiftX) {
-                    const originalId = Object.keys(boardTiles).find(key => boardTiles[key] === t);
-                    // 기존 타일의 x좌표를 한 칸(TILE_WIDTH) 오른쪽으로 이동
-                    up[`board/${originalId}/x`] = t.x + TILE_WIDTH;
-                    currentShiftX += TILE_WIDTH;
-                } else {
-                    break; // 연속된 타일 덩어리가 끝나면 더 이상 밀지 않음
-                }
-            }
-        }
-
-        // 3. 내 타일을 보드에 놓기 (다중 선택 처리 포함)
-        const inHand = myHandData.find(t => t.id === id);
-        
-        if (inHand) {
-            // 랙에서 보드로 1개 가져오기 (기존과 동일)
-            up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: dropX, y: dropY };
-            up[`hands/${myName}/${id}`] = null; 
-            db.ref('/').update(up); 
-            playSFX('tileDrop');
-        } else if (boardTiles[id]) {
-            // 보드 내부 이동
-            if (!window.latestPlayersData[myName]?.registered && initialBoardState[id]) { 
-                playSFX('error'); 
-                return alert("등록 전에는 바닥 패를 조작할 수 없습니다."); 
-            }
-
-            // [추가된 로직] 만약 이동시키려는 타일이 '선택된 묶음' 중 하나라면?
-            if (selectedTiles.includes(id)) {
-                // 기준 타일(현재 드래그한 타일)의 원래 위치
-                const originX = boardTiles[id].x;
-                const originY = boardTiles[id].y;
-                
-                // 마우스가 이동한 거리 (Delta) 계산
-                const dx = dropX - originX;
-                const dy = dropY - originY;
-
-                // 선택된 모든 타일을 똑같은 거리(Delta)만큼 일괄 이동
-                selectedTiles.forEach(tileId => {
-                    if (!boardTiles[tileId]) return;
-                    // 등록 전 패널티 체크
-                    if (!window.latestPlayersData[myName]?.registered && initialBoardState[tileId]) return;
-                    
-                    const newX = boardTiles[tileId].x + dx;
-                    const newY = boardTiles[tileId].y + dy;
-                    up[`board/${tileId}/x`] = newX;
-                    up[`board/${tileId}/y`] = newY;
-                });
-                
-                // 이동 후 선택 해제
-                selectedTiles = [];
-                document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
-            } else {
-                // 그룹이 아닌 단일 타일 이동 (기존과 동일)
-                up[`board/${id}/x`] = dropX;
-                up[`board/${id}/y`] = dropY;
-            }
-
-            db.ref('/').update(up); 
-            playSFX('tileDrop');
-        }
-    };
-
-    window.dropOnRack = function(e) {
-        e.preventDefault();
-        if (myRole !== 'player') return;
-        const id = e.dataTransfer.getData("text");
-        db.ref(`board/${id}`).once('value', s => { if (s.exists()) { const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null; db.ref('/').update(up); playSFX('tilePick'); } });
-    };
-
-    window.applyAutoSort = function() {
-        const rEl = document.getElementById('my-rack');
-        if(!rEl) return;
-        if (sortMode === 'manual' && manualOrder.length > 0) { myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); }
-        else {
-            const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
-            myHandData.sort((a, b) => { const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]); });
-        }
-        rEl.querySelectorAll('.tile').forEach(t => t.remove());
-        myHandData.forEach(t => {
-            if (!t || t.num === undefined) return;
-            const div = document.createElement('div');
-            div.id = "rack-" + t.id; div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = (myRole === 'player');
-            div.ondragstart = (e) => { if (myRole !== 'player') return e.preventDefault(); e.dataTransfer.setData("text", t.id); e.dataTransfer.setData("source", "rack"); playSFX('tilePick'); };
-            div.ondragover = (e) => e.preventDefault();
-            div.ondrop = (e) => { e.preventDefault(); e.stopPropagation(); const dId = e.dataTransfer.getData("text"), src = e.dataTransfer.getData("source"); if (src === "rack") window.moveTileInRack(dId, t.id); else window.dropOnRack(e); };
-            rEl.appendChild(div);
-        });
-    };
-
-    window.renderLobbyUI = function() { // async 제거 (화면 멈춤 방지)
-        const modalBody = document.getElementById('modal-body');
-        const isHost = (myName === currentHost);
-        const allUsers = Object.entries(window.latestPlayersData);
-        
-        let tags = allUsers.map(([name, data]) => { 
-            if(!data.joined) return ''; 
-            const isSpec = data.role === 'spectator'; 
-            return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`; 
-        }).join('');
-
-        // 방장에게만 보이는 전적 초기화 버튼
-        const resetRankBtn = isHost ? `<button onclick="window.resetRank()" style="background:#333; color:#aaa; padding:5px 10px; font-size:0.8rem; margin-top:10px; border:1px solid #555;">전적 초기화</button>` : '';
-
-        // 1. 대기실 틀과 닉네임을 딜레이 없이 즉시 그립니다.
-        modalBody.innerHTML = `
-            <h2 style="color:white;">🎮 루미큐브 대기실</h2>
-            <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">
-                ${tags}
-            </div>
-            
-            <h3 style="color:var(--accent-gold); margin-bottom:5px;">🏆 명예의 전당</h3>
-            <div id="rank-container" style="color:#aaa; font-size:0.9rem;">전적 로딩 중...</div>
-            ${resetRankBtn}
-
-            <div style="margin-top:20px; margin-bottom:20px;">
-                <button class="mode-btn ${gameMode==='normal'?'selected':''}" onclick="db.ref('settings/gameMode').set('normal')">보통 (4인)</button>
-                <button class="mode-btn ${gameMode==='expert'?'selected':''}" onclick="db.ref('settings/gameMode').set('expert')">전문가 (6인)</button>
-            </div>
-            ${isHost ? '<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>' : '<p style="color:var(--accent-gold);">방장이 게임을 시작하기를 기다리는 중...</p>'}
-        `;
-
-        // 2. 서버에서 전적 표를 다 가져오면, 위에서 만든 빈 박스에만 쏙 집어넣습니다.
-        window.getRankHtml().then(html => {
-            const rankBox = document.getElementById('rank-container');
-            if(rankBox) rankBox.innerHTML = html;
-        });
-    };
-
-    window.renderResultUI = function() {
-        db.ref('settings/gameResult').once('value', snap => {
-            const data = snap.val(); if (!data) return;
-            const modalBody = document.getElementById('modal-body');
-            let html = `<h1 style="color:var(--accent-gold);">🏆 WINNER: ${data.winner}!</h1>`;
-            Object.entries(data.scores).sort((a,b)=>a[1]-b[1]).forEach(([name, score]) => { html += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #444;"><span>${name}</span><span>${name === data.winner ? 'WINNER' : score + '점'}</span></div>`; });
-            if (myName === currentHost) html += `<button onclick="window.returnToLobby()" style="margin-top:20px; width:100%; padding:10px;">대기실로 돌아가기</button>`;
-            modalBody.innerHTML = html;
-        });
-    };
-
-    window.setSortMode = (m) => { sortMode = m; if (m === 'manual') manualOrder = myHandData.map(t => t.id); window.applyAutoSort(); };
-    window.nextTurnAction = () => {
-    const nextPlayer = playerList[(playerList.indexOf(currentTurn) + 1) % playerList.length];
-    
-    // 1. 다음 사람으로 턴을 넘기고
-    // 2. 동시에 'turnStartTime'이라는 항목을 현재 서버 시각으로 업데이트합니다.
-    db.ref('/').update({
-        'currentTurn': nextPlayer,
-        'settings/turnStartTime': firebase.database.ServerValue.TIMESTAMP
-    });
-};
-    window.returnToLobby = () => { if(confirm("방 전체 데이터를 완전히 초기화할까요?")) db.ref('/').update({ "settings/status": "waiting", "board": null, "hands": null, "pool": null, "settings/gameResult": null }); };
-    window.moveTileInRack = function(dId, tId) { if (dId === tId) return; if (sortMode !== 'manual') { sortMode = 'manual'; manualOrder = myHandData.map(t => t.id); } const fIdx = manualOrder.indexOf(dId), tIdx = manualOrder.indexOf(tId); if (fIdx > -1 && tIdx > -1) { manualOrder.splice(fIdx, 1); manualOrder.splice(tIdx, 0, dId); playSFX('tileDrop'); window.applyAutoSort(); } };
-    window.forceNextTurn = () => { if(confirm("다음 차례로 넘길까요?")) window.nextTurnAction(); };
-    window.sendChat = () => { const i = document.getElementById('chat-input'), color = document.getElementById('chat-color-input').value; if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value, color: color }); i.value = ''; } };
-    window.toggleBGM = () => { if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); } else { audioCtx.bgm.play().catch(()=>{}); } audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying; };
-window.viewPlayerHand = function(targetName) {
-        if (myRole !== 'spectator') return;
-        
-        // 누구의 패를 보고 있는지 표시
-        const regInfoEl = document.getElementById('reg-info');
-        regInfoEl.innerText = `👀 ${targetName} 님의 패 관전 중...`;
-        regInfoEl.style.color = "var(--turn-blue)";
-
-        db.ref('hands/' + targetName).once('value', snap => {
-            const handData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
-            
-            // 정렬 로직 (색상 기준)
-            const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
-            handData.sort((a, b) => { 
-                const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); 
-                return coMap[a.color] - coMap[b.color] || vA - vB;
-            });
-
-            const rEl = document.getElementById('my-rack');
-            rEl.querySelectorAll('.tile').forEach(t => t.remove());
-            
-            handData.forEach(t => {
-                const div = document.createElement('div');
-                div.className = `tile ${t.color}`;
-                div.innerText = t.num;
-                // 관전자는 패를 옮길 수 없으므로 draggable은 false
-                div.draggable = false;
-                rEl.appendChild(div);
-            });
-        });
-    };
-
-// === 게임 로그 함수 ===
-    window.addGameLog = function(message) {
-        if (!myName) return;
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        db.ref('logs').push({ time: timeStr, msg: message });
-    };
-
-    // UI 토글 함수 업데이트 (로그창과 채팅창을 같이 열고 닫음)
-    window.toggleChat = () => { 
-        const c = document.getElementById('chat-log-container');
-        const i = document.getElementById('chat-input-container');
-        const v = c.style.display === 'flex'; 
-        c.style.display = v ? 'none' : 'flex'; 
-        i.style.display = v ? 'none' : 'flex'; 
-    };
-
-// === 2번: 실시간 등록 점수 계산기 ===
-    window.updateRegScoreUI = function() {
-        const scoreBadge = document.getElementById('reg-score-badge');
-        const isReg = window.latestPlayersData[myName]?.registered;
-        
-        // 이미 등록했거나 내 차례가 아니면 숨김
-        if (isReg || currentTurn !== myName || myRole !== 'player') {
-            scoreBadge.style.display = 'none';
-            return;
-        }
-
-        let currentPts = 0;
-        Object.entries(boardTiles).forEach(([id, t]) => {
-            if (!initialBoardState[id]) {
-                currentPts += (t.num === 'J' ? 30 : Number(t.num));
-            }
-        });
-
-        scoreBadge.innerText = `등록 점수: ${currentPts} / 30`;
-        scoreBadge.style.display = 'inline-block';
-        scoreBadge.style.borderColor = currentPts >= 30 ? 'var(--accent-green)' : 'var(--accent-gold)';
-        scoreBadge.style.color = currentPts >= 30 ? 'var(--accent-green)' : 'var(--accent-gold)';
-    };
-
-    // === 5번: 누적 전적 저장 및 불러오기 ===
-    window.recordWin = function(winnerName) {
-        db.ref(`stats/${winnerName}/wins`).transaction(curr => (curr || 0) + 1);
-    };
-
-    window.getRankHtml = function() {
-        return new Promise(resolve => {
-            db.ref('stats').once('value', snap => {
-                const stats = snap.val() || {};
-                let html = `<table class="rank-table"><tr><th>이름</th><th>누적 승리</th></tr>`;
-                const sorted = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
-                if (sorted.length === 0) html += `<tr><td colspan="2">전적이 없습니다.</td></tr>`;
-                sorted.forEach(([name, data]) => {
-                    html += `<tr><td>${name}</td><td>${data.wins}회</td></tr>`;
-                });
-                html += `</table>`;
-                resolve(html);
-            });
-        });
-    };
-
-// === 그룹 선택 및 이동 로직 ===
-let isSelecting = false;
-let startX, startY;
-let selectedTiles = []; // 현재 선택된 타일 ID 목록
-
-// 1. 드래그 시작 (보드 빈 공간 클릭)
-window.startSelection = function(e) {
-    if (myRole !== 'player' || currentTurn !== myName) return;
-    // 타일 위를 클릭한 거라면 선택 취소하지 않음 (이동을 위해)
-    if (e.target.classList.contains('tile')) return;
-
-    isSelecting = true;
-    const board = document.getElementById('game-board');
-    const rect = board.getBoundingClientRect();
-    startX = e.clientX - rect.left;
-    startY = e.clientY - rect.top;
-
-    const selBox = document.getElementById('selection-box');
-    selBox.style.left = startX + 'px';
-    selBox.style.top = startY + 'px';
-    selBox.style.width = '0px';
-    selBox.style.height = '0px';
-    selBox.style.display = 'block';
-
-    // 기존 선택 초기화
-    selectedTiles = [];
-    document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
-};
-
-// 2. 드래그 중 (박스 그리기 및 타일 포함 여부 계산)
-document.addEventListener('mousemove', function(e) {
-    if (!isSelecting) return;
-    
-    const board = document.getElementById('game-board');
-    const rect = board.getBoundingClientRect();
-    let currentX = e.clientX - rect.left;
-    let currentY = e.clientY - rect.top;
-
-    // 보드 밖으로 마우스가 나가면 제한
-    currentX = Math.max(0, Math.min(currentX, rect.width));
-    currentY = Math.max(0, Math.min(currentY, rect.height));
-
-    const selBox = document.getElementById('selection-box');
-    const left = Math.min(startX, currentX);
-    const top = Math.min(startY, currentY);
-    const width = Math.abs(currentX - startX);
-    const height = Math.abs(currentY - startY);
-
-    selBox.style.left = left + 'px';
-    selBox.style.top = top + 'px';
-    selBox.style.width = width + 'px';
-    selBox.style.height = height + 'px';
-
-    // 실시간으로 박스 안에 들어온 타일 찾기
-    selectedTiles = [];
-    document.querySelectorAll('#game-board .tile').forEach(tile => {
-        const tX = parseInt(tile.style.left);
-        const tY = parseInt(tile.style.top);
-        const tRight = tX + 44; // 타일 너비
-        const tBottom = tY + 64; // 타일 높이
-
-        // 겹치는지 확인
-        if (!(tRight < left || tX > left + width || tBottom < top || tY > top + height)) {
-            tile.classList.add('selected-tile');
-            selectedTiles.push(tile.id);
+        if (window.sessionStorage.getItem('lumi-nick')) {
+            window.handleEntry(null, true);
         } else {
-            tile.classList.remove('selected-tile');
+            document.getElementById('entry-layer').style.display = 'flex';
         }
-    });
-});
 
-// 3. 드래그 종료
-document.addEventListener('mouseup', function() {
-    if (isSelecting) {
-        isSelecting = false;
-        document.getElementById('selection-box').style.display = 'none';
-    }
-});
+        db.ref('settings/host').on('value', snap => { 
+            currentHost = snap.val(); 
+            if(typeof window.updatePlayerListUI === 'function') window.updatePlayerListUI(); 
+            if (gameStatus === "waiting" && typeof window.renderLobbyUI === 'function') window.renderLobbyUI(); 
+        });
+        
+        db.ref('players').on('value', snap => {
+            const players = snap.val() || {};
+            window.latestPlayersData = players;
+            playerList = Object.entries(players).filter(p => p[1].joined && p[1].role === 'player').sort((a,b) => (a[1].timestamp||0) - (b[1].timestamp||0)).map(p => p[0]);
+            if (playerList.length > 0) {
+                let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
+                if (currentHost !== targetHost) db.ref('settings/host').set(targetHost);
+            } else if (Object.keys(players).length === 0) { db.ref('settings/host').set(""); }
+            if(typeof window.updatePlayerListUI === 'function') window.updatePlayerListUI();
+            if (gameStatus === "waiting") window.renderLobbyUI();
+        });
 
-// === 전적 초기화 함수 (방장 전용) ===
-    window.resetRank = function() {
-        if (confirm("🏆 모든 명예의 전당 기록을 영구적으로 초기화할까요?")) {
-            db.ref('stats').remove().then(() => {
-                window.renderLobbyUI(); // 삭제 후 화면 즉시 갱신
+        db.ref('settings/status').on('value', snap => {
+            gameStatus = snap.val() || "waiting";
+            document.getElementById('overlay-layer').style.display = (gameStatus === "playing") ? 'none' : 'flex';
+            if (gameStatus === "waiting") window.renderLobbyUI();
+            else if (gameStatus === "finished") window.renderResultUI();
+            if (gameStatus !== "playing" && turnTimer) { clearInterval(turnTimer); document.getElementById('timer-display').innerText = ""; }
+        });
+
+        db.ref('currentTurn').on('value', snap => {
+            currentTurn = snap.val();
+            const isMy = (currentTurn === myName && myRole === 'player');
+            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
+            ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => {
+                if(document.getElementById(id)) document.getElementById(id).disabled = !isMy;
             });
-        }
-    };
-
-// === 방장 전용 채팅/로그 초기화 ===
-    window.clearAllLogs = function() {
-        if (myName !== currentHost) return;
-        if (confirm("🗑️ 모든 채팅과 게임 로그를 지우시겠습니까?")) {
-            db.ref('chats').remove();
-            db.ref('logs').remove();
-        }
-    };
-
-// === 테마 설정 함수 ===
-    window.setTheme = function(themeName) {
-        document.body.setAttribute('data-theme', themeName);
-        localStorage.setItem('lumi-theme', themeName); // 설정 저장
-    };
-
-    // 페이지 로드 시 기존에 설정했던 테마 불러오기
-    const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
-    window.setTheme(savedTheme);
-
-// 이모티콘 전송 (DB 저장)
-    window.sendEmoji = function(msg) {
-        if (!myName) return;
-        db.ref('emoji_events').push({
-            name: myName,
-            msg: msg,
-            time: firebase.database.ServerValue.TIMESTAMP
-        });
-        // 내 채팅창에도 기록
-        db.ref('chats').push({ name: myName, msg: msg, color: '#f1c40f' });
-    };
-
-    // 화면에 말풍선 띄우기
-    window.showEmojiOnScreen = function(senderName, msg) {
-        // 상단 플레이어 리스트에서 해당 유저의 배지 찾기
-        const badges = document.querySelectorAll('.player-badge');
-        let targetBadge = null;
-        badges.forEach(b => {
-            if (b.innerText.includes(senderName)) targetBadge = b;
+            const turnInfo = document.getElementById('turn-info');
+            if(turnInfo) turnInfo.innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
+            if(isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
+            if(typeof window.updatePlayerListUI === 'function') window.updatePlayerListUI();
+            if(typeof window.updateRegScoreUI === 'function') window.updateRegScoreUI();
         });
 
-        if (targetBadge) {
-            // 이미 떠있는 말풍선 제거
-            const oldBubble = targetBadge.querySelector('.emoji-bubble');
-            if (oldBubble) oldBubble.remove();
+        db.ref('settings/turnStartTime').on('value', snap => {
+            const startTime = snap.val();
+            const timerEl = document.getElementById('timer-display');
+            if (!startTime || gameStatus !== "playing") {
+                if (timerEl) timerEl.innerText = "";
+                return;
+            }
+            if (turnTimer) clearInterval(turnTimer);
+            turnTimer = setInterval(() => {
+                const now = Date.now();
+                const elapsed = Math.floor((now - startTime) / 1000);
+                timeLeft = 60 - elapsed;
+                if (timerEl) { timerEl.innerText = (timeLeft > 0 ? timeLeft : 0) + "s"; }
+                if (timeLeft <= 0 && currentTurn === myName && myRole === 'player') {
+                    clearInterval(turnTimer);
+                    window.timeOutPenalty();
+                }
+            }, 1000);
+        });
 
-            const bubble = document.createElement('div');
-            bubble.className = 'emoji-bubble';
-            bubble.innerText = msg;
-            targetBadge.style.position = 'relative'; // 배지 기준으로 띄우기 위함
-            targetBadge.appendChild(bubble);
+        db.ref('board').on('value', snap => {
+            boardTiles = snap.val() || {};
+            if(typeof window.updateRegScoreUI === 'function') window.updateRegScoreUI();
+            const bEl = document.getElementById('game-board');
+            if(!bEl) return;
+            
+            // 기존 선택 박스와 정보 창은 지우지 않도록 처리
+            const selBox = document.getElementById('selection-box');
+            const regInfo = document.getElementById('reg-info');
+            bEl.innerHTML = '';
+            if(regInfo) bEl.appendChild(regInfo);
+            if(selBox) bEl.appendChild(selBox);
 
-setTimeout(() => bubble.remove(), 3000);
-        }
-    };
+            Object.entries(boardTiles).forEach(([id, data]) => {
+                if (!data || data.num === undefined) return; 
+                const div = document.createElement('div');
+                div.className = `tile ${data.color}`; div.id = id; div.innerText = data.num;
+                div.style.left = data.x + 'px'; div.style.top = data.y + 'px';
+                div.draggable = (myRole === 'player');
+                div.ondragstart = (e) => {
+                    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+                    e.dataTransfer.setData("text", id); playSFX('tilePick');
+                };
+                bEl.appendChild(div);
+            });
+        });
 
-}; // ⭐⭐ 여기에 이걸 추가하세요! (window.onload 닫기) ⭐⭐
+        db.ref('pool').on('value', snap => { 
+            const poolBadge = document.getElementById('pool-badge');
+            if(poolBadge) poolBadge.innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; 
+        });
 
+        db.ref('chats').limitToLast(20).on('child_added', snap => {
+            const c = snap.val();
+            const div = document.createElement('div');
+            div.style.color = c.color || "#ffffff";
+            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
+            const box = document.getElementById('chat-box');
+            if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
+        });
+
+        db.ref('logs').limitToLast(30).on('child_added', snap => {
+            const log = snap.val();
+            const div = document.createElement('div');
+            div.id = 'log-entry';
+            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
+            const logBox = document.getElementById('game-log');
+            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+        });
+
+        db.ref('chats').on('value', snap => { if (!snap.exists()) { const box = document.getElementById('chat-box'); if (box) box.innerHTML = ''; } });
+        db.ref('logs').on('value', snap => { if (!snap.exists()) { const logBox = document.getElementById('game-log'); if (logBox) logBox.innerHTML = ''; } });
+        
+        // 이모티콘 수신 리스너
+        db.ref('emoji_events').on('child_added', snap => {
+            const event = snap.val();
+            // 3초 이내의 최신 이벤트만 처리
+            if (Date.now() - event.time < 3000) {
+                window.showEmojiOnScreen(event.name, event.msg);
+            }
+        });
+    }; 
 </script>
 </body>
 </html>
