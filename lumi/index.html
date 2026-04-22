@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.1 </title>
+    <title>루미큐브 : Ver. 35.2 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -608,15 +608,63 @@ db.ref('settings/turnStartTime').on('value', snap => {
     window.dropOnBoard = function(e) {
         e.preventDefault();
         if (myRole !== 'player' || currentTurn !== myName) return;
-        const id = e.dataTransfer.getData("text"), rect = document.getElementById('game-board').getBoundingClientRect();
-        let sx = Math.round((e.clientX - rect.left - 22) / 50) * 50 + 2, sy = Math.round((e.clientY - rect.top - 32) / 75) * 75 + 2;
+        
+        const id = e.dataTransfer.getData("text");
+        const rect = document.getElementById('game-board').getBoundingClientRect();
+        
+        // 1. 50x75 그리드에 정확히 맞추기 (Snap to Grid)
+        const TILE_WIDTH = 50; 
+        const TILE_HEIGHT = 75;
+        let dropX = Math.round((e.clientX - rect.left - 22) / TILE_WIDTH) * TILE_WIDTH + 2;
+        let dropY = Math.round((e.clientY - rect.top - 32) / TILE_HEIGHT) * TILE_HEIGHT + 2;
+
+        // 드롭된 위치(dropY 줄)에 있는 기존 타일들 찾기
+        const tilesOnSameRow = Object.values(boardTiles).filter(t => t.y === dropY);
+        
+        const up = {}; // Firebase 업데이트용 객체
+
+        // 2. 타일 밀어내기 (Insert & Split 로직)
+        // 내가 놓으려는 x좌표(dropX)와 같거나 그보다 오른쪽에 있는 타일들이 있다면
+        const overlappingTiles = tilesOnSameRow.filter(t => t.x >= dropX);
+        
+        // 빈칸이 아니라 타일이 연달아 붙어있는(간격이 50px인) 덩어리라면 같이 밀어냅니다.
+        if (overlappingTiles.length > 0 && overlappingTiles.some(t => t.x === dropX)) {
+            overlappingTiles.sort((a, b) => a.x - b.x);
+            let currentShiftX = dropX;
+            
+            for (let i = 0; i < overlappingTiles.length; i++) {
+                const t = overlappingTiles[i];
+                // 타일이 연속해서 붙어있는 경우에만 뒤로 밉니다.
+                if (t.x === currentShiftX) {
+                    const originalId = Object.keys(boardTiles).find(key => boardTiles[key] === t);
+                    // 기존 타일의 x좌표를 한 칸(TILE_WIDTH) 오른쪽으로 이동
+                    up[`board/${originalId}/x`] = t.x + TILE_WIDTH;
+                    currentShiftX += TILE_WIDTH;
+                } else {
+                    break; // 연속된 타일 덩어리가 끝나면 더 이상 밀지 않음
+                }
+            }
+        }
+
+        // 3. 내 타일을 보드에 놓기
         const inHand = myHandData.find(t => t.id === id);
+        
         if (inHand) {
-            const up = {}; up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: sx, y: sy };
-            up[`hands/${myName}/${id}`] = null; db.ref('/').update(up); playSFX('tileDrop');
+            // 랙에서 보드로 이동
+            up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: dropX, y: dropY };
+            up[`hands/${myName}/${id}`] = null; 
+            db.ref('/').update(up); 
+            playSFX('tileDrop');
         } else if (boardTiles[id]) {
-            if (!window.latestPlayersData[myName]?.registered && initialBoardState[id]) { playSFX('error'); return alert("등록 전에는 바닥 패를 조작할 수 없습니다."); }
-            db.ref(`board/${id}`).update({ x: sx, y: sy }); playSFX('tileDrop');
+            // 보드 내에서 이동
+            if (!window.latestPlayersData[myName]?.registered && initialBoardState[id]) { 
+                playSFX('error'); 
+                return alert("등록 전에는 바닥 패를 조작할 수 없습니다."); 
+            }
+            up[`board/${id}/x`] = dropX;
+            up[`board/${id}/y`] = dropY;
+            db.ref('/').update(up); 
+            playSFX('tileDrop');
         }
     };
 
