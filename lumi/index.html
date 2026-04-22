@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 35.8 </title>
+    <title>루미큐브 : Ver. 35.8 (이모티콘 말풍선 추가)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -34,19 +34,16 @@
         .black { color: #2d3436 !important; border-bottom: 4px solid #2d3436 !important; }
         .joker { color: #8e44ad !important; font-size: 1.7rem !important; }
 
-        /* 기존 #chat-wrapper 관련 스타일들을 아래 내용으로 교체 */
-#chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 500px; z-index: 20000; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
-/* resize 속성을 추가하여 우측 상단 모서리를 잡고 크기를 조절할 수 있게 합니다 */
-#chat-log-container { display: flex; gap: 5px; height: 280px; min-height: 100px; min-width: 250px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; display: none; resize: both; overflow: hidden; }
-#game-log { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.8rem; border-right: 1px solid rgba(255,255,255,0.1); color: #ccc; }
-#chat-box { flex: 1.2; padding: 10px; overflow-y: auto; font-size: 0.85rem; }
-/* word-break 속성을 추가하여 긴 글이나 띄어쓰기 없는 영어도 강제로 다음 줄로 넘깁니다 */
-#chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); word-break: break-all; overflow-wrap: break-word; }
-#log-entry { margin-bottom: 3px; font-family: monospace; }
-#log-time { color: var(--accent-gold); margin-right: 5px; }
+        #chat-wrapper { position: fixed; bottom: 230px; right: 20px; width: 500px; z-index: 20000; display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
+        #chat-log-container { display: flex; gap: 5px; height: 280px; min-height: 100px; min-width: 250px; background: var(--chat-bg); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; display: none; resize: both; overflow: hidden; }
+        #game-log { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.8rem; border-right: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+        #chat-box { flex: 1.2; padding: 10px; overflow-y: auto; font-size: 0.85rem; }
+        #chat-box div { margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); word-break: break-all; overflow-wrap: break-word; }
+        #log-entry { margin-bottom: 3px; font-family: monospace; }
+        #log-time { color: var(--accent-gold); margin-right: 5px; }
 
-#chat-input-container { display: none; background: #1a1a1a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; }
-#chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
+        #chat-input-container { display: none; background: #1a1a1a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); pointer-events: auto; align-items: center; padding: 5px; gap: 5px; position: relative; }
+        #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: #fff; outline: none; }
 
         #audio-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; margin-top: 5px; pointer-events: auto; }
         #audio-buttons { display: flex; gap: 5px; }
@@ -66,7 +63,9 @@
         button:disabled { opacity: 0.3; cursor: not-allowed; }
         .mode-btn { border: 1px solid #555; background: #333; margin: 0 5px; font-size: 0.8rem; }
         .mode-btn.selected { background: var(--accent-purple); border-color: #fff; }
-        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
+        
+        /* 뱃지에 position: relative 추가 (말풍선 기준점 역할) */
+        .player-badge { background: rgba(255,255,255,0.05); padding: 5px 12px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; display: flex; align-items: center; gap: 8px; position: relative; }
         .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52, 152, 219, 0.2) !important; }
         .tile-count { background: #fff; color: #000; padding: 1px 6px; border-radius: 5px; font-weight: 900; }
         
@@ -79,54 +78,66 @@
             50% { box-shadow: 0 0 20px var(--accent-gold); transform: scale(1.05); }
             100% { box-shadow: 0 0 5px var(--accent-gold); transform: scale(1); }
         }
-        .hint-target {
-            animation: hint-glow 1s infinite;
-            border: 2px solid var(--accent-gold) !important;
-            z-index: 1000 !important;
-        }
-/* 대기실 플레이어 닉네임 태그 디자인 */
-        .lobby-player-tag {
-            display: inline-flex;
-            align-items: center;
-            background: var(--turn-blue);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 20px; /* 동글동글한 캡슐 모양 */
-            margin: 4px; /* 이름 사이 간격 */
-            font-weight: 800;
-            font-size: 0.95rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-        }
+        .hint-target { animation: hint-glow 1s infinite; border: 2px solid var(--accent-gold) !important; z-index: 1000 !important; }
         
-        /* 대기실 관전자 닉네임 태그 디자인 */
-        .lobby-player-tag.spec-tag {
-            background: #333;
-            color: #aaa;
-            border: 1px dashed #777;
-            box-shadow: none;
-        }
-/* 실시간 점수 표시 스타일 */
-#reg-score-badge { background: rgba(241, 196, 15, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 5px 12px; border-radius: 15px; font-weight: 800; font-size: 0.8rem; margin-right: 10px; display: none; }
-/* 전적 테이블 스타일 */
-.rank-table { width: 100%; margin-top: 15px; border-collapse: collapse; color: white; font-size: 0.9rem; }
-.rank-table th { border-bottom: 1px solid #555; padding: 8px; color: var(--accent-gold); }
-.rank-table td { padding: 8px; border-bottom: 1px solid #333; }
+        .lobby-player-tag { display: inline-flex; align-items: center; background: var(--turn-blue); color: #fff; padding: 8px 16px; border-radius: 20px; margin: 4px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+        .lobby-player-tag.spec-tag { background: #333; color: #aaa; border: 1px dashed #777; box-shadow: none; }
+        
+        #reg-score-badge { background: rgba(241, 196, 15, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold); padding: 5px 12px; border-radius: 15px; font-weight: 800; font-size: 0.8rem; margin-right: 10px; display: none; }
+        
+        .rank-table { width: 100%; margin-top: 15px; border-collapse: collapse; color: white; font-size: 0.9rem; }
+        .rank-table th { border-bottom: 1px solid #555; padding: 8px; color: var(--accent-gold); }
+        .rank-table td { padding: 8px; border-bottom: 1px solid #333; }
 
-/* === 드래그 선택 박스 스타일 === */
-#selection-box {
-    position: absolute;
-    border: 1px solid rgba(52, 152, 219, 0.8);
-    background: rgba(52, 152, 219, 0.2);
-    pointer-events: none; /* 마우스 이벤트 방해 금지 */
-    display: none;
-    z-index: 9999;
-}
-/* 선택된 타일 강조 효과 */
-.selected-tile {
-    box-shadow: 0 0 10px 3px var(--turn-blue) !important;
-    transform: scale(1.05);
-    z-index: 50 !important;
-}
+        #selection-box { position: absolute; border: 1px solid rgba(52, 152, 219, 0.8); background: rgba(52, 152, 219, 0.2); pointer-events: none; display: none; z-index: 9999; }
+        .selected-tile { box-shadow: 0 0 10px 3px var(--turn-blue) !important; transform: scale(1.05); z-index: 50 !important; }
+
+        /* === 말풍선 애니메이션 & 스타일 === */
+        .emoji-bubble {
+            position: absolute;
+            top: calc(100% + 10px); /* 닉네임 뱃지 바로 밑에 위치 */
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: black;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            z-index: 99999;
+            pointer-events: none;
+            white-space: nowrap;
+            animation: bubble-pop 2.5s ease-in-out forwards;
+        }
+        /* 말풍선 위로 튀어나온 꼬리 부분 */
+        .emoji-bubble::after { 
+            content: '';
+            position: absolute;
+            top: -6px; left: 50%; transform: translateX(-50%);
+            border-width: 0 6px 6px;
+            border-style: solid;
+            border-color: transparent transparent white;
+        }
+        @keyframes bubble-pop {
+            0% { opacity: 0; transform: translate(-50%, -10px) scale(0.5); }
+            10% { opacity: 1; transform: translate(-50%, 0) scale(1.2); }
+            20% { transform: translate(-50%, 0) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, 15px); }
+        }
+
+        /* 이모티콘 선택 팝업창 */
+        #emote-picker {
+            display: none; position: absolute; bottom: 45px; left: 0; 
+            background: var(--panel-bg); border-radius: 12px; padding: 10px; 
+            border: 1px solid rgba(255,255,255,0.2); gap: 5px; flex-wrap: wrap; 
+            width: 220px; z-index: 30000; box-shadow: 0 -4px 15px rgba(0,0,0,0.6);
+        }
+        .emote-btn {
+            font-size: 1.5rem; cursor: pointer; background: none; 
+            border: none; transition: transform 0.1s; padding: 5px;
+        }
+        .emote-btn:hover { transform: scale(1.3); }
 
     </style>
 </head>
@@ -174,7 +185,9 @@
         <div id="chat-box"></div>
     </div>
     <div id="chat-input-container">
+        <button onclick="window.toggleEmotePicker()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 0 5px;">😀</button>
         <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
+        <div id="emote-picker"></div>
     </div>
     <div id="audio-controls">
         <div class="color-picker-container">
@@ -243,7 +256,7 @@
         window.isPenalizing = true;
 
         alert("시간 초과! 바닥 초기화 및 벌칙 타일 3개.");
-window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 받았습니다.`);
+        window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 받았습니다.`);
         const up = {};
         Object.keys(boardTiles).forEach(k => { if(!initialBoardState[k]) up[`hands/${myName}/${k}`] = boardTiles[k]; });
         up['board'] = initialBoardState;
@@ -271,12 +284,10 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         const hand = [...myHandData];
         const isReg = window.latestPlayersData[myName]?.registered;
 
-        // 1. 내 손패 안에서 독자적인 세트 찾기
         const numMap = {};
         hand.forEach(t => {
             if (t.num === 'J') return;
             if (!numMap[t.num]) numMap[t.num] = [];
-            // 중복 색상 타일 방지
             if (!numMap[t.num].find(it => it.color === t.color)) numMap[t.num].push(t);
         });
         Object.values(numMap).forEach(group => { 
@@ -299,7 +310,6 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
             if (currentRun.length >= 3) sets.push(currentRun.map(t => ({ type: 'rack', id: t.id })));
         });
 
-        // 2. 바닥에 놓인 패에 내 타일을 붙일 수 있는지 확인 (첫 등록을 마친 경우만)
         if (isReg) {
             const rows = {};
             Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y] = []; rows[t.y].push(t); });
@@ -308,32 +318,27 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
                 let currentBoardSet = [];
                 for (let i = 0; i < rowTiles.length; i++) {
                     currentBoardSet.push(rowTiles[i]);
-                    // 타일 사이 간격이 벌어졌거나 줄의 마지막인 경우 세트 판별
                     if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
                         if (currentBoardSet.length >= 3) {
                             const nonJokers = currentBoardSet.filter(t => t.num !== 'J');
                             if (nonJokers.length > 0) {
                                 const isGroup = nonJokers.every(t => t.num === nonJokers[0].num);
                                 hand.forEach(handTile => {
-                                    if (handTile.num === 'J') return; // 내 패의 조커는 모든 곳에 붙을 수 있어 힌트가 지저분해지므로 제외
+                                    if (handTile.num === 'J') return; 
                                     
                                     if (isGroup && currentBoardSet.length < 4) {
-                                        // 그룹(같은 숫자, 다른 색상)에 붙일 때
                                         const boardColors = currentBoardSet.map(t => t.color);
                                         if (handTile.num === nonJokers[0].num && !boardColors.includes(handTile.color)) {
                                             sets.push([{ type: 'rack', id: handTile.id }, ...currentBoardSet.map(t => ({ type: 'board', id: t.id }))]);
                                         }
                                     } else if (!isGroup) {
-                                        // 런(연속된 숫자)에 붙일 때
                                         const color = nonJokers[0].color;
-                                        // 바닥 패 양끝 또는 중간에 조커가 있을 경우를 고려하여 실제 시작/끝 숫자를 정밀하게 계산
                                         const firstRealIdx = currentBoardSet.findIndex(t => t.num !== 'J');
                                         const firstRealNum = Number(currentBoardSet[firstRealIdx].num);
-                                        const firstNum = firstRealNum - firstRealIdx; // 세트의 가장 왼쪽 숫자
-                                        const lastNum = firstNum + currentBoardSet.length - 1; // 세트의 가장 오른쪽 숫자
+                                        const firstNum = firstRealNum - firstRealIdx; 
+                                        const lastNum = firstNum + currentBoardSet.length - 1; 
 
                                         const hn = Number(handTile.num);
-                                        // 내 패가 세트의 앞(-1)이나 뒤(+1)에 연결될 수 있는지 확인 (1~13 범위 내)
                                         if (handTile.color === color && ((hn === firstNum - 1 && hn >= 1) || (hn === lastNum + 1 && hn <= 13))) {
                                             sets.push([{ type: 'rack', id: handTile.id }, ...currentBoardSet.map(t => ({ type: 'board', id: t.id }))]);
                                         }
@@ -349,7 +354,6 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
 
         if (sets.length === 0) return alert("현재 낼 수 있는 타일이 없습니다.");
 
-        // 3. 무작위 1개가 아닌, 찾아낸 '모든' 조합의 타일 ID를 중복 없이 수집
         const allTargetIds = new Set();
         sets.forEach(setInfo => {
             setInfo.forEach(item => {
@@ -357,13 +361,11 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
             });
         });
 
-        // 4. 수집된 모든 타일에 형광(Glow) 효과 적용
         allTargetIds.forEach(domId => {
             let el = document.getElementById(domId);
             if (el) el.classList.add('hint-target');
         });
 
-        // 전체 힌트이므로 플레이어가 눈으로 확인할 시간을 충분히 주기 위해 3초 -> 5초로 연장
         setTimeout(() => document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target')), 5000);
     };
 
@@ -396,14 +398,14 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
         listEl.innerHTML = '';
         playerList.forEach(name => {
             const badge = document.createElement('span');
-            // 관전자일 경우 클릭하면 패를 볼 수 있다는 걸 알리기 위해 커서 스타일 추가
+            // ⭐ 뱃지에 ID를 부여해서 말풍선이 뜰 위치를 잡습니다
+            badge.id = `badge-${name}`; 
             badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
             if (myRole === 'spectator') badge.style.cursor = 'pointer'; 
             
             const pData = window.latestPlayersData[name] || {};
             badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
             
-            // 관전자 전용 클릭 이벤트
             badge.onclick = () => {
                 if (myRole === 'spectator') window.viewPlayerHand(name);
             };
@@ -450,7 +452,7 @@ window.addGameLog(`⏰ ${myName}님이 시간 초과로 벌칙 타일 3개를 �
             if (gameStatus !== "playing" && turnTimer) { clearInterval(turnTimer); document.getElementById('timer-display').innerText = ""; }
         });
 
-db.ref('currentTurn').on('value', snap => {
+        db.ref('currentTurn').on('value', snap => {
             currentTurn = snap.val();
             const isMy = (currentTurn === myName && myRole === 'player');
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
@@ -458,39 +460,39 @@ db.ref('currentTurn').on('value', snap => {
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
             if(isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
             window.updatePlayerListUI();
-window.updateRegScoreUI();
+            window.updateRegScoreUI();
         });
 
-        // window.onload 내부의 db.ref('currentTurn').on 부분을 이 내용으로 교체
-db.ref('settings/turnStartTime').on('value', snap => {
-        const startTime = snap.val();
-        const timerEl = document.getElementById('timer-display');
-        
-        if (!startTime || gameStatus !== "playing") {
-            if (timerEl) timerEl.innerText = "";
-            return;
-        }
-
-        if (turnTimer) clearInterval(turnTimer);
-
-        turnTimer = setInterval(() => {
-            const now = Date.now();
-            const elapsed = Math.floor((now - startTime) / 1000);
-            timeLeft = 60 - elapsed;
-
-            if (timerEl) {
-                timerEl.innerText = (timeLeft > 0 ? timeLeft : 0) + "s";
+        db.ref('settings/turnStartTime').on('value', snap => {
+            const startTime = snap.val();
+            const timerEl = document.getElementById('timer-display');
+            
+            if (!startTime || gameStatus !== "playing") {
+                if (timerEl) timerEl.innerText = "";
+                return;
             }
 
-            if (timeLeft <= 0 && currentTurn === myName && myRole === 'player') {
-                clearInterval(turnTimer);
-                window.timeOutPenalty();
-            }
-        }, 1000);
-    });
+            if (turnTimer) clearInterval(turnTimer);
+
+            turnTimer = setInterval(() => {
+                const now = Date.now();
+                const elapsed = Math.floor((now - startTime) / 1000);
+                timeLeft = 60 - elapsed;
+
+                if (timerEl) {
+                    timerEl.innerText = (timeLeft > 0 ? timeLeft : 0) + "s";
+                }
+
+                if (timeLeft <= 0 && currentTurn === myName && myRole === 'player') {
+                    clearInterval(turnTimer);
+                    window.timeOutPenalty();
+                }
+            }, 1000);
+        });
+
         db.ref('board').on('value', snap => {
             boardTiles = snap.val() || {};
-window.updateRegScoreUI();
+            window.updateRegScoreUI();
             const bEl = document.getElementById('game-board');
             if(!bEl) return;
             bEl.querySelectorAll('.tile').forEach(t => t.remove());
@@ -507,8 +509,10 @@ window.updateRegScoreUI();
                 bEl.appendChild(div);
             });
         });
+        
         db.ref('pool').on('value', snap => { document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`; });
-db.ref('chats').limitToLast(20).on('child_added', snap => {
+        
+        db.ref('chats').limitToLast(20).on('child_added', snap => {
             const c = snap.val();
             const div = document.createElement('div');
             div.style.color = c.color || "#ffffff";
@@ -517,7 +521,6 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
             if(box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
         });
         
-        // 게임 로그 실시간 감시
         db.ref('logs').limitToLast(30).on('child_added', snap => {
             const log = snap.val();
             const div = document.createElement('div');
@@ -525,6 +528,14 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
             div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
             const logBox = document.getElementById('game-log');
             if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+        });
+
+        // ⭐ 이모티콘 데이터 수신기 (로그창에는 안 띄우고 말풍선으로만 띄웁니다)
+        db.ref('emotes').limitToLast(10).on('child_added', snap => {
+            const data = snap.val();
+            // 새로고침 시 옛날 데이터가 우르르 뜨는 걸 방지 (10초 이내만)
+            if (Date.now() - data.time > 10000) return;
+            window.showBubble(data.name, data.emote);
         });
     }; 
 
@@ -603,7 +614,6 @@ db.ref('chats').limitToLast(20).on('child_added', snap => {
                     const allHands = hSnap.val(), scores = {};
                     playerList.forEach(p => { let s = 0; Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); scores[p] = s; });
                     
-                    // ⭐ 여기에 우승 기록 코드가 들어갔습니다!
                     window.recordWin(myName);
                     
                     db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
@@ -662,7 +672,7 @@ db.ref('/').update(up).then(() => { playSFX('tilePick'); window.nextTurnAction()
         updates['hands'] = allHands;
         const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
         updates['pool'] = poolObj;
-updates['logs'] = null; // 게임 시작 시 로그 초기화
+        updates['logs'] = null; 
         window.addGameLog(`📢 게임이 시작되었습니다!`);
         
         db.ref('/').update(updates).then(() => {
@@ -677,70 +687,55 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
         const id = e.dataTransfer.getData("text");
         const rect = document.getElementById('game-board').getBoundingClientRect();
         
-        // 1. 50x75 그리드에 정확히 맞추기 (Snap to Grid)
         const TILE_WIDTH = 50; 
         const TILE_HEIGHT = 75;
         let dropX = Math.round((e.clientX - rect.left - 22) / TILE_WIDTH) * TILE_WIDTH + 2;
         let dropY = Math.round((e.clientY - rect.top - 32) / TILE_HEIGHT) * TILE_HEIGHT + 2;
 
-        // 드롭된 위치(dropY 줄)에 있는 기존 타일들 찾기
         const tilesOnSameRow = Object.values(boardTiles).filter(t => t.y === dropY);
         
-        const up = {}; // Firebase 업데이트용 객체
+        const up = {}; 
 
-        // 2. 타일 밀어내기 (Insert & Split 로직)
-        // 내가 놓으려는 x좌표(dropX)와 같거나 그보다 오른쪽에 있는 타일들이 있다면
         const overlappingTiles = tilesOnSameRow.filter(t => t.x >= dropX);
         
-        // 빈칸이 아니라 타일이 연달아 붙어있는(간격이 50px인) 덩어리라면 같이 밀어냅니다.
         if (overlappingTiles.length > 0 && overlappingTiles.some(t => t.x === dropX)) {
             overlappingTiles.sort((a, b) => a.x - b.x);
             let currentShiftX = dropX;
             
             for (let i = 0; i < overlappingTiles.length; i++) {
                 const t = overlappingTiles[i];
-                // 타일이 연속해서 붙어있는 경우에만 뒤로 밉니다.
                 if (t.x === currentShiftX) {
                     const originalId = Object.keys(boardTiles).find(key => boardTiles[key] === t);
-                    // 기존 타일의 x좌표를 한 칸(TILE_WIDTH) 오른쪽으로 이동
                     up[`board/${originalId}/x`] = t.x + TILE_WIDTH;
                     currentShiftX += TILE_WIDTH;
                 } else {
-                    break; // 연속된 타일 덩어리가 끝나면 더 이상 밀지 않음
+                    break; 
                 }
             }
         }
 
-        // 3. 내 타일을 보드에 놓기 (다중 선택 처리 포함)
         const inHand = myHandData.find(t => t.id === id);
         
         if (inHand) {
-            // 랙에서 보드로 1개 가져오기 (기존과 동일)
             up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: dropX, y: dropY };
             up[`hands/${myName}/${id}`] = null; 
             db.ref('/').update(up); 
             playSFX('tileDrop');
         } else if (boardTiles[id]) {
-            // 보드 내부 이동
             if (!window.latestPlayersData[myName]?.registered && initialBoardState[id]) { 
                 playSFX('error'); 
                 return alert("등록 전에는 바닥 패를 조작할 수 없습니다."); 
             }
 
-            // [추가된 로직] 만약 이동시키려는 타일이 '선택된 묶음' 중 하나라면?
             if (selectedTiles.includes(id)) {
-                // 기준 타일(현재 드래그한 타일)의 원래 위치
                 const originX = boardTiles[id].x;
                 const originY = boardTiles[id].y;
                 
-                // 마우스가 이동한 거리 (Delta) 계산
                 const dx = dropX - originX;
                 const dy = dropY - originY;
 
-                // 선택된 모든 타일을 똑같은 거리(Delta)만큼 일괄 이동
                 selectedTiles.forEach(tileId => {
                     if (!boardTiles[tileId]) return;
-                    // 등록 전 패널티 체크
                     if (!window.latestPlayersData[myName]?.registered && initialBoardState[tileId]) return;
                     
                     const newX = boardTiles[tileId].x + dx;
@@ -749,11 +744,9 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
                     up[`board/${tileId}/y`] = newY;
                 });
                 
-                // 이동 후 선택 해제
                 selectedTiles = [];
                 document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
             } else {
-                // 그룹이 아닌 단일 타일 이동 (기존과 동일)
                 up[`board/${id}/x`] = dropX;
                 up[`board/${id}/y`] = dropY;
             }
@@ -790,7 +783,7 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
         });
     };
 
-    window.renderLobbyUI = function() { // async 제거 (화면 멈춤 방지)
+    window.renderLobbyUI = function() { 
         const modalBody = document.getElementById('modal-body');
         const isHost = (myName === currentHost);
         const allUsers = Object.entries(window.latestPlayersData);
@@ -801,10 +794,8 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
             return `<span class="lobby-player-tag ${isSpec ? 'spec-tag' : ''}">${name === currentHost ? '👑 ' : ''}${name}${isSpec ? ' (관전)' : ''}</span>`; 
         }).join('');
 
-        // 방장에게만 보이는 전적 초기화 버튼
         const resetRankBtn = isHost ? `<button onclick="window.resetRank()" style="background:#333; color:#aaa; padding:5px 10px; font-size:0.8rem; margin-top:10px; border:1px solid #555;">전적 초기화</button>` : '';
 
-        // 1. 대기실 틀과 닉네임을 딜레이 없이 즉시 그립니다.
         modalBody.innerHTML = `
             <h2 style="color:white;">🎮 루미큐브 대기실</h2>
             <div style="text-align:left; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px; margin-bottom:15px;">
@@ -822,7 +813,6 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
             ${isHost ? '<button onclick="window.startGame()" style="background:var(--accent-green); color:#000; width:100%; padding:15px; font-weight:900;">게임 시작</button>' : '<p style="color:var(--accent-gold);">방장이 게임을 시작하기를 기다리는 중...</p>'}
         `;
 
-        // 2. 서버에서 전적 표를 다 가져오면, 위에서 만든 빈 박스에만 쏙 집어넣습니다.
         window.getRankHtml().then(html => {
             const rankBox = document.getElementById('rank-container');
             if(rankBox) rankBox.innerHTML = html;
@@ -844,8 +834,6 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
     window.nextTurnAction = () => {
     const nextPlayer = playerList[(playerList.indexOf(currentTurn) + 1) % playerList.length];
     
-    // 1. 다음 사람으로 턴을 넘기고
-    // 2. 동시에 'turnStartTime'이라는 항목을 현재 서버 시각으로 업데이트합니다.
     db.ref('/').update({
         'currentTurn': nextPlayer,
         'settings/turnStartTime': firebase.database.ServerValue.TIMESTAMP
@@ -856,10 +844,9 @@ updates['logs'] = null; // 게임 시작 시 로그 초기화
     window.forceNextTurn = () => { if(confirm("다음 차례로 넘길까요?")) window.nextTurnAction(); };
     window.sendChat = () => { const i = document.getElementById('chat-input'), color = document.getElementById('chat-color-input').value; if (i.value.trim()) { db.ref('chats').push({ name: myName, msg: i.value, color: color }); i.value = ''; } };
     window.toggleBGM = () => { if (audioCtx.isBGMPlaying) { audioCtx.bgm.pause(); } else { audioCtx.bgm.play().catch(()=>{}); } audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying; };
-window.viewPlayerHand = function(targetName) {
+    window.viewPlayerHand = function(targetName) {
         if (myRole !== 'spectator') return;
         
-        // 누구의 패를 보고 있는지 표시
         const regInfoEl = document.getElementById('reg-info');
         regInfoEl.innerText = `👀 ${targetName} 님의 패 관전 중...`;
         regInfoEl.style.color = "var(--turn-blue)";
@@ -867,7 +854,6 @@ window.viewPlayerHand = function(targetName) {
         db.ref('hands/' + targetName).once('value', snap => {
             const handData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
             
-            // 정렬 로직 (색상 기준)
             const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
             handData.sort((a, b) => { 
                 const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); 
@@ -881,14 +867,12 @@ window.viewPlayerHand = function(targetName) {
                 const div = document.createElement('div');
                 div.className = `tile ${t.color}`;
                 div.innerText = t.num;
-                // 관전자는 패를 옮길 수 없으므로 draggable은 false
                 div.draggable = false;
                 rEl.appendChild(div);
             });
         });
     };
 
-// === 게임 로그 함수 ===
     window.addGameLog = function(message) {
         if (!myName) return;
         const now = new Date();
@@ -896,7 +880,6 @@ window.viewPlayerHand = function(targetName) {
         db.ref('logs').push({ time: timeStr, msg: message });
     };
 
-    // UI 토글 함수 업데이트 (로그창과 채팅창을 같이 열고 닫음)
     window.toggleChat = () => { 
         const c = document.getElementById('chat-log-container');
         const i = document.getElementById('chat-input-container');
@@ -905,12 +888,10 @@ window.viewPlayerHand = function(targetName) {
         i.style.display = v ? 'none' : 'flex'; 
     };
 
-// === 2번: 실시간 등록 점수 계산기 ===
     window.updateRegScoreUI = function() {
         const scoreBadge = document.getElementById('reg-score-badge');
         const isReg = window.latestPlayersData[myName]?.registered;
         
-        // 이미 등록했거나 내 차례가 아니면 숨김
         if (isReg || currentTurn !== myName || myRole !== 'player') {
             scoreBadge.style.display = 'none';
             return;
@@ -929,7 +910,6 @@ window.viewPlayerHand = function(targetName) {
         scoreBadge.style.color = currentPts >= 30 ? 'var(--accent-green)' : 'var(--accent-gold)';
     };
 
-    // === 5번: 누적 전적 저장 및 불러오기 ===
     window.recordWin = function(winnerName) {
         db.ref(`stats/${winnerName}/wins`).transaction(curr => (curr || 0) + 1);
     };
@@ -950,15 +930,13 @@ window.viewPlayerHand = function(targetName) {
         });
     };
 
-// === 그룹 선택 및 이동 로직 ===
+// 드래그 및 선택 관련 로직
 let isSelecting = false;
 let startX, startY;
-let selectedTiles = []; // 현재 선택된 타일 ID 목록
+let selectedTiles = []; 
 
-// 1. 드래그 시작 (보드 빈 공간 클릭)
 window.startSelection = function(e) {
     if (myRole !== 'player' || currentTurn !== myName) return;
-    // 타일 위를 클릭한 거라면 선택 취소하지 않음 (이동을 위해)
     if (e.target.classList.contains('tile')) return;
 
     isSelecting = true;
@@ -974,12 +952,10 @@ window.startSelection = function(e) {
     selBox.style.height = '0px';
     selBox.style.display = 'block';
 
-    // 기존 선택 초기화
     selectedTiles = [];
     document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
 };
 
-// 2. 드래그 중 (박스 그리기 및 타일 포함 여부 계산)
 document.addEventListener('mousemove', function(e) {
     if (!isSelecting) return;
     
@@ -988,7 +964,6 @@ document.addEventListener('mousemove', function(e) {
     let currentX = e.clientX - rect.left;
     let currentY = e.clientY - rect.top;
 
-    // 보드 밖으로 마우스가 나가면 제한
     currentX = Math.max(0, Math.min(currentX, rect.width));
     currentY = Math.max(0, Math.min(currentY, rect.height));
 
@@ -1003,15 +978,13 @@ document.addEventListener('mousemove', function(e) {
     selBox.style.width = width + 'px';
     selBox.style.height = height + 'px';
 
-    // 실시간으로 박스 안에 들어온 타일 찾기
     selectedTiles = [];
     document.querySelectorAll('#game-board .tile').forEach(tile => {
         const tX = parseInt(tile.style.left);
         const tY = parseInt(tile.style.top);
-        const tRight = tX + 44; // 타일 너비
-        const tBottom = tY + 64; // 타일 높이
+        const tRight = tX + 44; 
+        const tBottom = tY + 64; 
 
-        // 겹치는지 확인
         if (!(tRight < left || tX > left + width || tBottom < top || tY > top + height)) {
             tile.classList.add('selected-tile');
             selectedTiles.push(tile.id);
@@ -1021,7 +994,6 @@ document.addEventListener('mousemove', function(e) {
     });
 });
 
-// 3. 드래그 종료
 document.addEventListener('mouseup', function() {
     if (isSelecting) {
         isSelecting = false;
@@ -1029,13 +1001,61 @@ document.addEventListener('mouseup', function() {
     }
 });
 
-// === 전적 초기화 함수 (방장 전용) ===
     window.resetRank = function() {
         if (confirm("🏆 모든 명예의 전당 기록을 영구적으로 초기화할까요?")) {
             db.ref('stats').remove().then(() => {
-                window.renderLobbyUI(); // 삭제 후 화면 즉시 갱신
+                window.renderLobbyUI(); 
             });
         }
+    };
+
+    // ⭐ 이모티콘 동작 함수들 (말풍선 전용)
+    const EMOTES = ['😀', '😂', '😍', '😎', '🤔', '😭', '😡', '👍', '👎', '🎉', '🔥', '👀'];
+
+    window.toggleEmotePicker = function() {
+        const picker = document.getElementById('emote-picker');
+        if (picker.style.display === 'flex') {
+            picker.style.display = 'none';
+        } else {
+            picker.style.display = 'flex';
+            if (picker.innerHTML === '') {
+                EMOTES.forEach(e => {
+                    const btn = document.createElement('button');
+                    btn.className = 'emote-btn';
+                    btn.innerText = e;
+                    btn.onclick = () => window.sendEmote(e);
+                    picker.appendChild(btn);
+                });
+            }
+        }
+    };
+
+    window.sendEmote = function(emote) {
+        if (!myName) return;
+        // 로그창이나 채팅창에는 올리지 않고 emotes 경로에만 데이터 푸시
+        db.ref('emotes').push({ name: myName, emote: emote, time: Date.now() });
+        document.getElementById('emote-picker').style.display = 'none';
+    };
+
+    window.showBubble = function(playerName, emote) {
+        const badge = document.getElementById(`badge-${playerName}`);
+        if (!badge) return; // 해당 플레이어 뱃지가 안 보이면 무시
+
+        // 기존에 떠있는 말풍선이 있다면 먼저 지워줌
+        const existingBubble = badge.querySelector('.emoji-bubble');
+        if (existingBubble) existingBubble.remove();
+
+        // 새 말풍선 생성
+        const bubble = document.createElement('div');
+        bubble.className = 'emoji-bubble';
+        bubble.innerText = emote;
+        
+        badge.appendChild(bubble);
+
+        // 2.5초 뒤 애니메이션이 끝나면 삭제
+        setTimeout(() => {
+            if (bubble.parentNode) bubble.remove();
+        }, 2500);
     };
 
 </script>
