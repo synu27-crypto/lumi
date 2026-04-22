@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 40 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 41 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -386,6 +386,7 @@ body[data-theme='pink'] #game-board {
         <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
         <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
         <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
+<button id="chat-toggle" onclick="window.toggleChat()" style="background:var(--accent-purple); color:white;">📜 로그/채팅</button>
     </div>
 </div>
 
