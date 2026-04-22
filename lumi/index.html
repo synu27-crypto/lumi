@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 </title>
+    <title>루미큐브 : Ver. 40 </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -897,52 +897,37 @@ window.viewPlayerHand = function(targetName) {
     };
 
     window.handleTurnEnd = function() {
-        if (myRole !== 'player') return;
-        if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) return alert("패를 내거나 뽑으세요.");
-        if (!validateBoard()) { playSFX('error'); return alert("보드 배치가 유효하지 않습니다!"); }
+    if (myRole !== 'player') return;
+    if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) return alert("패를 내거나 뽑으세요.");
+    if (!validateBoard()) { playSFX('error'); return alert("보드 배치가 유효하지 않습니다!"); }
+    
+    db.ref(`players/${myName}/registered`).once('value', snap => {
+        const isReg = snap.val();
+        if (!isReg) {
+            // 등록 로직 생략 (기존 로직 유지)
+            let pts = 0;
+            Object.entries(boardTiles).forEach(([id, t]) => { if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); });
+            if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); }
+            db.ref(`players/${myName}`).update({ registered: true });
+        }
         
-        db.ref(`players/${myName}/registered`).once('value', snap => {
-            const isReg = snap.val();
-            if (!isReg) {
-                let isPiggy = false;
-                const rows = {};
-                Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
-                for (let y in rows) {
-                    const rowTiles = rows[y].sort((a,b) => a.x - b.x);
-                    let curr = [];
-                    for (let i=0; i<rowTiles.length; i++) {
-                        curr.push(rowTiles[i]);
-                        if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
-                            if (curr.some(t => initialBoardState[t.id]) && curr.some(t => !initialBoardState[t.id])) isPiggy = true;
-                            curr = [];
-                        }
-                    }
-                }
-                if (isPiggy) { playSFX('error'); return alert("🚨 첫 등록 시에는 바닥 패에 붙일 수 없습니다."); }
-                let pts = 0;
-                Object.entries(boardTiles).forEach(([id, t]) => { if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); });
-                if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); }
-                db.ref(`players/${myName}`).update({ registered: true });
-            }
-            
-            if (myHandData.length === 0) {
-                db.ref('hands').once('value', hSnap => {
-                    const allHands = hSnap.val(), scores = {};
-                    playerList.forEach(p => { let s = 0; Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); scores[p] = s; });
-                    
-                    window.recordWin(myName);
-                    
-                    db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
+        if (myHandData.length === 0) {
+            db.ref('hands').once('value', hSnap => {
+                const allHands = hSnap.val(), scores = {};
+                playerList.forEach(p => { 
+                    let s = 0; 
+                    Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); 
+                    scores[p] = s; 
                 });
-            } else { 
-                if (!isReg) {
-                    window.addGameLog(`⭐ ${myName}님이 첫 등록에 성공했습니다!`);
-                } else {
-                    window.addGameLog(`🔄 ${myName}님이 턴을 마쳤습니다.`);
-                }
-                window.nextTurnAction(); 
-            }
-        });
+                window.recordWin(myName);
+                db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores: scores } });
+            });
+        } else { 
+            window.addGameLog(`🔄 ${myName}님이 턴을 마쳤습니다.`);
+            window.nextTurnAction(); 
+        }
+    }); // <- 여기서 .once의 콜백이 닫히고
+}; // <- 여기서 handleTurnEnd 함수가 정확히 닫혀야 합니다.
 
 window.rollbackTurn = function() {
     if (myRole !== 'player' || currentTurn !== myName) return;
@@ -973,19 +958,6 @@ window.viewPlayerHand = function(targetName) {
         });
     });
 };
-
-
-    // ==========================================
-    // 2. 페이지 로딩 완료 시 실행되는 초기화 로직
-    // ==========================================
-        const config = { 
-            apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY", 
-            authDomain: "lumi-b373e.firebaseapp.com", 
-            databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/", 
-            projectId: "lumi-b373e" 
-        };
-        if (!firebase.apps.length) firebase.initializeApp(config);
-        db = firebase.database();
         
         const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
         window.setTheme(savedTheme);
