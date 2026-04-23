@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>루미큐브 : Ver. 60.2</title>
-     
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Pretendard:wght@600&display=swap" rel="stylesheet">
@@ -1491,14 +1491,15 @@ div.ondragstart = (e) => {
         picker.innerHTML = ''; 
         
         EMOTE_SETS.forEach(item => {
-    const btn = document.createElement('button');
-    btn.className = 'emote-btn';
-    btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
-    btn.onclick = () => { 
-        window.sendEmote(`${item.e} ${item.t}`); 
-    };
-    picker.appendChild(btn);  // ← 이게 forEach 콜백 안에 있어야 함
-});                            // ← forEach 닫는 괄호
+            const btn = document.createElement('button');
+            btn.className = 'emote-btn';
+            btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
+            btn.onclick = () => { 
+                window.sendEmote(`${item.e} ${item.t}`); 
+            };
+            picker.appendChild(btn);
+        });
+    };  // ← 이게 toggleEmotePicker 함수를 닫는 중괄호! 꼭 추가해야 함
 
     window.sendEmote = function(emote) {
         if (!myName) return;
@@ -1518,5 +1519,5 @@ div.ondragstart = (e) => {
         setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
     };
 </script>
-</body> 
+</body>
 </html>
