@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -152,14 +152,12 @@ body[data-theme='pink'] {
 
        /* 하단 랙 설정 */
 #my-rack {
-    position: relative; /* 좌표 배치의 기준 */
+    position: relative;
     height: 210px;
-    background: var(--rack-bg);
-    border-top: 2px solid rgba(0,0,0,0.1);
-    padding: 0 !important; /* 패딩이 있으면 좌표가 엇나갑니다 */
+    padding: 0 !important; /* 중요: 패딩이 0이어야 좌표가 정확합니다 */
     overflow-x: auto;
     overflow-y: hidden;
-    display: block !important; /* flex가 켜져 있으면 절대 좌표가 무시됩니다 */
+    background: var(--rack-bg);
 }
 
 /* 기존 .tile 설정에서 position: absolute !important를 제거하십시오 */
@@ -975,32 +973,31 @@ window.dropOnBoard = function(e) {
     });
 };
 
-// 하단 랙으로 타일을 가져올 때 (좌표 저장 포함)
 window.dropOnRack = function(e) {
     e.preventDefault();
     const id = e.dataTransfer.getData("text");
     const rack = document.getElementById('my-rack');
     const rect = rack.getBoundingClientRect();
 
-    // 마우스 위치 기반 좌표 계산 (그리드 스냅 적용)
-    let rawX = e.clientX - rect.left;
+    // 랙 내부의 실제 좌표 계산 (스크롤값 포함)
+    let rawX = e.clientX - rect.left + rack.scrollLeft;
     let rawY = e.clientY - rect.top;
 
-    // 가로 50px, 세로 70px 간격으로 자석처럼 붙게 설정
+    // ⭐ 중구난방 방지: 50x75 그리드에 딱딱 맞게 스냅
     const snapX = Math.floor(rawX / 50) * 50 + 5;
-    const snapY = Math.floor(rawY / 70) * 70 + 5;
+    const snapY = Math.floor(rawY / 75) * 75 + 5;
 
-    // 랙 영역을 벗어나지 않게 보정
-    const finalX = Math.max(5, Math.min(snapX, rect.width - 50));
-    const finalY = Math.max(5, Math.min(snapY, rect.height - 80));
+    // 랙 범위를 벗어나지 않게 고정
+    const finalX = Math.max(5, snapX);
+    const finalY = Math.max(5, Math.min(snapY, 150)); // 랙 높이에 맞춰 제한
 
     const updates = {};
-    // 보드에서 가져오는 건지, 랙 내 이동인지 확인
     db.ref(`board/${id}`).once('value', s => {
+        // 현재 내 패(myHandData)에서 타일 정보를 가져옴
         const tileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
         if (!tileData) return;
 
-        // 좌표 정보(x, y)를 포함하여 저장
+        // DB에 좌표 저장
         updates[`hands/${myName}/${id}`] = { ...tileData, x: finalX, y: finalY };
         if (s.exists()) updates[`board/${id}`] = null;
         
@@ -1013,7 +1010,7 @@ window.dropOnRack = function(e) {
     const rEl = document.getElementById('my-rack');
     if(!rEl) return;
 
-    // 1. 정렬 로직 (기존과 동일)
+    // 1. 데이터 정렬 (기존 로직 유지)
     if (sortMode === 'manual' && manualOrder.length > 0) { 
         myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); 
     } else {
@@ -1026,7 +1023,7 @@ window.dropOnRack = function(e) {
 
     rEl.querySelectorAll('.tile').forEach(t => t.remove());
 
-    // 2. 타일 재생성 및 배치 최적화
+    // 2. 타일 생성 및 배치
     myHandData.forEach((t, index) => {
         if (!t || t.num === undefined) return;
         const div = document.createElement('div');
@@ -1036,25 +1033,25 @@ window.dropOnRack = function(e) {
         div.draggable = (myRole === 'player');
 
         if (sortMode === 'manual') {
-            // ⭐ 수동 정렬: absolute 좌표 강제 고정
             div.style.position = 'absolute';
-            // 좌표 데이터가 없으면 인덱스 기반으로 겹치지 않게 기본 자리 배치
+            // ⭐ 좌표가 개나대는 걸 막기 위해 기본 위치를 타일 크기에 딱 맞게 설정
+            // 가로 50px, 세로 75px 간격
             const posX = (t.x !== undefined) ? t.x : (index % 15) * 50 + 10;
             const posY = (t.y !== undefined) ? t.y : Math.floor(index / 15) * 75 + 10;
             
             div.style.left = posX + 'px';
             div.style.top = posY + 'px';
-            div.style.margin = '0'; // 수동일 땐 마진 제거
+            div.style.margin = '0';
         } else {
-            // ⭐ 자동 정렬: relative로 순서대로 배치
+            // 자동 정렬 시에는 절대 좌표 해제
             div.style.position = 'relative';
             div.style.display = 'inline-flex';
-            div.style.left = '0px';
-            div.style.top = '0px';
+            div.style.left = 'auto';
+            div.style.top = 'auto';
             div.style.margin = '5px';
         }
 
-        // 드래그 이벤트 (기존 코드 유지)
+        // 드래그 이벤트 (기존과 동일)
         div.ondragstart = (e) => { 
             if (myRole !== 'player') return e.preventDefault(); 
             e.dataTransfer.setData("text", t.id); 
