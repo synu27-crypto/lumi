@@ -785,20 +785,19 @@ document.getElementById('entry-layer').style.display = 'none';
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
             window.latestPlayersData = players;
-Object.entries(players).forEach(([name, pData]) => {
-                // 타일이 3개 이하이고 게임 중인 플레이어인지 확인
-                if (pData.joined && pData.role === 'player' && pData.tileCount <= 3 && pData.tileCount > 0) {
-                    // 처음 3개 이하가 되었거나, 개수가 더 줄어들었을 때만 알림 발생
-                    if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > pData.tileCount) {
+
+Object.entries(players).forEach(([name, playerData]) => {
+                if (playerData.joined && playerData.role === 'player' && playerData.tileCount <= 3 && playerData.tileCount > 0) {
+                    if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > playerData.tileCount) {
                         if (window.lastTileCounts[name] > 3 || window.lastTileCounts[name] === undefined) {
-                            window.addGameLog(`⚠️ 경고! ${name}님의 남은 타일이 ${pData.tileCount}개입니다! 조심하세요!`);
-                            playSFX('turnAlarm'); // 긴박한 효과음 재생 [cite: 157]
+                            window.addGameLog(`⚠️ 경고! ${name}님의 남은 타일이 ${playerData.tileCount}개입니다! 조심하세요!`);
+                            playSFX('turnAlarm'); 
                         }
                     }
                 }
-                // 실시간 비교를 위해 현재 개수 저장
-                window.lastTileCounts[name] = pData.tileCount;
+                window.lastTileCounts[name] = playerData.tileCount;
             });
+
             playerList = Object.entries(players)
                 .filter(p => p[1].joined && p[1].role === 'player')
                 .sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0))
