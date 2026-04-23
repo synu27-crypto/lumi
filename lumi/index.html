@@ -989,72 +989,140 @@ body[data-theme='pink'] #chat-input::placeholder {
         });
     };
 
-    // ✅ 보드 드롭 - 자유 배치 + 자석 기능
-    window.dropOnBoard = function(e) {
-        e.preventDefault();
-        const id = e.dataTransfer.getData("text");
-        const boardRect = document.getElementById('game-board').getBoundingClientRect();
+   window.dropOnBoard = function(e) {
+    e.preventDefault();
+    const rawData = e.dataTransfer.getData("text/plain") || e.dataTransfer.getData("text");
+    if (!rawData) return;
 
-        let dropX = e.clientX - boardRect.left - 22;
-        let dropY = e.clientY - boardRect.top  - 32;
+    let dragInfo;
+    try { dragInfo = JSON.parse(rawData); } 
+    catch(err) { dragInfo = { primary: rawData, group: [rawData] }; }
 
-        const SNAP_DIST = 40;
-        const TILE_W = 48;
-        const TILE_H = 68;
+    const primaryId = dragInfo.primary;
+    const groupIds = dragInfo.group;
 
-        let snapped = false;
+    const boardRect = document.getElementById('game-board').getBoundingClientRect();
+    let dropX = e.clientX - boardRect.left - 22;
+    let dropY = e.clientY - boardRect.top  - 32;
+
+    const SNAP_DIST = 40;
+    const TILE_W = 48;
+    const TILE_H = 68;
+    let snapped = false;
+
+    // 1. 자석 기능 (메인 타일 1개 기준으로만 자석 판정)
+    Object.entries(boardTiles).forEach(([tid, t]) => {
+        if (groupIds.includes(tid) || snapped) return; 
+        const dx = dropX - t.x;
+        const dy = dropY - t.y;
+
+        if (Math.abs(dy) < SNAP_DIST) {
+            if (dx > 0 && dx < SNAP_DIST * 2)  { dropX = t.x + TILE_W; dropY = t.y; snapped = true; }
+            else if (dx < 0 && dx > -SNAP_DIST * 2) { dropX = t.x - TILE_W; dropY = t.y; snapped = true; }
+        }
+        if (!snapped && Math.abs(dx) < SNAP_DIST) {
+            if (dy > 0 && dy < SNAP_DIST * 2)  { dropY = t.y + TILE_H; dropX = t.x; snapped = true; }
+            else if (dy < 0 && dy > -SNAP_DIST * 2) { dropY = t.y - TILE_H; dropX = t.x; snapped = true; }
+        }
+    });
+
+    const updates = {};
+    
+    // 메인 타일의 원래 위치 파악 (이동량 계산용)
+    let primaryTileData = boardTiles[primaryId];
+    let pOrigX = primaryTileData ? primaryTileData.x : dropX;
+    let pOrigY = primaryTileData ? primaryTileData.y : dropY;
+
+    let deltaX = dropX - pOrigX;
+    let deltaY = dropY - pOrigY;
+
+    // 2. 끼워넣기 밀어내기 (선택한 타일들의 너비만큼 공간 확보)
+    let isOverlapping = false;
+    Object.entries(boardTiles).forEach(([tid, t]) => {
+        if (groupIds.includes(tid)) return; 
+        if (Math.abs(t.y - dropY) < 10 && Math.abs(t.x - dropX) < 10) isOverlapping = true;
+    });
+
+    if (isOverlapping) {
+        const pushDist = TILE_W * groupIds.length; // 그룹 타일 개수만큼 공간 확보
         Object.entries(boardTiles).forEach(([tid, t]) => {
-            if (tid === id || snapped) return;
-            const dx = dropX - t.x;
-            const dy = dropY - t.y;
-
-            if (Math.abs(dy) < SNAP_DIST) {
-                if (dx > 0 && dx < SNAP_DIST * 2)  { dropX = t.x + TILE_W; dropY = t.y; snapped = true; }
-                else if (dx < 0 && dx > -SNAP_DIST * 2) { dropX = t.x - TILE_W; dropY = t.y; snapped = true; }
-            }
-            if (!snapped && Math.abs(dx) < SNAP_DIST) {
-                if (dy > 0 && dy < SNAP_DIST * 2)  { dropY = t.y + TILE_H; dropX = t.x; snapped = true; }
-                else if (dy < 0 && dy > -SNAP_DIST * 2) { dropY = t.y - TILE_H; dropX = t.x; snapped = true; }
+            if (groupIds.includes(tid)) return;
+            if (Math.abs(t.y - dropY) < 10 && t.x >= dropX - 5) {
+                updates[`board/${tid}/x`] = t.x + pushDist;
             }
         });
+    }
 
-        const updates = {};
-        db.ref(`hands/${myName}/${id}`).once('value', s => {
-            if (s.exists()) {
-                updates[`board/${id}`] = { ...s.val(), x: dropX, y: dropY };
-                updates[`hands/${myName}/${id}`] = null;
-            } else {
-                updates[`board/${id}/x`] = dropX;
-                updates[`board/${id}/y`] = dropY;
-            }
-            db.ref('/').update(updates);
-            playSFX('tileDrop');
-        });
-    };
+    // 3. 그룹 내 모든 타일 일괄 업데이트
+    let checkHands = false;
+    groupIds.forEach(id => {
+        let origX = boardTiles[id] ? boardTiles[id].x : dropX;
+        let origY = boardTiles[id] ? boardTiles[id].y : dropY;
+        
+        let targetX = origX + deltaX;
+        let targetY = origY + deltaY;
 
-    // ✅ 수정 4: 수동 정렬 - x좌표 저장 없이 manualOrder로만 관리
-    window.dropOnRack = function(e) {
-        e.preventDefault();
-        const id = e.dataTransfer.getData("text");
+        if (!boardTiles[id]) checkHands = true; // 랙에서 가져온 패가 섞여있음
 
-        const updates = {};
-        db.ref(`board/${id}`).once('value', s => {
-            const rawData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
-            if (!rawData) return;
+        updates[`board/${id}/x`] = targetX;
+        updates[`board/${id}/y`] = targetY;
+    });
 
-            // x, y 좌표 제거하고 순수 타일 데이터만 저장
-            const { x, y, ...cleanData } = rawData;
-            updates[`hands/${myName}/${id}`] = cleanData;
-            if (s.exists()) updates[`board/${id}`] = null;
-
-            db.ref('/').update(updates).then(() => {
-                playSFX('tilePick');
-                if (!manualOrder.includes(id)) manualOrder.push(id);
-                sortMode = 'manual';
-                window.applyAutoSort();
+    if (checkHands) {
+        db.ref(`hands/${myName}`).once('value', s => {
+            const handData = s.val() || {};
+            groupIds.forEach(id => {
+                if (handData[id]) {
+                    updates[`board/${id}`] = { ...handData[id], x: updates[`board/${id}/x`], y: updates[`board/${id}/y`] };
+                    updates[`hands/${myName}/${id}`] = null;
+                }
             });
+            db.ref('/').update(updates).then(() => playSFX('tileDrop'));
         });
-    };
+    } else {
+        db.ref('/').update(updates).then(() => playSFX('tileDrop'));
+    }
+
+    // 드롭 완료 후 선택 해제
+    document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+    selectedTiles = [];
+};
+
+    // ✅ 수정 4: 수동 정렬 + JSON 에러 방어 코드 추가
+window.dropOnRack = function(e) {
+    e.preventDefault();
+    const rawData = e.dataTransfer.getData("text/plain") || e.dataTransfer.getData("text");
+    if (!rawData) return;
+
+    // JSON으로 날아온 데이터면 메인 타일 1개(primary)만 뽑아냄
+    let id = rawData;
+    try {
+        const dragInfo = JSON.parse(rawData);
+        id = dragInfo.primary; // 여러 개를 잡아서 랙에 내려도, 클릭한 1개만 내려가게 처리
+    } catch(err) {}
+
+    const updates = {};
+    db.ref(`board/${id}`).once('value', s => {
+        const rawTileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
+        if (!rawTileData) return;
+
+        // x, y 좌표 제거하고 순수 타일 데이터만 저장
+        const { x, y, ...cleanData } = rawTileData;
+        updates[`hands/${myName}/${id}`] = cleanData;
+        if (s.exists()) updates[`board/${id}`] = null;
+
+        db.ref('/').update(updates).then(() => {
+            playSFX('tilePick');
+            if (!manualOrder.includes(id)) manualOrder.push(id);
+            sortMode = 'manual';
+            window.applyAutoSort();
+            
+            // 랙으로 회수하면 선택 박스 해제
+            document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+            selectedTiles = [];
+        });
+    });
+};
 
     // ✅ 수정 5: applyAutoSort - 수동 정렬도 index 기반으로 통일
     window.applyAutoSort = function() {
@@ -1093,12 +1161,22 @@ body[data-theme='pink'] #chat-input::placeholder {
             div.style.top  = '45px';
             div.style.margin = '0';
 
-            div.ondragstart = (e) => {
-                if (myRole !== 'player') return e.preventDefault();
-                e.dataTransfer.setData("text", t.id);
-                e.dataTransfer.setData("source", "rack");
-                playSFX('tilePick');
-            };
+            // 기존 보드판 타일 ondragstart 교체
+div.ondragstart = (e) => {
+    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+    
+    // 보드판에서도 그룹 드래그 인식하도록 추가
+    let dragData = { primary: id, group: [id] };
+    if (selectedTiles.includes(id)) {
+        dragData.group = selectedTiles;
+    } else {
+        document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+        selectedTiles = [];
+    }
+    
+    e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    playSFX('tilePick');
+};
             div.ondragover = (e) => e.preventDefault();
             div.ondrop = (e) => {
                 e.preventDefault(); e.stopPropagation();
