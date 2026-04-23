@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.</title>
+    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -800,11 +800,11 @@ if (t.x !== undefined && t.y !== undefined) {
     div.style.position = 'absolute'; // 자유 배치 허용
     div.style.left = t.x + 'px';    // DB에 저장된 X좌표 적용
     div.style.top = t.y + 'px';     // DB에 저장된 Y좌표 적용
-} else {
+} 
+else {
     // 좌표가 없는 경우(정렬 버튼 클릭 등)를 위한 기본 설정
     div.style.position = 'relative';
     div.style.display = 'inline-block';
-}
 }
         });
 
