@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5</title>
+    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -152,11 +152,18 @@ body[data-theme='pink'] {
 
        /* 하단 랙 설정 */
 #my-rack {
+    position: relative;
     height: 210px;
-    background: var(--rack-bg);
-    border-top: 2px solid rgba(0,0,0,0.1);
-    position: relative; /* 좌표의 기준점 */
-    overflow: hidden;   /* 타일이 겹치거나 넘칠 때 처리 */
+    padding: 0 !important; /* 내부 여백이 있으면 좌표가 뒤틀립니다 */
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.tile {
+    position: absolute !important;
+    width: 44px;  /* 타일 너비 고정 */
+    height: 64px; /* 타일 높이 고정 */
+    margin: 0 !important; /* 마진이 있으면 중구난방이 됩니다 */
 }
 
 /* 보드판 설정 */
@@ -164,13 +171,6 @@ body[data-theme='pink'] {
     position: relative; /* 좌표의 기준점 */
     flex: 1;
     overflow: hidden;
-}
-
-/* 모든 타일의 공통 배치 방식 */
-.tile {
-    position: absolute !important; /* 고정된 좌표값(left, top)을 따르게 함 */
-    /* 기존의 display: inline-block이나 flex 관련 속성이 있다면 무시됨 */
-}
 }
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: var(--rack-bg); padding-bottom: 10px; transition: background 0.3s; }
         
@@ -971,27 +971,37 @@ window.dropOnBoard = function(e) {
     });
 };
 
-// 하단 랙으로 타일을 가져올 때
+// 하단 랙으로 타일을 가져올 때 (좌표 저장 포함)
 window.dropOnRack = function(e) {
     e.preventDefault();
     const id = e.dataTransfer.getData("text");
-    const rackRect = document.getElementById('my-rack').getBoundingClientRect();
-    
-    const dropX = e.clientX - rackRect.left - 22;
-    const dropY = e.clientY - rackRect.top - 32;
+    const rack = document.getElementById('my-rack');
+    const rect = rack.getBoundingClientRect();
+
+    // 마우스 위치 기반 좌표 계산 (그리드 스냅 적용)
+    let rawX = e.clientX - rect.left;
+    let rawY = e.clientY - rect.top;
+
+    // 가로 50px, 세로 70px 간격으로 자석처럼 붙게 설정
+    const snapX = Math.floor(rawX / 50) * 50 + 5;
+    const snapY = Math.floor(rawY / 70) * 70 + 5;
+
+    // 랙 영역을 벗어나지 않게 보정
+    const finalX = Math.max(5, Math.min(snapX, rect.width - 50));
+    const finalY = Math.max(5, Math.min(snapY, rect.height - 80));
 
     const updates = {};
+    // 보드에서 가져오는 건지, 랙 내 이동인지 확인
     db.ref(`board/${id}`).once('value', s => {
-        if (s.exists()) {
-            // 보드에서 다시 랙으로 가져올 때
-            updates[`hands/${myName}/${id}`] = { ...s.val(), x: dropX, y: dropY };
-            updates[`board/${id}`] = null;
-        } else {
-            // 랙 내부에서 수동 정렬할 때
-            updates[`hands/${myName}/${id}/x`] = dropX;
-            updates[`hands/${myName}/${id}/y`] = dropY;
-        }
+        const tileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
+        if (!tileData) return;
+
+        // 좌표 정보(x, y)를 포함하여 저장
+        updates[`hands/${myName}/${id}`] = { ...tileData, x: finalX, y: finalY };
+        if (s.exists()) updates[`board/${id}`] = null;
+        
         db.ref('/').update(updates);
+        playSFX('tilePick');
     });
 };
 
@@ -1011,21 +1021,26 @@ window.dropOnRack = function(e) {
 
     rEl.querySelectorAll('.tile').forEach(t => t.remove());
 
-    myHandData.forEach(t => {
+    // applyAutoSort 내부 forEach문 수정
+myHandData.forEach((t, index) => {
         if (!t || t.num === undefined) return;
         const div = document.createElement('div');
-        div.id = "rack-" + t.id; 
-        div.className = `tile ${t.color}`; 
-        div.innerText = t.num; 
+        div.id = "rack-" + t.id;
+        div.className = `tile ${t.color}`;
+        div.innerText = t.num;
         div.draggable = (myRole === 'player');
 
-        // ⭐ 핵심: 수동 정렬 모드이고 좌표가 저장되어 있다면 해당 위치에 고정
-        if (sortMode === 'manual' && t.x !== undefined && t.y !== undefined) {
+        // 수동 정렬 모드일 때 좌표 적용
+        if (sortMode === 'manual') {
             div.style.position = 'absolute';
-            div.style.left = t.x + 'px';
-            div.style.top = t.y + 'px';
+            // 좌표가 없으면(처음 뽑은 타일 등) 겹치지 않게 기본 위치(index 활용) 부여
+            const posX = (t.x !== undefined) ? t.x : (index % 15) * 50 + 10;
+            const posY = (t.y !== undefined) ? t.y : Math.floor(index / 15) * 75 + 10;
+            
+            div.style.left = posX + 'px';
+            div.style.top = posY + 'px';
         } else {
-            // 숫자/색상 정렬 모드일 때는 일렬로 배치
+            // 숫자/색상 정렬 모드일 때는 일렬 배치
             div.style.position = 'relative';
             div.style.display = 'inline-block';
             div.style.margin = '5px';
