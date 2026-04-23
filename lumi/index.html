@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (</title>
+    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -152,11 +152,14 @@ body[data-theme='pink'] {
 
        /* 하단 랙 설정 */
 #my-rack {
-    position: relative;
+    position: relative; /* 좌표 배치의 기준 */
     height: 210px;
-    padding: 0 !important; /* 내부 여백이 있으면 좌표가 뒤틀립니다 */
+    background: var(--rack-bg);
+    border-top: 2px solid rgba(0,0,0,0.1);
+    padding: 0 !important; /* 패딩이 있으면 좌표가 엇나갑니다 */
     overflow-x: auto;
     overflow-y: hidden;
+    display: block !important; /* flex가 켜져 있으면 절대 좌표가 무시됩니다 */
 }
 
 /* 기존 .tile 설정에서 position: absolute !important를 제거하십시오 */
@@ -1010,7 +1013,7 @@ window.dropOnRack = function(e) {
     const rEl = document.getElementById('my-rack');
     if(!rEl) return;
 
-    // 1. 데이터 정렬 로직
+    // 1. 정렬 로직 (기존과 동일)
     if (sortMode === 'manual' && manualOrder.length > 0) { 
         myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); 
     } else {
@@ -1021,10 +1024,9 @@ window.dropOnRack = function(e) {
         });
     }
 
-    // 2. 기존 타일 제거
     rEl.querySelectorAll('.tile').forEach(t => t.remove());
 
-    // 3. 타일 재생성 및 배치
+    // 2. 타일 재생성 및 배치 최적화
     myHandData.forEach((t, index) => {
         if (!t || t.num === undefined) return;
         const div = document.createElement('div');
@@ -1034,23 +1036,25 @@ window.dropOnRack = function(e) {
         div.draggable = (myRole === 'player');
 
         if (sortMode === 'manual') {
-            // 수동 정렬: 저장된 좌표 사용
+            // ⭐ 수동 정렬: absolute 좌표 강제 고정
             div.style.position = 'absolute';
-            const posX = t.x !== undefined ? t.x : (index % 15) * 50 + 10;
-            const posY = t.y !== undefined ? t.y : Math.floor(index / 15) * 75 + 10;
+            // 좌표 데이터가 없으면 인덱스 기반으로 겹치지 않게 기본 자리 배치
+            const posX = (t.x !== undefined) ? t.x : (index % 15) * 50 + 10;
+            const posY = (t.y !== undefined) ? t.y : Math.floor(index / 15) * 75 + 10;
+            
             div.style.left = posX + 'px';
             div.style.top = posY + 'px';
+            div.style.margin = '0'; // 수동일 땐 마진 제거
         } else {
-            // ⭐ 자동 정렬(777, 123): absolute를 완전히 해제하여 겹침 방지
-            div.style.position = 'relative'; 
+            // ⭐ 자동 정렬: relative로 순서대로 배치
+            div.style.position = 'relative';
             div.style.display = 'inline-flex';
-            div.style.left = 'auto';
-            div.style.top = 'auto';
+            div.style.left = '0px';
+            div.style.top = '0px';
             div.style.margin = '5px';
-            div.style.flexShrink = '0';
         }
 
-        // 드래그 앤 드롭 이벤트 설정
+        // 드래그 이벤트 (기존 코드 유지)
         div.ondragstart = (e) => { 
             if (myRole !== 'player') return e.preventDefault(); 
             e.dataTransfer.setData("text", t.id); 
@@ -1059,8 +1063,7 @@ window.dropOnRack = function(e) {
         };
         div.ondragover = (e) => e.preventDefault();
         div.ondrop = (e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
+            e.preventDefault(); e.stopPropagation(); 
             const dId = e.dataTransfer.getData("text"), src = e.dataTransfer.getData("source"); 
             if (src === "rack") window.moveTileInRack(dId, t.id); 
             else window.dropOnRack(e); 
