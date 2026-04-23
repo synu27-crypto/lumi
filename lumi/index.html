@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50</title>
+    <title>루미큐브 : Ver. 50.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -264,15 +264,39 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 /* === 선택 박스 === */
 #selection-box { position: absolute; border: 1px solid rgba(52,152,219,0.8); background: rgba(52,152,219,0.2); pointer-events: none; display: none; z-index: 9999; }
 
-/* === 말풍선 === */
+/* 말풍선 사이즈 줄이기 */
 .emoji-bubble {
-    position: absolute; top: calc(100% + 10px); left: 50%;
+    position: absolute; 
+    top: calc(100% + 5px); /* 간격 살짝 밀착 */
+    left: 50%;
     transform: translateX(-50%);
-    background: white; color: black;
-    padding: 5px 10px; border-radius: 20px; font-size: 1.5rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    z-index: 99999; pointer-events: none; white-space: nowrap;
+    background: white; 
+    color: black;
+    padding: 4px 10px; /* 안쪽 여백 줄임 */
+    border-radius: 10px; 
+    font-size: 0.85rem; /* 폰트 크기 축소 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 99999; 
+    pointer-events: none; 
+    white-space: nowrap; 
     animation: bubble-pop 2.5s ease-in-out forwards;
+    font-weight: 600;
+}
+
+/* 이모티콘 선택창 버튼 사이즈 줄이기 */
+.emote-btn { 
+    font-size: 0.9rem;  /* 버튼 전체 폰트 축소 */
+    cursor: pointer; 
+    background: rgba(255,255,255,0.05);
+    border: none; 
+    border-radius: 6px; 
+    transition: all 0.2s; 
+    padding: 6px 10px; /* 버튼 여백 축소 */
+    color: var(--main-text); 
+    width: calc(50% - 6px); 
+    display: flex;
+    align-items: center;
+    gap: 6px; /* 이모지-텍스트 사이 간격 좁힘 */
 }
 .emoji-bubble::after { 
     content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
@@ -287,13 +311,42 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 }
 
 #emote-picker {
-    display: none; position: absolute; bottom: 45px; left: 0; 
-    background: var(--panel-bg); border-radius: 12px; padding: 10px; 
-    border: 1px solid rgba(0,0,0,0.1); gap: 5px; flex-wrap: wrap; 
-    width: 220px; z-index: 30000; box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+    display: none; 
+    position: absolute; 
+    bottom: 45px; 
+    left: 0; 
+    background: var(--panel-bg); 
+    border-radius: 12px; 
+    padding: 10px; 
+    border: 1px solid rgba(0,0,0,0.1); 
+    gap: 8px;           /* 버튼들 사이 간격 */
+    flex-wrap: wrap; 
+    width: 320px;       /* 텍스트를 담기 위해 폭을 220px -> 320px로 확장 */
+    z-index: 30000; 
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+    max-height: 250px;  /* 목록이 길어질 경우를 대비 */
+    overflow-y: auto;
 }
-.emote-btn { font-size: 1.5rem; cursor: pointer; background: none; border: none; transition: transform 0.1s; padding: 5px; color: var(--main-text); }
-.emote-btn:hover { transform: scale(1.3); }
+
+.emote-btn { 
+    font-size: 1.1rem;  /* 텍스트 가독성을 위해 살짝 조절 */
+    cursor: pointer; 
+    background: rgba(255,255,255,0.05); /* 버튼 배경 살짝 넣기 */
+    border: none; 
+    border-radius: 8px; /* 버튼을 둥글게 */
+    transition: all 0.2s; 
+    padding: 8px 12px; 
+    color: var(--main-text); 
+    width: calc(50% - 8px); /* 한 줄에 버튼 두 개씩 배치 */
+    display: flex;
+    align-items: center;
+    gap: 10px;          /* 이모지와 텍스트 사이 간격 */
+}
+
+.emote-btn:hover { 
+    transform: translateY(-2px); /* 위로 살짝 올라가는 효과 */
+    background: rgba(255,255,255,0.15); 
+}
 
 /* 🎀 핑크 테마 완전 통합: 타일, 보드, 상하단 패널 모두 강제 적용 */
 
@@ -334,6 +387,37 @@ body[data-theme='pink'] button {
     background: #ffffff !important;
     color: #a32a58 !important;
     border: 1px solid #f06292 !important;
+}
+
+/* 🎀 핑크 테마 전용 채팅창 스타일링 */
+
+/* 1. 채팅 로그와 게임 로그가 담긴 전체 박스 */
+body[data-theme='pink'] #chat-log-container {
+    background: rgba(255, 245, 248, 0.98) !important; /* 아주 연한 핑크 배경 */
+    border: 1px solid #f06292 !important; /* 진분홍 테두리 */
+    box-shadow: 0 8px 32px rgba(163, 42, 88, 0.2) !important;
+}
+
+/* 2. 개별 로그 영역 구분선 */
+body[data-theme='pink'] #game-log {
+    border-right: 1px solid rgba(240, 98, 146, 0.2) !important;
+}
+
+/* 3. 하단 채팅 입력 칸 박스 */
+body[data-theme='pink'] #chat-input-container {
+    background: #ffdae9 !important; /* 연분홍 배경 */
+    border: 1px solid #f06292 !important;
+    border-radius: 12px;
+}
+
+/* 4. 실제 글자가 써지는 입력창 내부 */
+body[data-theme='pink'] #chat-input {
+    color: #a32a58 !important; /* 진한 자주색 글씨 */
+}
+
+/* 5. 입력창 내의 placeholder(안내문구) 색상 */
+body[data-theme='pink'] #chat-input::placeholder {
+    color: rgba(163, 42, 88, 0.5) !important;
 }
 
     </style>
@@ -1227,20 +1311,36 @@ body[data-theme='pink'] button {
     });
 
     // === 이모트 ===
-    const EMOTES = ['😀','😂','😍','😎','🤔','😭','😡','👍','👎','🎉','🔥','👀'];
+    // 기존의 EMOTES와 중복된 부분을 지우고 하나로 통합했습니다.
+    const EMOTE_SETS = [
+        { e: '🎉', t: '축하해요!' },
+        { e: '🔥', t: '가보자고' },
+        { e: '👀', t: '지켜보는 중' },
+        { e: '😭', t: '아이고 까비' },
+        { e: '👍', t: '나이스!' },
+        { e: '😡', t: '빨리 좀..' },
+        { e: '😂', t: 'ㅋㅋㅋㅋㅋ' },
+        { e: '🤔', t: '고민 중...' }
+    ];
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
         if (picker.style.display === 'flex') { picker.style.display = 'none'; return; }
         picker.style.display = 'flex';
-        if (picker.innerHTML === '') {
-            EMOTES.forEach(e => {
-                const btn = document.createElement('button');
-                btn.className = 'emote-btn'; btn.innerText = e;
-                btn.onclick = () => window.sendEmote(e);
-                picker.appendChild(btn);
-            });
-        }
+        
+        // 버튼이 중복 생성되지 않게 비워주고 새로 만듭니다.
+        picker.innerHTML = ''; 
+        
+        EMOTE_SETS.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = 'emote-btn';
+            // 버튼 모양을 [이모지 + 텍스트]로 만듭니다.
+            btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
+            
+            // 클릭하면 이모지+텍스트가 한꺼번에 전송되도록 합니다.
+            btn.onclick = () => window.sendEmote(`${item.e} ${item.t}`);
+            picker.appendChild(btn);
+        });
     };
 
     window.sendEmote = function(emote) {
