@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50.1</title>
+    <title>루미큐브 : Ver. 50.2</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1161,20 +1161,24 @@ window.dropOnRack = function(e) {
             div.style.top  = '45px';
             div.style.margin = '0';
 
-            // 기존 보드판 타일 ondragstart 교체
+            // ✅ 내 랙(Rack) 타일 드래그 - id를 t.id로 수정!
 div.ondragstart = (e) => {
-    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+    if (myRole !== 'player') return e.preventDefault();
     
-    // 보드판에서도 그룹 드래그 인식하도록 추가
-    let dragData = { primary: id, group: [id] };
-    if (selectedTiles.includes(id)) {
-        dragData.group = selectedTiles;
+    // 랙에서는 타일 변수가 t 이므로 t.id 를 사용해야 합니다.
+    let dragData = { primary: t.id, group: [t.id] };
+    
+    if (selectedTiles.includes(t.id)) {
+        dragData.group = selectedTiles; // 선택된 그룹 전체 묶기
     } else {
-        document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+        // 선택되지 않은 타일을 드래그하면 기존 다중 선택 강제 해제
+        document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
         selectedTiles = [];
     }
     
+    // 배열 데이터를 문자열(JSON)로 변환해서 전송
     e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    e.dataTransfer.setData("source", "rack"); // 랙에서 출발했다는 표시 유지
     playSFX('tilePick');
 };
             div.ondragover = (e) => e.preventDefault();
