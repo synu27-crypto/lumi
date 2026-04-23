@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50.9</title>
+    <title>루미큐브 : Ver. 60</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -700,35 +700,46 @@ document.getElementById('entry-layer').style.display = 'none';
     };
 
     window.updatePlayerListUI = function() {
-        const listEl = document.getElementById('player-list-container');
-        if (!listEl) return;
-        listEl.innerHTML = '';
-        playerList.forEach(name => {
-            const badge = document.createElement('span');
-            badge.id = `badge-${name}`;
-            const pData = window.latestPlayersData[name] || {};
-            const isDanger = (pData.tileCount <= 3 && pData.tileCount > 0) ? 'danger-player' : '';
-            badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''} ${isDanger}`;
-            
-            if (myRole === 'spectator') badge.style.cursor = 'pointer';
-            const pData = window.latestPlayersData[name] || {};
-            badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
-            badge.onclick = () => { if (myRole === 'spectator') window.viewPlayerHand(name); };
-            listEl.appendChild(badge);
-        });
-        const isHost = (myName === currentHost);
-        document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
-        document.getElementById('btn-force-next').style.display  = isHost ? 'inline-block' : 'none';
-        const regInfoEl = document.getElementById('reg-info');
-        if (myRole === 'spectator') {
-            regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)";
-            regInfoEl.style.color = "#aaa";
-        } else {
-            const isReg = window.latestPlayersData[myName]?.registered;
-            regInfoEl.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
-            regInfoEl.style.color = "var(--accent-gold)";
-        }
-    };
+    const listEl = document.getElementById('player-list-container');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    playerList.forEach(name => {
+        const badge = document.createElement('span');
+        badge.id = `badge-${name}`;
+        
+        // pData는 여기서 한 번만 선언합니다.
+        const pData = window.latestPlayersData[name] || {};
+        
+        // 위험 상태(타일 3개 이하) 체크
+        const isDanger = (pData.tileCount <= 3 && pData.tileCount > 0) ? 'danger-player' : '';
+        
+        // 클래스 부여
+        badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''} ${isDanger}`;
+        
+        if (myRole === 'spectator') badge.style.cursor = 'pointer';
+
+        // 내용 삽입
+        badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
+        
+        badge.onclick = () => { if (myRole === 'spectator') window.viewPlayerHand(name); };
+        listEl.appendChild(badge);
+    });
+
+    const isHost = (myName === currentHost);
+    document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
+    document.getElementById('btn-force-next').style.display  = isHost ? 'inline-block' : 'none';
+    
+    const regInfoEl = document.getElementById('reg-info');
+    if (myRole === 'spectator') {
+        regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)";
+        regInfoEl.style.color = "#aaa";
+    } else {
+        const isReg = window.latestPlayersData[myName]?.registered;
+        regInfoEl.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
+        regInfoEl.style.color = "var(--accent-gold)";
+    }
+};
 
     window.onload = function() {
     const config = {
