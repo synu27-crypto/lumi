@@ -159,7 +159,8 @@ body[data-theme='pink'] {
     position: relative; 
     padding: 0 !important; 
     display: flex; 
-    gap: 0 !important; /* 타일 사이 간격 0 */
+    justify-content: flex-start !important; /* ⭐ 타일들을 왼쪽부터 정렬 */
+    gap: 0 !important; 
     align-items: center; 
     z-index: 600; 
     overflow-x: auto; 
@@ -1047,14 +1048,16 @@ window.dropOnRack = function(e) {
             div.style.top = posY + 'px';
             div.style.margin = '0';
         } else {
-            // ⭐ 자동 정렬 시: margin을 0으로 해서 타일을 딱 붙임
-            div.style.position = 'relative';
-            div.style.display = 'inline-flex';
-            div.style.left = 'auto';
-            div.style.top = 'auto';
-            div.style.margin = '0px'; // 간격 제거
-            div.style.flexShrink = '0';
-        }
+    div.style.position = 'relative';
+    div.style.display = 'inline-flex';
+    div.style.left = 'auto';
+    div.style.top = 'auto';
+    div.style.margin = '0px';
+    div.style.flexShrink = '0';
+    
+    // 부모 컨테이너의 정렬을 왼쪽으로 다시 한번 확인
+    rEl.style.justifyContent = 'flex-start'; 
+}
 
         div.ondragstart = (e) => { 
             if (myRole !== 'player') return e.preventDefault(); 
