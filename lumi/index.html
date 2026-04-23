@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.5 (</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -159,11 +159,12 @@ body[data-theme='pink'] {
     overflow-y: hidden;
 }
 
+/* 기존 .tile 설정에서 position: absolute !important를 제거하십시오 */
 .tile {
-    position: absolute !important;
-    width: 44px;  /* 타일 너비 고정 */
-    height: 64px; /* 타일 높이 고정 */
-    margin: 0 !important; /* 마진이 있으면 중구난방이 됩니다 */
+    width: 44px; 
+    height: 64px; 
+    background: var(--tile-bg) !important; 
+    /* position 속성은 여기서 정하지 않고 자바스크립트(JS)가 모드에 따라 결정하도록 둡니다 */
 }
 
 /* 보드판 설정 */
@@ -1009,6 +1010,7 @@ window.dropOnRack = function(e) {
     const rEl = document.getElementById('my-rack');
     if(!rEl) return;
 
+    // 1. 데이터 정렬 로직
     if (sortMode === 'manual' && manualOrder.length > 0) { 
         myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); 
     } else {
@@ -1019,10 +1021,11 @@ window.dropOnRack = function(e) {
         });
     }
 
+    // 2. 기존 타일 제거
     rEl.querySelectorAll('.tile').forEach(t => t.remove());
 
-    // applyAutoSort 내부 forEach문 수정
-myHandData.forEach((t, index) => {
+    // 3. 타일 재생성 및 배치
+    myHandData.forEach((t, index) => {
         if (!t || t.num === undefined) return;
         const div = document.createElement('div');
         div.id = "rack-" + t.id;
@@ -1030,22 +1033,24 @@ myHandData.forEach((t, index) => {
         div.innerText = t.num;
         div.draggable = (myRole === 'player');
 
-        // 수동 정렬 모드일 때 좌표 적용
         if (sortMode === 'manual') {
+            // 수동 정렬: 저장된 좌표 사용
             div.style.position = 'absolute';
-            // 좌표가 없으면(처음 뽑은 타일 등) 겹치지 않게 기본 위치(index 활용) 부여
-            const posX = (t.x !== undefined) ? t.x : (index % 15) * 50 + 10;
-            const posY = (t.y !== undefined) ? t.y : Math.floor(index / 15) * 75 + 10;
-            
+            const posX = t.x !== undefined ? t.x : (index % 15) * 50 + 10;
+            const posY = t.y !== undefined ? t.y : Math.floor(index / 15) * 75 + 10;
             div.style.left = posX + 'px';
             div.style.top = posY + 'px';
         } else {
-            // 숫자/색상 정렬 모드일 때는 일렬 배치
-            div.style.position = 'relative';
-            div.style.display = 'inline-block';
+            // ⭐ 자동 정렬(777, 123): absolute를 완전히 해제하여 겹침 방지
+            div.style.position = 'relative'; 
+            div.style.display = 'inline-flex';
+            div.style.left = 'auto';
+            div.style.top = 'auto';
             div.style.margin = '5px';
+            div.style.flexShrink = '0';
         }
 
+        // 드래그 앤 드롭 이벤트 설정
         div.ondragstart = (e) => { 
             if (myRole !== 'player') return e.preventDefault(); 
             e.dataTransfer.setData("text", t.id); 
@@ -1060,6 +1065,7 @@ myHandData.forEach((t, index) => {
             if (src === "rack") window.moveTileInRack(dId, t.id); 
             else window.dropOnRack(e); 
         };
+        
         rEl.appendChild(div);
     });
 };
