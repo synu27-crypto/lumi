@@ -535,6 +535,7 @@ body[data-theme='pink'] .hint-target {
     let myHandData = [], gameStatus = "waiting", boardTiles = {}, gameMode = "normal";
     let initialBoardState = {};
     window.latestPlayersData = {};
+    window.lastTileCounts = {};
 
     const SOUND_ASSETS = {
         bgm:       "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -797,7 +798,10 @@ document.getElementById('entry-layer').style.display = 'none';
             const players = snap.val() || {};
             window.latestPlayersData = players;
 
-Object.entries(players).forEach(([name, playerData]) => {
+            // 추가: 변수가 없으면 여기서라도 즉시 빈 객체로 만듭니다.
+            if (!window.lastTileCounts) window.lastTileCounts = {}; 
+
+            Object.entries(players).forEach(([name, playerData]) => {
                 if (playerData.joined && playerData.role === 'player' && playerData.tileCount <= 3 && playerData.tileCount > 0) {
                     if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > playerData.tileCount) {
                         if (window.lastTileCounts[name] > 3 || window.lastTileCounts[name] === undefined) {
