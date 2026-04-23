@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 311</title>
+    <title>루미큐브 : Ver. 31</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1013,19 +1013,21 @@ window.dropOnRack = function(e) {
 
     const updates = {};
     db.ref(`board/${id}`).once('value', s => {
-        const tileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
-        if (!tileData) return;
+    const tileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
+    if (!tileData) return;
 
-        // DB에 소수점 없는 정확한 '칸 좌표' 저장
-        updates[`hands/${myName}/${id}`] = { ...tileData, x: snapX, y: finalY };
-        if (s.exists()) updates[`board/${id}`] = null;
-        
-        db.ref('/').update(updates).then(() => {
-            playSFX('tilePick');
-            sortMode = 'manual'; 
-            window.applyAutoSort(); 
-        });
+    const { x, y, ...cleanData } = tileData; // ✅ x,y 제거
+    updates[`hands/${myName}/${id}`] = cleanData;
+    if (s.exists()) updates[`board/${id}`] = null;
+
+    db.ref('/').update(updates).then(() => {
+        playSFX('tilePick');
+        // manualOrder에 없으면 맨 뒤에 추가
+        if (!manualOrder.includes(id)) manualOrder.push(id);
+        sortMode = 'manual';
+        window.applyAutoSort();
     });
+});
 };
 
     window.applyAutoSort = function() {
@@ -1060,9 +1062,9 @@ window.dropOnRack = function(e) {
         if (sortMode === 'manual') {
             // 수동 정렬: 저장된 X좌표가 있으면 사용, 없으면 순서대로 배치
             const posX = (t.x !== undefined) ? t.x : (index * 44) + 10;
-            div.style.left = posX + 'px';
-            div.style.top = '45px';
-        } else {
+            div.style.left = (index * 44 + 10) + 'px';
+    div.style.top = '45px';
+} else {
             // 자동 정렬: X좌표 무시하고 왼쪽부터 44px 간격으로 일렬 정렬
             div.style.left = (index * 44 + 10) + 'px';
             div.style.top = '45px';
