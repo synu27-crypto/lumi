@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.2</title>
+    <title>루미큐브 : Ver. 60.3</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -11,7 +11,7 @@
 
     <style>
 :root {
-    --bg-color: #121212;  
+    --bg-color: #121212; 
     --panel-bg: #1e1e1e; 
     --board-bg: #181818;
     --rack-bg: #121212;
@@ -1102,11 +1102,10 @@ document.getElementById('entry-layer').style.display = 'none';
     const updates = {};
     
     // 메인 타일의 이동량 계산
-    let primaryTileData = boardTiles[primaryId];
-    let pOrigX = primaryTileData ? primaryTileData.x : dropX;
-    let pOrigY = primaryTileData ? primaryTileData.y : dropY;
-    let deltaX = dropX - pOrigX;
-    let deltaY = dropY - pOrigY;
+    // 랙에서 온 타일은 boardTiles에 없으므로 delta를 0으로 처리
+     let primaryTileData = boardTiles[primaryId];
+    let deltaX = primaryTileData ? (dropX - primaryTileData.x) : 0;
+    let deltaY = primaryTileData ? (dropY - primaryTileData.y) : 0;
 
     // 2단계: 끼워넣기 밀어내기
     let isOverlapping = false;
@@ -1129,11 +1128,9 @@ document.getElementById('entry-layer').style.display = 'none';
     db.ref(`hands/${myName}`).once('value', s => {
         const handData = s.val() || {};
 
-        groupIds.forEach(id => {
-            let origX = boardTiles[id] ? boardTiles[id].x : dropX;
-            let origY = boardTiles[id] ? boardTiles[id].y : dropY;
-            let targetX = origX + deltaX;
-            let targetY = origY + deltaY;
+        groupIds.forEach((id, idx) => {
+            let targetX = boardTiles[id] ? boardTiles[id].x + deltaX : dropX + (idx * 48);
+            let targetY = boardTiles[id] ? boardTiles[id].y + deltaY : dropY;
 
             if (handData[id]) {
                 // 랙에서 가져온 패: 통째로 덮어쓰기 (경로 충돌 차단)
