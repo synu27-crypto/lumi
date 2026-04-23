@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. </title>
+    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -150,36 +150,21 @@ body[data-theme='pink'] {
         #bgm-volume { cursor: pointer; accent-color: var(--accent-green); width: 80px; height: 4px; }
         #chat-color-input { cursor: pointer; border: none; width: 20px; height: 20px; background: none; padding: 0; }
 
-       /* 하단 랙 설정 */
-#my-rack { 
-    height: 120px; /* 패가 반 잘려 보이지 않게 높이 최적화 */
-    background: var(--rack-bg); 
-    border-top: 2px solid rgba(0,0,0,0.1); 
-    position: relative; 
-    padding: 0 !important; /* 패딩이 있으면 좌표가 무조건 어긋납니다. 0으로 고정하세요. */
-    z-index: 600; 
-    overflow-x: auto; /* 가로로 길어지면 스크롤 */
-    overflow-y: hidden; /* 세로로 나대는 것 방지 */
-    display: block !important; /* flex를 반드시 꺼야 absolute 좌표가 먹습니다 */
-    transition: background 0.3s; 
-}
+       /* === 하단 랙 컨트롤 === */
+        #my-rack { height: 210px; background: var(--rack-bg); border-top: 2px solid rgba(0,0,0,0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; transition: background 0.3s; }
+        #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: var(--rack-bg); padding-bottom: 10px; transition: background 0.3s; }
 
-/* 컨트롤 버튼들이 패를 가리지 않게 위치 조정 */
-#rack-controls { 
-    position: absolute; 
-    top: 5px; 
-    right: 10px; 
-    display: flex; 
-    gap: 8px; 
-    z-index: 700; 
-}
-
-/* 기존 .tile 설정에서 position: absolute !important를 제거하십시오 */
-.tile {
-    width: 44px; 
-    height: 64px; 
+.tile { 
+    width: 44px; height: 64px; 
     background: var(--tile-bg) !important; 
-    /* position 속성은 여기서 정하지 않고 자바스크립트(JS)가 모드에 따라 결정하도록 둡니다 */
+    color: var(--tile-text);
+    border-radius: 6px; 
+    display: flex; justify-content: center; align-items: center; 
+    font-weight: 800; font-size: 1.4rem; 
+    /* 입체감을 위한 이중 그림자 */
+    box-shadow: 0 3px 0 #bbb, 0 4px 10px rgba(0,0,0,0.2); 
+    border: 1px solid rgba(0,0,0,0.1);
+    z-index: 10; cursor: grab; transition: transform 0.1s; 
 }
 
 /* 보드판 설정 */
