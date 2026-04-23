@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. </title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -152,26 +152,26 @@ body[data-theme='pink'] {
 
        /* 하단 랙 설정 */
 #my-rack { 
-    height: 150px; /* 한 줄일 때는 210px까지 필요 없습니다 */
+    height: 120px; /* 패가 반 잘려 보이지 않게 높이 최적화 */
     background: var(--rack-bg); 
     border-top: 2px solid rgba(0,0,0,0.1); 
     position: relative; 
-    padding: 0 !important; /* 패딩이 있으면 좌표 계산이 틀어집니다 */
+    padding: 0 !important; /* 패딩이 있으면 좌표가 무조건 어긋납니다. 0으로 고정하세요. */
     z-index: 600; 
-    overflow-x: auto; /* 가로로 길어지면 가로 스크롤 생성 */
-    overflow-y: hidden; /* 위아래로 어긋나는 것 방지 */
-    display: block !important; /* flex를 제거하여 수동 좌표가 잘 먹게 함 */
+    overflow-x: auto; /* 가로로 길어지면 스크롤 */
+    overflow-y: hidden; /* 세로로 나대는 것 방지 */
+    display: block !important; /* flex를 반드시 꺼야 absolute 좌표가 먹습니다 */
     transition: background 0.3s; 
 }
 
+/* 컨트롤 버튼들이 패를 가리지 않게 위치 조정 */
 #rack-controls { 
-    position: absolute; /* 스크롤에 상관없이 우측 상단 고정 */
+    position: absolute; 
     top: 5px; 
     right: 10px; 
     display: flex; 
     gap: 8px; 
     z-index: 700; 
-    padding-bottom: 0; 
 }
 
 /* 기존 .tile 설정에서 position: absolute !important를 제거하십시오 */
@@ -993,26 +993,21 @@ window.dropOnRack = function(e) {
     const rack = document.getElementById('my-rack');
     const rect = rack.getBoundingClientRect();
 
-    // 랙 내부의 실제 좌표 계산 (스크롤값 포함)
+    // 랙의 좌측 상단 기준 실제 마우스 위치 계산 (스크롤 포함)
     let rawX = e.clientX - rect.left + rack.scrollLeft;
-    let rawY = e.clientY - rect.top;
+    
+    // 가로 50px 간격으로 딱딱 맞게 배치 (10px은 첫 타일 여백)
+    const snapX = Math.floor(rawX / 50) * 50 + 10;
 
-    // ⭐ 중구난방 방지: 50x75 그리드에 딱딱 맞게 스냅
-    const snapX = Math.floor(rawX / 50) * 50 + 5;
-    const snapY = Math.floor(rawY / 75) * 75 + 5;
-
-    // 랙 범위를 벗어나지 않게 고정
-    const finalX = Math.max(5, snapX);
-    const finalY = Math.max(5, Math.min(snapY, 150)); // 랙 높이에 맞춰 제한
+    // ⭐ 세로 위치(y)를 25px 정도로 고정하여 패가 잘리지 않고 한가운데 오게 함
+    const finalY = 25; 
 
     const updates = {};
     db.ref(`board/${id}`).once('value', s => {
-        // 현재 내 패(myHandData)에서 타일 정보를 가져옴
         const tileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
         if (!tileData) return;
 
-        // DB에 좌표 저장
-        updates[`hands/${myName}/${id}`] = { ...tileData, x: finalX, y: finalY };
+        updates[`hands/${myName}/${id}`] = { ...tileData, x: snapX, y: finalY };
         if (s.exists()) updates[`board/${id}`] = null;
         
         db.ref('/').update(updates);
@@ -1046,17 +1041,18 @@ window.dropOnRack = function(e) {
         div.innerText = t.num;
         div.draggable = (myRole === 'player');
 
-        if (sortMode === 'manual') {
-            div.style.position = 'absolute';
-            // ⭐ 좌표가 개나대는 걸 막기 위해 기본 위치를 타일 크기에 딱 맞게 설정
-            // 가로 50px, 세로 75px 간격
-            const posX = (t.x !== undefined) ? t.x : (index % 15) * 50 + 10;
-            const posY = (t.y !== undefined) ? t.y : Math.floor(index / 15) * 75 + 10;
-            
-            div.style.left = posX + 'px';
-            div.style.top = posY + 'px';
-            div.style.margin = '0';
-        } else {
+        // applyAutoSort 내부의 수동 정렬(sortMode === 'manual') 섹션 수정
+if (sortMode === 'manual') {
+    div.style.position = 'absolute';
+    const posX = (t.x !== undefined) ? t.x : (index * 50) + 10;
+    // 무조건 25px로 고정해서 한 줄 정렬
+    const posY = 25; 
+    
+    div.style.left = posX + 'px';
+    div.style.top = posY + 'px';
+    div.style.margin = '0';
+} 
+else {
             // 자동 정렬 시에는 절대 좌표 해제
             div.style.position = 'relative';
             div.style.display = 'inline-flex';
