@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 3</title>
+    <title>루미큐브 : Ver. 31</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -158,22 +158,18 @@ body[data-theme='pink'] {
     border-top: 2px solid rgba(0,0,0,0.1); 
     position: relative; 
     padding: 0 !important; 
-    display: flex; 
-    /* 타일들이 왼쪽부터 쌓이도록 설정 */
-    flex-direction: row; 
-    justify-content: flex-start !important; 
-    align-items: center; 
+    display: block !important; /* flex를 끄고 block으로 해야 좌표 배치가 먹습니다 */
     z-index: 600; 
     overflow-x: auto; 
     overflow-y: hidden; 
     transition: background 0.3s; 
 }
 
-/* 정렬 버튼들이 타일을 밀어내지 않게 위치 고정 */
+/* 정렬 버튼들이 패를 가리지 않게 위치 고정 */
 #rack-controls { 
     position: absolute; 
     top: 5px; 
-    left: 10px; /* 버튼을 왼쪽 상단에 고정 */
+    left: 10px; 
     display: flex; 
     gap: 8px; 
     z-index: 700; 
@@ -1004,14 +1000,16 @@ window.dropOnRack = function(e) {
     const rack = document.getElementById('my-rack');
     const rect = rack.getBoundingClientRect();
 
+    // 마우스 위치 계산 (스크롤 포함)
     let rawX = e.clientX - rect.left + rack.scrollLeft;
     
-    // 타일 너비 44px에 맞춰서 자석처럼 붙게 함 (공백 제거 핵심)
+    // 타일 너비(44px) 단위로 딱딱 붙게 함
     const snapX = Math.floor(rawX / 44) * 44 + 5;
-    const finalY = 35; 
+    const finalY = 45; // 버튼 아래 한 줄로 배치
 
     const updates = {};
     db.ref(`board/${id}`).once('value', s => {
+        // 보드에서 가져오거나 랙 내부 이동 시 데이터 확보
         const tileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
         if (!tileData) return;
 
@@ -1020,8 +1018,11 @@ window.dropOnRack = function(e) {
         
         db.ref('/').update(updates).then(() => {
             playSFX('tilePick');
-            // 드롭 직후 수동 정렬 모드 강제 업데이트
-            if (sortMode !== 'manual') window.setSortMode('manual');
+            // 드롭 성공 후 즉시 수동 정렬 모드로 전환하여 위치 고정
+            if (sortMode !== 'manual') {
+                sortMode = 'manual';
+            }
+            window.applyAutoSort(); // ⭐ 화면을 즉시 다시 그려서 패가 옮겨진 걸 보여줌
         });
     });
 };
@@ -1030,7 +1031,7 @@ window.dropOnRack = function(e) {
     const rEl = document.getElementById('my-rack');
     if(!rEl) return;
 
-    // 1. 데이터 정렬
+    // 1. 데이터 정렬 로직
     if (sortMode === 'manual' && manualOrder.length > 0) { 
         myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); 
     } else {
@@ -1052,27 +1053,23 @@ window.dropOnRack = function(e) {
         div.innerText = t.num;
         div.draggable = (myRole === 'player');
 
-        if (sortMode === 'manual') {
-            // 수동 정렬 시에도 공백 없이 딱 붙게 계산
-            div.style.position = 'absolute';
-            // t.x가 있으면 그 위치, 없으면 index를 이용해 왼쪽부터 44px(타일너비)씩 붙임
-            const posX = (t.x !== undefined) ? t.x : (index * 44) + 10;
-            const posY = 35; // 버튼 아래쪽으로 위치 조정
-            
-            div.style.left = posX + 'px';
-            div.style.top = posY + 'px';
-            div.style.margin = '0';
-        } else {
-            // 자동 정렬(777, 123) 시 간격 없이 왼쪽 정렬
-            div.style.position = 'relative';
-            div.style.display = 'inline-flex';
-            div.style.left = 'auto';
-            div.style.top = '20px'; // 버튼 아래로 살짝 내림
-            div.style.margin = '0px'; 
-            div.style.flexShrink = '0';
-        }
+        // ⭐ 공통 스타일: 모든 타일은 absolute로 배치하여 겹침 방지
+        div.style.position = 'absolute';
 
-        // 드래그 이벤트 (기존 코드 유지)
+        if (sortMode === 'manual') {
+            // 수동 정렬: 저장된 X좌표가 있으면 사용, 없으면 순서대로 배치
+            const posX = (t.x !== undefined) ? t.x : (index * 44) + 10;
+            div.style.left = posX + 'px';
+            div.style.top = '45px';
+        } else {
+            // 자동 정렬: X좌표 무시하고 왼쪽부터 44px 간격으로 일렬 정렬
+            div.style.left = (index * 44 + 10) + 'px';
+            div.style.top = '45px';
+        }
+        
+        div.style.margin = '0';
+
+        // 드래그 이벤트 (기존 유지)
         div.ondragstart = (e) => { 
             if (myRole !== 'player') return e.preventDefault(); 
             e.dataTransfer.setData("text", t.id); 
