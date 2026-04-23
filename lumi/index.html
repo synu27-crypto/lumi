@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -130,6 +130,18 @@ body[data-theme='pink'] {
         #audio-controls { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; margin-top: 5px; pointer-events: auto; }
         #audio-buttons { display: flex; gap: 5px; }
         #chat-toggle, #bgm-toggle { background: var(--accent-purple); color: white; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+/* 버튼을 허공에 띄우고 위치를 고정하는 코드 */
+#chat-toggle {
+    position: fixed;
+    bottom: 220px; /* 수동 정렬 버튼 바로 위 높이 */
+    right: 20px;   /* 오른쪽 벽에서 띄움 */
+    z-index: 20001; /* 다른 요소보다 위에 오도록 */
+}
+
+/* 채팅창이 버튼이랑 겹치지 않게 위로 올림 */
+#chat-wrapper {
+    bottom: 270px !important; 
+}
         #bgm-toggle { background: #888; }
         #bgm-toggle.playing { background: var(--accent-green); color: #000; }
 
@@ -138,8 +150,28 @@ body[data-theme='pink'] {
         #bgm-volume { cursor: pointer; accent-color: var(--accent-green); width: 80px; height: 4px; }
         #chat-color-input { cursor: pointer; border: none; width: 20px; height: 20px; background: none; padding: 0; }
 
-        /* === 하단 랙 컨트롤 === */
-        #my-rack { height: 210px; background: var(--rack-bg); border-top: 2px solid rgba(0,0,0,0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; transition: background 0.3s; }
+       /* 하단 랙 설정 */
+#my-rack {
+    height: 210px;
+    background: var(--rack-bg);
+    border-top: 2px solid rgba(0,0,0,0.1);
+    position: relative; /* 좌표의 기준점 */
+    overflow: hidden;   /* 타일이 겹치거나 넘칠 때 처리 */
+}
+
+/* 보드판 설정 */
+#game-board {
+    position: relative; /* 좌표의 기준점 */
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 모든 타일의 공통 배치 방식 */
+.tile {
+    position: absolute !important; /* 고정된 좌표값(left, top)을 따르게 함 */
+    /* 기존의 display: inline-block이나 flex 관련 속성이 있다면 무시됨 */
+}
+}
         #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: var(--rack-bg); padding-bottom: 10px; transition: background 0.3s; }
         
         /* 일반 버튼들 */
@@ -359,30 +391,35 @@ body[data-theme='pink'] #game-board {
 
 <body data-theme="classic"> <div id="main-container">
     <div id="ui-layer">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <div id="player-list-container" style="display: flex; gap: 8px;"></div>
-            <div id="turn-info" style="font-weight: 800; color: var(--turn-blue); min-width: 80px;"></div>
-            <div id="timer-display" style="font-weight: 800; color: var(--accent-red); width: 40px; text-align: center;"></div>
-            <span id="reg-info" style="font-size: 0.75rem; font-weight: 600;"></span>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <div class="theme-selector" style="display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 4px; border-radius: 20px; margin-right: 10px;">
-                <button class="theme-btn classic" onclick="window.setTheme('classic')" title="클래식">⚪</button>
-                <button class="theme-btn dark" onclick="window.setTheme('dark')" title="다크">⚫</button>
-                <button class="theme-btn pink" onclick="window.setTheme('pink')" title="키티">🎀</button>
-            </div>
-
-            <span id="reg-score-badge"></span>
-            <span id="pool-badge" class="player-badge" style="background:var(--accent-purple); color:white; border:none;">POOL: 0</span>
-            <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
-            <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
-            <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
-            <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
-            <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
-            <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
-        </div>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div id="player-list-container" style="display: flex; gap: 8px;"></div>
     </div>
+
+    <div style="flex: 1;"></div>
+
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div id="turn-info" style="font-weight: 800; color: var(--turn-blue); min-width: 80px; text-align: right;"></div>
+        <div id="timer-display" style="font-weight: 800; color: var(--accent-red); width: 45px; text-align: center; font-size: 1.1rem;"></div>
+        <span id="reg-info" style="font-size: 0.75rem; font-weight: 700; background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 8px;"></span>
+
+        <div class="theme-selector" style="display: flex; gap: 5px; background: rgba(0,0,0,0.1); padding: 4px; border-radius: 20px; margin: 0 10px;">
+            <button class="theme-btn classic" onclick="window.setTheme('classic')" title="클래식">⚪</button>
+            <button class="theme-btn dark" onclick="window.setTheme('dark')" title="다크">⚫</button>
+            <button class="theme-btn pink" onclick="window.setTheme('pink')" title="키티">🎀</button>
+        </div>
+
+        <span id="reg-score-badge"></span>
+        <span id="pool-badge" class="player-badge" style="background:var(--accent-purple); color:white; border:none;">POOL: 0</span>
+        
+        <button id="btn-force-next" onclick="window.forceNextTurn()" style="display:none; background:var(--accent-red); color:white;">턴 넘기기</button>
+        <button id="btn-force-lobby" onclick="window.returnToLobby()" style="display:none; background:#444; color:white;">리셋</button>
+        
+        <button onclick="window.showHint()" style="background:var(--accent-gold); color:#000;">힌트</button>
+        <button id="btn-rollback" onclick="window.rollbackTurn()">무르기</button>
+        <button id="btn-draw" onclick="window.drawTile()">타일 뽑기</button>
+        <button id="btn-end" onclick="window.handleTurnEnd()" style="background:var(--accent-green); color:#000;">완료</button>
+    </div>
+</div>
 
     <div id="game-board" ondragover="event.preventDefault()" ondrop="window.dropOnBoard(event)" onmousedown="window.startSelection(event)">
         <div id="selection-box"></div>
@@ -399,6 +436,8 @@ body[data-theme='pink'] #game-board {
             <div id="emote-picker"></div>
         </div>
         </div>
+
+<button onclick="window.toggleChat()" style="position: fixed; bottom: 220px; right: 20px; z-index: 9999; background: var(--accent-purple); color: white; border-radius: 20px; padding: 10px 20px; font-weight: bold; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">📜 로그/채팅</button>
 
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
         <div id="rack-controls">
@@ -751,11 +790,22 @@ body[data-theme='pink'] #game-board {
         
         db.ref('logs').limitToLast(30).on('child_added', snap => {
             const log = snap.val();
-            const div = document.createElement('div');
-            div.id = 'log-entry';
-            div.innerHTML = `<span id="log-time">[${log.time}]</span> ${log.msg}`;
-            const logBox = document.getElementById('game-log');
-            if(logBox) { logBox.appendChild(div); logBox.scrollTop = logBox.scrollHeight; }
+            // applyAutoSort 내부 타일 생성 부분 수정
+const div = document.createElement('div');
+div.id = "rack-" + t.id;
+div.className = `tile ${t.color}`;
+div.innerText = t.num;
+// 저장된 좌표가 있다면 적용
+if (t.x !== undefined && t.y !== undefined) {
+    div.style.position = 'absolute'; // 자유 배치 허용
+    div.style.left = t.x + 'px';    // DB에 저장된 X좌표 적용
+    div.style.top = t.y + 'px';     // DB에 저장된 Y좌표 적용
+} else {
+    // 좌표가 없는 경우(정렬 버튼 클릭 등)를 위한 기본 설정
+    div.style.position = 'relative';
+    div.style.display = 'inline-block';
+}
+}
         });
 
         db.ref('emotes').limitToLast(10).on('child_added', snap => {
@@ -901,77 +951,54 @@ body[data-theme='pink'] #game-board {
         });
     };
 
-    window.dropOnBoard = function(e) {
-        e.preventDefault();
-        if (myRole !== 'player' || currentTurn !== myName) return;
-        
-        const id = e.dataTransfer.getData("text");
-        const rect = document.getElementById('game-board').getBoundingClientRect();
-        
-        const TILE_WIDTH = 50; 
-        const TILE_HEIGHT = 75;
-        let dropX = Math.round((e.clientX - rect.left - 22) / TILE_WIDTH) * TILE_WIDTH + 2;
-        let dropY = Math.round((e.clientY - rect.top - 32) / TILE_HEIGHT) * TILE_HEIGHT + 2;
+    // 보드판에 타일을 내려놓을 때
+window.dropOnBoard = function(e) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text");
+    const boardRect = document.getElementById('game-board').getBoundingClientRect();
+    
+    // 마우스 위치에서 보드판의 시작 위치를 빼서 정확한 좌표 계산
+    const dropX = e.clientX - boardRect.left - 22; // 타일 너비 절반 보정
+    const dropY = e.clientY - boardRect.top - 32;  // 타일 높이 절반 보정
 
-        const tilesOnSameRow = Object.values(boardTiles).filter(t => t.y === dropY);
-        const up = {}; 
-        const overlappingTiles = tilesOnSameRow.filter(t => t.x >= dropX);
-        
-        if (overlappingTiles.length > 0 && overlappingTiles.some(t => t.x === dropX)) {
-            overlappingTiles.sort((a, b) => a.x - b.x);
-            let currentShiftX = dropX;
-            for (let i = 0; i < overlappingTiles.length; i++) {
-                const t = overlappingTiles[i];
-                if (t.x === currentShiftX) {
-                    const originalId = Object.keys(boardTiles).find(key => boardTiles[key] === t);
-                    up[`board/${originalId}/x`] = t.x + TILE_WIDTH;
-                    currentShiftX += TILE_WIDTH;
-                } else break; 
-            }
+    const updates = {};
+    db.ref(`hands/${myName}/${id}`).once('value', s => {
+        if (s.exists()) {
+            // 내 패에서 보드로 낼 때
+            updates[`board/${id}`] = { ...s.val(), x: dropX, y: dropY };
+            updates[`hands/${myName}/${id}`] = null;
+        } else {
+            // 보드 위에서 위치만 옮길 때
+            updates[`board/${id}/x`] = dropX;
+            updates[`board/${id}/y`] = dropY;
         }
+        db.ref('/').update(updates);
+    });
+};
 
-        const inHand = myHandData.find(t => t.id === id);
-        
-        if (inHand) {
-            up[`board/${id}`] = { num: inHand.num, color: inHand.color, x: dropX, y: dropY };
-            up[`hands/${myName}/${id}`] = null; 
-            db.ref('/').update(up); 
-            playSFX('tileDrop');
-        } else if (boardTiles[id]) {
-            if (!window.latestPlayersData[myName]?.registered && initialBoardState[id]) { 
-                playSFX('error'); return alert("등록 전에는 바닥 패를 조작할 수 없습니다."); 
-            }
+// 하단 랙으로 타일을 가져올 때
+window.dropOnRack = function(e) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text");
+    const rackRect = document.getElementById('my-rack').getBoundingClientRect();
+    
+    const dropX = e.clientX - rackRect.left - 22;
+    const dropY = e.clientY - rackRect.top - 32;
 
-            if (selectedTiles.includes(id)) {
-                const originX = boardTiles[id].x;
-                const originY = boardTiles[id].y;
-                const dx = dropX - originX;
-                const dy = dropY - originY;
-
-                selectedTiles.forEach(tileId => {
-                    if (!boardTiles[tileId]) return;
-                    if (!window.latestPlayersData[myName]?.registered && initialBoardState[tileId]) return;
-                    up[`board/${tileId}/x`] = boardTiles[tileId].x + dx;
-                    up[`board/${tileId}/y`] = boardTiles[tileId].y + dy;
-                });
-                
-                selectedTiles = [];
-                document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
-            } else {
-                up[`board/${id}/x`] = dropX;
-                up[`board/${id}/y`] = dropY;
-            }
-            db.ref('/').update(up); 
-            playSFX('tileDrop');
+    const updates = {};
+    db.ref(`board/${id}`).once('value', s => {
+        if (s.exists()) {
+            // 보드에서 다시 랙으로 가져올 때
+            updates[`hands/${myName}/${id}`] = { ...s.val(), x: dropX, y: dropY };
+            updates[`board/${id}`] = null;
+        } else {
+            // 랙 내부에서 수동 정렬할 때
+            updates[`hands/${myName}/${id}/x`] = dropX;
+            updates[`hands/${myName}/${id}/y`] = dropY;
         }
-    };
-
-    window.dropOnRack = function(e) {
-        e.preventDefault();
-        if (myRole !== 'player') return;
-        const id = e.dataTransfer.getData("text");
-        db.ref(`board/${id}`).once('value', s => { if (s.exists()) { const up = {}; up[`hands/${myName}/${id}`] = s.val(); up[`board/${id}`] = null; db.ref('/').update(up); playSFX('tilePick'); } });
-    };
+        db.ref('/').update(updates);
+    });
+};
 
     window.applyAutoSort = function() {
         const rEl = document.getElementById('my-rack');
