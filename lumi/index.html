@@ -543,7 +543,8 @@ body[data-theme='pink'] .hint-target {
         tileDrop:  "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
         turnAlarm: "https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3",
         error:     "https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3",
-        success:   "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
+        success:   "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3",
+        dangerAlarm: "https://assets.mixkit.co/active_storage/sfx/997/997-preview.mp3"
     };
 
     const audioCtx = { bgm: new Audio(SOUND_ASSETS.bgm), isBGMPlaying: false, currentVolume: 0.5 };
@@ -806,7 +807,7 @@ document.getElementById('entry-layer').style.display = 'none';
                     if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > playerData.tileCount) {
                         if (window.lastTileCounts[name] > 3 || window.lastTileCounts[name] === undefined) {
                             window.addGameLog(`⚠️ 경고! ${name}님의 남은 타일이 ${playerData.tileCount}개입니다! 조심하세요!`);
-                            playSFX('turnAlarm'); 
+                            playSFX('dangerAlarm');
                         }
                     }
                 }
@@ -1471,15 +1472,15 @@ div.ondragstart = (e) => {
     // === 이모트 ===
     // 기존의 EMOTES와 중복된 부분을 지우고 하나로 통합했습니다.
     const EMOTE_SETS = [
-        { e: '🎉', t: '축하해요!' },
-        { e: '🔥', t: '가보자고' },
-        { e: '👀', t: '지켜보는 중' },
-        { e: '😭', t: '아이고 까비' },
-        { e: '👍', t: '나이스!' },
-        { e: '😡', t: '빨리 좀..' },
-        { e: '😂', t: 'ㅋㅋㅋㅋㅋ' },
-        { e: '🤔', t: '고민 중...' }
-    ];
+        { e: '😋', t: '이게 되네?' },
+        { e: '🔥', t: '가능한.' },
+        { e: '👀', t: '빤히...빤히...' },
+        { e: '😭', t: '아 진짜 왜 이래' },
+        { e: '😘', t: '고마워~' },
+        { e: '⏳', t: '날 새겠네' },
+        { e: '💀', t: '실화임?' },
+        { e: '😱', t: '등록하지마' }
+    ] ; // <--- 반드시 대괄호와 세미콜론으로 닫아주어야 합니다.
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
@@ -1490,18 +1491,14 @@ div.ondragstart = (e) => {
         picker.innerHTML = ''; 
         
         EMOTE_SETS.forEach(item => {
-        const btn = document.createElement('button');
-        btn.className = 'emote-btn';
-        // 백틱 시작과 끝(`)을 명확히 확인하세요.
-        btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
-        
-        // 화살표 함수 내부의 세미콜론은 문제가 되지 않습니다[cite: 252].
-        btn.onclick = () => { 
-            window.sendEmote(`${item.e} ${item.t}`); 
-        };
-        picker.appendChild(btn);
-    });
+    const btn = document.createElement('button');
+    btn.className = 'emote-btn';
+    btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
+    btn.onclick = () => { 
+        window.sendEmote(`${item.e} ${item.t}`); 
     };
+    picker.appendChild(btn);  // ← 이게 forEach 콜백 안에 있어야 함
+});                            // ← forEach 닫는 괄호
 
     window.sendEmote = function(emote) {
         if (!myName) return;
