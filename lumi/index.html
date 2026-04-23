@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 31</title>
+    <title>루미큐브 : Ver. 311</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1000,29 +1000,30 @@ window.dropOnRack = function(e) {
     const rack = document.getElementById('my-rack');
     const rect = rack.getBoundingClientRect();
 
-    // 마우스 위치 계산 (스크롤 포함)
+    // 1. 실제 마우스 위치 계산 (스크롤 포함)
     let rawX = e.clientX - rect.left + rack.scrollLeft;
     
-    // 타일 너비(44px) 단위로 딱딱 붙게 함
-    const snapX = Math.floor(rawX / 44) * 44 + 5;
-    const finalY = 45; // 버튼 아래 한 줄로 배치
+    // 2. ⭐ 자석 효과 (Grid Snap) 강제 적용
+    // 마우스 위치를 타일 너비(44px)로 나눈 뒤 반올림하여 '몇 번째 칸'인지 계산합니다.
+    // 그 값에 다시 44를 곱하면 무조건 0, 44, 88, 132... 식의 정해진 좌표만 나옵니다.
+    const col = Math.round((rawX - 22) / 44); 
+    const snapX = (col * 44) + 10; // 10은 시작 여백
+
+    const finalY = 45; // 높이 고정
 
     const updates = {};
     db.ref(`board/${id}`).once('value', s => {
-        // 보드에서 가져오거나 랙 내부 이동 시 데이터 확보
         const tileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
         if (!tileData) return;
 
+        // DB에 소수점 없는 정확한 '칸 좌표' 저장
         updates[`hands/${myName}/${id}`] = { ...tileData, x: snapX, y: finalY };
         if (s.exists()) updates[`board/${id}`] = null;
         
         db.ref('/').update(updates).then(() => {
             playSFX('tilePick');
-            // 드롭 성공 후 즉시 수동 정렬 모드로 전환하여 위치 고정
-            if (sortMode !== 'manual') {
-                sortMode = 'manual';
-            }
-            window.applyAutoSort(); // ⭐ 화면을 즉시 다시 그려서 패가 옮겨진 걸 보여줌
+            sortMode = 'manual'; 
+            window.applyAutoSort(); 
         });
     });
 };
