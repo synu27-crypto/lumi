@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60</title>
+    <title>루미큐브 : Ver. 60.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1480,7 +1480,7 @@ div.ondragstart = (e) => {
         { e: '⏳', t: '날 새겠네' },
         { e: '💀', t: '실화임?' },
         { e: '😱', t: '등록하지마' }
-    ]; // <--- 반드시 대괄호와 세미콜론으로 닫아주어야 합니다.
+    ] ; // <--- 반드시 대괄호와 세미콜론으로 닫아주어야 합니다.
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
@@ -1499,8 +1499,8 @@ div.ondragstart = (e) => {
             // 클릭하면 이모지+텍스트가 한꺼번에 전송되도록 합니다.
             btn.onclick = () => window.sendEmote(`${item.e} ${item.t}`);
             picker.appendChild(btn);
-        });
-    };
+        }) ;
+    } ;
 
     window.sendEmote = function(emote) {
         if (!myName) return;
