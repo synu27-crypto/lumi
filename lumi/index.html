@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50.7</title>
+    <title>루미큐브 : Ver. 50.8</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -826,10 +826,25 @@ document.getElementById('entry-layer').style.display = 'none';
                 div.style.top  = data.y + 'px';
                 div.draggable = (myRole === 'player');
                 div.ondragstart = (e) => {
-                    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
-                    e.dataTransfer.setData("text", id);
-                    playSFX('tilePick');
-                };
+    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+
+    let dragData = { primary: id, group: [id] };
+
+    // 현재 잡은 타일이 선택 박스(selectedTiles) 안에 있다면 그룹 전체 묶기
+    if (selectedTiles.includes(id)) {
+        dragData.group = selectedTiles;
+    } else {
+        // 선택되지 않은 타일을 드래그하면 기존 다중 선택 강제 해제
+        document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
+        selectedTiles = [];
+    }
+
+    // 그룹 정보를 JSON 문자열로 변환하여 전송
+    e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    e.dataTransfer.setData("text", JSON.stringify(dragData)); // 호환성 유지
+    e.dataTransfer.setData("source", "board");
+    playSFX('tilePick');
+};
                 bEl.appendChild(div);
             });
         });
