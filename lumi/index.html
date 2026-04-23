@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 3</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -159,13 +159,25 @@ body[data-theme='pink'] {
     position: relative; 
     padding: 0 !important; 
     display: flex; 
-    justify-content: flex-start !important; /* ⭐ 타일들을 왼쪽부터 정렬 */
-    gap: 0 !important; 
+    /* 타일들이 왼쪽부터 쌓이도록 설정 */
+    flex-direction: row; 
+    justify-content: flex-start !important; 
     align-items: center; 
     z-index: 600; 
     overflow-x: auto; 
     overflow-y: hidden; 
     transition: background 0.3s; 
+}
+
+/* 정렬 버튼들이 타일을 밀어내지 않게 위치 고정 */
+#rack-controls { 
+    position: absolute; 
+    top: 5px; 
+    left: 10px; /* 버튼을 왼쪽 상단에 고정 */
+    display: flex; 
+    gap: 8px; 
+    z-index: 700; 
+    background: transparent !important;
 }
 
 .tile { 
@@ -992,14 +1004,11 @@ window.dropOnRack = function(e) {
     const rack = document.getElementById('my-rack');
     const rect = rack.getBoundingClientRect();
 
-    // 랙의 좌측 상단 기준 실제 마우스 위치 계산 (스크롤 포함)
     let rawX = e.clientX - rect.left + rack.scrollLeft;
     
-    // 가로 50px 간격으로 딱딱 맞게 배치 (10px은 첫 타일 여백)
-    const snapX = Math.floor(rawX / 50) * 50 + 10;
-
-    // ⭐ 세로 위치(y)를 25px 정도로 고정하여 패가 잘리지 않고 한가운데 오게 함
-    const finalY = 25; 
+    // 타일 너비 44px에 맞춰서 자석처럼 붙게 함 (공백 제거 핵심)
+    const snapX = Math.floor(rawX / 44) * 44 + 5;
+    const finalY = 35; 
 
     const updates = {};
     db.ref(`board/${id}`).once('value', s => {
@@ -1009,8 +1018,11 @@ window.dropOnRack = function(e) {
         updates[`hands/${myName}/${id}`] = { ...tileData, x: snapX, y: finalY };
         if (s.exists()) updates[`board/${id}`] = null;
         
-        db.ref('/').update(updates);
-        playSFX('tilePick');
+        db.ref('/').update(updates).then(() => {
+            playSFX('tilePick');
+            // 드롭 직후 수동 정렬 모드 강제 업데이트
+            if (sortMode !== 'manual') window.setSortMode('manual');
+        });
     });
 };
 
@@ -1018,7 +1030,7 @@ window.dropOnRack = function(e) {
     const rEl = document.getElementById('my-rack');
     if(!rEl) return;
 
-    // 1. 데이터 정렬 로직 (기본 유지)
+    // 1. 데이터 정렬
     if (sortMode === 'manual' && manualOrder.length > 0) { 
         myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); 
     } else {
@@ -1041,24 +1053,26 @@ window.dropOnRack = function(e) {
         div.draggable = (myRole === 'player');
 
         if (sortMode === 'manual') {
+            // 수동 정렬 시에도 공백 없이 딱 붙게 계산
             div.style.position = 'absolute';
-            const posX = (t.x !== undefined) ? t.x : (index * 50) + 10;
-            const posY = 25; 
+            // t.x가 있으면 그 위치, 없으면 index를 이용해 왼쪽부터 44px(타일너비)씩 붙임
+            const posX = (t.x !== undefined) ? t.x : (index * 44) + 10;
+            const posY = 35; // 버튼 아래쪽으로 위치 조정
+            
             div.style.left = posX + 'px';
             div.style.top = posY + 'px';
             div.style.margin = '0';
         } else {
-    div.style.position = 'relative';
-    div.style.display = 'inline-flex';
-    div.style.left = 'auto';
-    div.style.top = 'auto';
-    div.style.margin = '0px';
-    div.style.flexShrink = '0';
-    
-    // 부모 컨테이너의 정렬을 왼쪽으로 다시 한번 확인
-    rEl.style.justifyContent = 'flex-start'; 
-}
+            // 자동 정렬(777, 123) 시 간격 없이 왼쪽 정렬
+            div.style.position = 'relative';
+            div.style.display = 'inline-flex';
+            div.style.left = 'auto';
+            div.style.top = '20px'; // 버튼 아래로 살짝 내림
+            div.style.margin = '0px'; 
+            div.style.flexShrink = '0';
+        }
 
+        // 드래그 이벤트 (기존 코드 유지)
         div.ondragstart = (e) => { 
             if (myRole !== 'player') return e.preventDefault(); 
             e.dataTransfer.setData("text", t.id); 
