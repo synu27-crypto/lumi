@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.5</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -789,23 +789,18 @@ body[data-theme='pink'] #game-board {
         });
         
         db.ref('logs').limitToLast(30).on('child_added', snap => {
-            const log = snap.val();
-            // applyAutoSort 내부 타일 생성 부분 수정
-const div = document.createElement('div');
-div.id = "rack-" + t.id;
-div.className = `tile ${t.color}`;
-div.innerText = t.num;
-// 저장된 좌표가 있다면 적용
-if (t.x !== undefined && t.y !== undefined) {
-    div.style.position = 'absolute'; // 자유 배치 허용
-    div.style.left = t.x + 'px';    // DB에 저장된 X좌표 적용
-    div.style.top = t.y + 'px';     // DB에 저장된 Y좌표 적용
-} 
-else {
-    // 좌표가 없는 경우(정렬 버튼 클릭 등)를 위한 기본 설정
-    div.style.position = 'relative';
-    div.style.display = 'inline-block';
-}
+            const logMsg = snap.val(); // 로그는 보통 문자열 데이터입니다.
+            const div = document.createElement('div');
+            div.style.padding = "2px 0";
+            div.style.fontSize = "0.8rem";
+            div.style.color = "var(--main-text)";
+            div.innerText = logMsg; // 로그 메시지를 화면에 표시
+
+            const logContainer = document.getElementById('game-log');
+            if(logContainer) { 
+                logContainer.appendChild(div); 
+                logContainer.scrollTop = logContainer.scrollHeight; 
+            }
         });
 
         db.ref('emotes').limitToLast(10).on('child_added', snap => {
@@ -1001,24 +996,58 @@ window.dropOnRack = function(e) {
 };
 
     window.applyAutoSort = function() {
-        const rEl = document.getElementById('my-rack');
-        if(!rEl) return;
-        if (sortMode === 'manual' && manualOrder.length > 0) { myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); }
-        else {
-            const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
-            myHandData.sort((a, b) => { const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]); });
-        }
-        rEl.querySelectorAll('.tile').forEach(t => t.remove());
-        myHandData.forEach(t => {
-            if (!t || t.num === undefined) return;
-            const div = document.createElement('div');
-            div.id = "rack-" + t.id; div.className = `tile ${t.color}`; div.innerText = t.num; div.draggable = (myRole === 'player');
-            div.ondragstart = (e) => { if (myRole !== 'player') return e.preventDefault(); e.dataTransfer.setData("text", t.id); e.dataTransfer.setData("source", "rack"); playSFX('tilePick'); };
-            div.ondragover = (e) => e.preventDefault();
-            div.ondrop = (e) => { e.preventDefault(); e.stopPropagation(); const dId = e.dataTransfer.getData("text"), src = e.dataTransfer.getData("source"); if (src === "rack") window.moveTileInRack(dId, t.id); else window.dropOnRack(e); };
-            rEl.appendChild(div);
+    const rEl = document.getElementById('my-rack');
+    if(!rEl) return;
+
+    if (sortMode === 'manual' && manualOrder.length > 0) { 
+        myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); 
+    } else {
+        const coMap = { 'red': 1, 'blue': 2, 'yellow': 3, 'black': 4, 'joker': 5 };
+        myHandData.sort((a, b) => { 
+            const vA = a.num === 'J' ? 99 : Number(a.num), vB = b.num === 'J' ? 99 : Number(b.num); 
+            return sortMode === 'color' ? (coMap[a.color] - coMap[b.color] || vA - vB) : (vA - vB || coMap[a.color] - coMap[b.color]); 
         });
-    };
+    }
+
+    rEl.querySelectorAll('.tile').forEach(t => t.remove());
+
+    myHandData.forEach(t => {
+        if (!t || t.num === undefined) return;
+        const div = document.createElement('div');
+        div.id = "rack-" + t.id; 
+        div.className = `tile ${t.color}`; 
+        div.innerText = t.num; 
+        div.draggable = (myRole === 'player');
+
+        // ⭐ 핵심: 수동 정렬 모드이고 좌표가 저장되어 있다면 해당 위치에 고정
+        if (sortMode === 'manual' && t.x !== undefined && t.y !== undefined) {
+            div.style.position = 'absolute';
+            div.style.left = t.x + 'px';
+            div.style.top = t.y + 'px';
+        } else {
+            // 숫자/색상 정렬 모드일 때는 일렬로 배치
+            div.style.position = 'relative';
+            div.style.display = 'inline-block';
+            div.style.margin = '5px';
+        }
+
+        div.ondragstart = (e) => { 
+            if (myRole !== 'player') return e.preventDefault(); 
+            e.dataTransfer.setData("text", t.id); 
+            e.dataTransfer.setData("source", "rack"); 
+            playSFX('tilePick'); 
+        };
+        div.ondragover = (e) => e.preventDefault();
+        div.ondrop = (e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            const dId = e.dataTransfer.getData("text"), src = e.dataTransfer.getData("source"); 
+            if (src === "rack") window.moveTileInRack(dId, t.id); 
+            else window.dropOnRack(e); 
+        };
+        rEl.appendChild(div);
+    });
+};
 
     window.renderLobbyUI = function() { 
         const modalBody = document.getElementById('modal-body');
