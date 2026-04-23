@@ -544,6 +544,7 @@ body[data-theme='pink'] .hint-target {
         turnAlarm: "https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3",
         error:     "https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3",
         success:   "https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
+        dangerAlarm: "https://assets.mixkit.co/active_storage/sfx/997/997-preview.mp3"
     };
 
     const audioCtx = { bgm: new Audio(SOUND_ASSETS.bgm), isBGMPlaying: false, currentVolume: 0.5 };
@@ -806,7 +807,7 @@ document.getElementById('entry-layer').style.display = 'none';
                     if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > playerData.tileCount) {
                         if (window.lastTileCounts[name] > 3 || window.lastTileCounts[name] === undefined) {
                             window.addGameLog(`⚠️ 경고! ${name}님의 남은 타일이 ${playerData.tileCount}개입니다! 조심하세요!`);
-                            playSFX('turnAlarm'); 
+                            playSFX('dangerAlarm');
                         }
                     }
                 }
