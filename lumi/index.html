@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50.3</title>
+    <title>루미큐브 : Ver. 50.4</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1010,7 +1010,7 @@ body[data-theme='pink'] #chat-input::placeholder {
     const TILE_H = 68;
     let snapped = false;
 
-    // 1. 자석 기능 (메인 타일 1개 기준으로만 자석 판정)
+    // 1단계: 자석 기능 (딱 붙이기)
     Object.entries(boardTiles).forEach(([tid, t]) => {
         if (groupIds.includes(tid) || snapped) return; 
         const dx = dropX - t.x;
@@ -1028,15 +1028,14 @@ body[data-theme='pink'] #chat-input::placeholder {
 
     const updates = {};
     
-    // 메인 타일의 원래 위치 파악 (이동량 계산용)
+    // 메인 타일의 이동량 계산
     let primaryTileData = boardTiles[primaryId];
     let pOrigX = primaryTileData ? primaryTileData.x : dropX;
     let pOrigY = primaryTileData ? primaryTileData.y : dropY;
-
     let deltaX = dropX - pOrigX;
     let deltaY = dropY - pOrigY;
 
-    // 2. 끼워넣기 밀어내기 (선택한 타일들의 너비만큼 공간 확보)
+    // 2단계: 끼워넣기 밀어내기
     let isOverlapping = false;
     Object.entries(boardTiles).forEach(([tid, t]) => {
         if (groupIds.includes(tid)) return; 
@@ -1044,7 +1043,7 @@ body[data-theme='pink'] #chat-input::placeholder {
     });
 
     if (isOverlapping) {
-        const pushDist = TILE_W * groupIds.length; // 그룹 타일 개수만큼 공간 확보
+        const pushDist = TILE_W * groupIds.length;
         Object.entries(boardTiles).forEach(([tid, t]) => {
             if (groupIds.includes(tid)) return;
             if (Math.abs(t.y - dropY) < 10 && t.x >= dropX - 5) {
@@ -1053,52 +1052,45 @@ body[data-theme='pink'] #chat-input::placeholder {
         });
     }
 
-    // 3. 그룹 내 모든 타일 일괄 업데이트
-    let checkHands = false;
-    let tempTargets = {}; // 계산된 좌표를 임시로 담아둘 공간
+    // 3단계: 업데이트 충돌 완벽 방어 코드
+    db.ref(`hands/${myName}`).once('value', s => {
+        const handData = s.val() || {};
 
-    groupIds.forEach(id => {
-        let origX = boardTiles[id] ? boardTiles[id].x : dropX;
-        let origY = boardTiles[id] ? boardTiles[id].y : dropY;
-        
-        let targetX = origX + deltaX;
-        let targetY = origY + deltaY;
+        groupIds.forEach(id => {
+            let origX = boardTiles[id] ? boardTiles[id].x : dropX;
+            let origY = boardTiles[id] ? boardTiles[id].y : dropY;
+            let targetX = origX + deltaX;
+            let targetY = origY + deltaY;
 
-        tempTargets[id] = { x: targetX, y: targetY }; // 좌표 기록
-
-        if (!boardTiles[id]) {
-            checkHands = true; // 보드에 없는 타일(즉, 랙에서 가져온 패)이 섞여있음
-        } else {
-            // 이미 보드판에 있던 패는 깔끔하게 x, y (자식 경로)만 업데이트!
-            updates[`board/${id}/x`] = targetX;
-            updates[`board/${id}/y`] = targetY;
-        }
-    });
-
-    if (checkHands) {
-        db.ref(`hands/${myName}`).once('value', s => {
-            const handData = s.val() || {};
-            groupIds.forEach(id => {
-                if (handData[id]) {
-                    // 랙에서 가져온 패는 경로 충돌 없이 통째로(부모 경로) 추가!
-                    updates[`board/${id}`] = { 
-                        ...handData[id], 
-                        x: tempTargets[id].x, 
-                        y: tempTargets[id].y 
-                    };
-                    updates[`hands/${myName}/${id}`] = null;
-                }
-            });
-            db.ref('/').update(updates).then(() => playSFX('tileDrop'));
+            if (handData[id]) {
+                // 랙에서 가져온 패: 통째로 덮어쓰기 (경로 충돌 차단)
+                updates[`board/${id}`] = { ...handData[id], x: targetX, y: targetY };
+                updates[`hands/${myName}/${id}`] = null;
+                
+                // 밀어내기 로직에서 혹시 생성됐을지 모를 자식 경로 삭제
+                delete updates[`board/${id}/x`];
+                delete updates[`board/${id}/y`];
+            } 
+            else if (boardTiles[id]) {
+                // 보드에 이미 있던 패: X, Y 좌표만 업데이트
+                updates[`board/${id}/x`] = targetX;
+                updates[`board/${id}/y`] = targetY;
+            }
         });
-    } else {
-        db.ref('/').update(updates).then(() => playSFX('tileDrop'));
-    }
 
-    // 드롭 완료 후 선택 해제
-    document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
-    selectedTiles = [];
-}; // <-- window.dropOnBoard 함수 끝
+        // 최종 파이어베이스 전송 및 에러 캐치
+        db.ref('/').update(updates)
+            .then(() => playSFX('tileDrop'))
+            .catch(err => {
+                console.error("🔥 타일 이동 에러 발생:", err);
+                alert("통신 중 에러가 발생했습니다. 콘솔을 확인해주세요.");
+            });
+        
+        // 드롭 완료 후 선택 해제
+        document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+        selectedTiles = [];
+    });
+};
 
     // ✅ 수정 4: 수동 정렬 + JSON 에러 방어 코드 추가
 window.dropOnRack = function(e) {
