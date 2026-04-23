@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50.8</title>
+    <title>루미큐브 : Ver. 50.9</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -433,6 +433,19 @@ body[data-theme='pink'] .hint-target {
     z-index: 1000 !important;
 }
 
+/* === 타일 소량 보유자 강조 효과 === */
+.danger-player {
+    background: rgba(231, 76, 60, 0.3) !important;
+    border: 2px solid #e74c3c !important;
+    animation: danger-pulse 0.8s infinite;
+}
+
+@keyframes danger-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 5px #e74c3c; }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px #e74c3c; }
+    100% { transform: scale(1); box-shadow: 0 0 5px #e74c3c; }
+}
+
     </style>
 </head>
 
@@ -693,7 +706,10 @@ document.getElementById('entry-layer').style.display = 'none';
         playerList.forEach(name => {
             const badge = document.createElement('span');
             badge.id = `badge-${name}`;
-            badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''}`;
+            const pData = window.latestPlayersData[name] || {};
+            const isDanger = (pData.tileCount <= 3 && pData.tileCount > 0) ? 'danger-player' : '';
+            badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''} ${isDanger}`;
+            
             if (myRole === 'spectator') badge.style.cursor = 'pointer';
             const pData = window.latestPlayersData[name] || {};
             badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
@@ -769,6 +785,20 @@ document.getElementById('entry-layer').style.display = 'none';
         db.ref('players').on('value', snap => {
             const players = snap.val() || {};
             window.latestPlayersData = players;
+Object.entries(players).forEach(([name, pData]) => {
+                // 타일이 3개 이하이고 게임 중인 플레이어인지 확인
+                if (pData.joined && pData.role === 'player' && pData.tileCount <= 3 && pData.tileCount > 0) {
+                    // 처음 3개 이하가 되었거나, 개수가 더 줄어들었을 때만 알림 발생
+                    if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > pData.tileCount) {
+                        if (window.lastTileCounts[name] > 3 || window.lastTileCounts[name] === undefined) {
+                            window.addGameLog(`⚠️ 경고! ${name}님의 남은 타일이 ${pData.tileCount}개입니다! 조심하세요!`);
+                            playSFX('turnAlarm'); // 긴박한 효과음 재생 [cite: 157]
+                        }
+                    }
+                }
+                // 실시간 비교를 위해 현재 개수 저장
+                window.lastTileCounts[name] = pData.tileCount;
+            });
             playerList = Object.entries(players)
                 .filter(p => p[1].joined && p[1].role === 'player')
                 .sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0))
