@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 36.5 (풀 테마 & 말풍선 적용)</title>
+    <title>루미큐브 : Ver. 36.5</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -151,8 +151,21 @@ body[data-theme='pink'] {
         #chat-color-input { cursor: pointer; border: none; width: 20px; height: 20px; background: none; padding: 0; }
 
        /* === 하단 랙 컨트롤 === */
-        #my-rack { height: 210px; background: var(--rack-bg); border-top: 2px solid rgba(0,0,0,0.1); position: relative; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-content: flex-start; z-index: 600; overflow-y: auto; transition: background 0.3s; }
-        #rack-controls { position: sticky; top: 0; width: 100%; display: flex; justify-content: flex-end; gap: 8px; background: var(--rack-bg); padding-bottom: 10px; transition: background 0.3s; }
+        /* 스타일 태그 내의 #my-rack 부분을 찾아서 교체하세요 */
+#my-rack { 
+    height: 150px; 
+    background: var(--rack-bg); 
+    border-top: 2px solid rgba(0,0,0,0.1); 
+    position: relative; 
+    padding: 0 !important; 
+    display: flex; 
+    gap: 0 !important; /* 타일 사이 간격 0 */
+    align-items: center; 
+    z-index: 600; 
+    overflow-x: auto; 
+    overflow-y: hidden; 
+    transition: background 0.3s; 
+}
 
 .tile { 
     width: 44px; height: 64px; 
@@ -1004,7 +1017,7 @@ window.dropOnRack = function(e) {
     const rEl = document.getElementById('my-rack');
     if(!rEl) return;
 
-    // 1. 데이터 정렬 (기존 로직 유지)
+    // 1. 데이터 정렬 로직 (기본 유지)
     if (sortMode === 'manual' && manualOrder.length > 0) { 
         myHandData.sort((a, b) => manualOrder.indexOf(a.id) - manualOrder.indexOf(b.id)); 
     } else {
@@ -1026,27 +1039,23 @@ window.dropOnRack = function(e) {
         div.innerText = t.num;
         div.draggable = (myRole === 'player');
 
-        // applyAutoSort 내부의 수동 정렬(sortMode === 'manual') 섹션 수정
-if (sortMode === 'manual') {
-    div.style.position = 'absolute';
-    const posX = (t.x !== undefined) ? t.x : (index * 50) + 10;
-    // 무조건 25px로 고정해서 한 줄 정렬
-    const posY = 25; 
-    
-    div.style.left = posX + 'px';
-    div.style.top = posY + 'px';
-    div.style.margin = '0';
-} 
-else {
-            // 자동 정렬 시에는 절대 좌표 해제
+        if (sortMode === 'manual') {
+            div.style.position = 'absolute';
+            const posX = (t.x !== undefined) ? t.x : (index * 50) + 10;
+            const posY = 25; 
+            div.style.left = posX + 'px';
+            div.style.top = posY + 'px';
+            div.style.margin = '0';
+        } else {
+            // ⭐ 자동 정렬 시: margin을 0으로 해서 타일을 딱 붙임
             div.style.position = 'relative';
             div.style.display = 'inline-flex';
             div.style.left = 'auto';
             div.style.top = 'auto';
-            div.style.margin = '5px';
+            div.style.margin = '0px'; // 간격 제거
+            div.style.flexShrink = '0';
         }
 
-        // 드래그 이벤트 (기존과 동일)
         div.ondragstart = (e) => { 
             if (myRole !== 'player') return e.preventDefault(); 
             e.dataTransfer.setData("text", t.id); 
@@ -1060,7 +1069,6 @@ else {
             if (src === "rack") window.moveTileInRack(dId, t.id); 
             else window.dropOnRack(e); 
         };
-        
         rEl.appendChild(div);
     });
 };
