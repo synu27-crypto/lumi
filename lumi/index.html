@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50.5</title>
+    <title>루미큐브 : Ver. 50.6</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -674,9 +674,9 @@ body[data-theme='pink'] .hint-target {
         }
         window.sessionStorage.setItem('lumi-nick', myName);
         window.sessionStorage.setItem('lumi-role', myRole);
-        db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
-        db.ref('players/' + myName).onDisconnect().remove();
-        document.getElementById('entry-layer').style.display = 'none';
+db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
+db.ref('players/' + myName + '/joined').onDisconnect().set(false); // 접속 상태만 해제하도록 변경
+document.getElementById('entry-layer').style.display = 'none';
         if (!isAuto) playSFX('success');
 
         db.ref('hands/' + myName).on('value', snap => {
