@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 50.2</title>
+    <title>루미큐브 : Ver. 50.3</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1055,6 +1055,8 @@ body[data-theme='pink'] #chat-input::placeholder {
 
     // 3. 그룹 내 모든 타일 일괄 업데이트
     let checkHands = false;
+    let tempTargets = {}; // 계산된 좌표를 임시로 담아둘 공간
+
     groupIds.forEach(id => {
         let origX = boardTiles[id] ? boardTiles[id].x : dropX;
         let origY = boardTiles[id] ? boardTiles[id].y : dropY;
@@ -1062,10 +1064,15 @@ body[data-theme='pink'] #chat-input::placeholder {
         let targetX = origX + deltaX;
         let targetY = origY + deltaY;
 
-        if (!boardTiles[id]) checkHands = true; // 랙에서 가져온 패가 섞여있음
+        tempTargets[id] = { x: targetX, y: targetY }; // 좌표 기록
 
-        updates[`board/${id}/x`] = targetX;
-        updates[`board/${id}/y`] = targetY;
+        if (!boardTiles[id]) {
+            checkHands = true; // 보드에 없는 타일(즉, 랙에서 가져온 패)이 섞여있음
+        } else {
+            // 이미 보드판에 있던 패는 깔끔하게 x, y (자식 경로)만 업데이트!
+            updates[`board/${id}/x`] = targetX;
+            updates[`board/${id}/y`] = targetY;
+        }
     });
 
     if (checkHands) {
@@ -1073,7 +1080,12 @@ body[data-theme='pink'] #chat-input::placeholder {
             const handData = s.val() || {};
             groupIds.forEach(id => {
                 if (handData[id]) {
-                    updates[`board/${id}`] = { ...handData[id], x: updates[`board/${id}/x`], y: updates[`board/${id}/y`] };
+                    // 랙에서 가져온 패는 경로 충돌 없이 통째로(부모 경로) 추가!
+                    updates[`board/${id}`] = { 
+                        ...handData[id], 
+                        x: tempTargets[id].x, 
+                        y: tempTargets[id].y 
+                    };
                     updates[`hands/${myName}/${id}`] = null;
                 }
             });
@@ -1086,7 +1098,7 @@ body[data-theme='pink'] #chat-input::placeholder {
     // 드롭 완료 후 선택 해제
     document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
     selectedTiles = [];
-};
+}; // <-- window.dropOnBoard 함수 끝
 
     // ✅ 수정 4: 수동 정렬 + JSON 에러 방어 코드 추가
 window.dropOnRack = function(e) {
