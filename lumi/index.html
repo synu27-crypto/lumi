@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.9</title>
+    <title>루미큐브 : Ver. 60.95</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2648,8 +2648,7 @@ div.ondragstart = (e) => {
         if (isSelecting) { isSelecting = false; document.getElementById('selection-box').style.display = 'none'; }
     });
 
-    // === 이모트 ===
-    // 기존의 EMOTES와 중복된 부분을 지우고 하나로 통합했습니다.
+   // === 이모트 ===
     const EMOTE_SETS = [
         { e: '😋', t: '이게 되네?' },
         { e: '🔥', t: '가능한.' },
@@ -2659,57 +2658,63 @@ div.ondragstart = (e) => {
         { e: '😨', t: '안 돼 안 돼 안 돼' },
         { e: '💀', t: '실화임?' },
         { e: '😱', t: '등록하지마' }
-    ] ; // <--- 반드시 대괄호와 세미콜론으로 닫아주어야 합니다.
+    ]; // <-- 세미콜론과 대괄호 확인
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
-        if (picker.style.display === 'flex') { picker.style.display = 'none'; return; }
-        picker.style.display = 'flex';
+        if (!picker) return;
+
+        const isVisible = picker.style.display === 'flex';
+        picker.style.display = isVisible ? 'none' : 'flex';
         
-        // 버튼이 중복 생성되지 않게 비워주고 새로 만듭니다.
-        picker.innerHTML = ''; 
-        
-        EMOTE_SETS.forEach(item => {
-            const btn = document.createElement('button');
-            btn.className = 'emote-btn';
-            btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
-            btn.onclick = () => { 
-                window.sendEmote(`${item.e} ${item.t}`); 
-            };
-            picker.appendChild(btn);
-        });
-    };  // ← 이게 toggleEmotePicker 함수를 닫는 중괄호! 꼭 추가해야 함
+        if (!isVisible) {
+            picker.innerHTML = ''; 
+            EMOTE_SETS.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'emote-btn';
+                // 백틱(`) 사용에 주의하세요
+                btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
+                btn.onclick = () => {
+                    window.sendEmote(`${item.e} ${item.t}`);
+                };
+                picker.appendChild(btn);
+            });
+        }
+    };
 
     window.sendEmote = function(emote) {
-        if (!myName) return;
+        if (!myName || !db) return;
         db.ref('emotes').push({ name: myName, emote, time: Date.now() });
-        document.getElementById('emote-picker').style.display = 'none';
+        const picker = document.getElementById('emote-picker');
+        if (picker) picker.style.display = 'none';
     };
 
     window.showBubble = function(playerName, emote) {
-    let badge = document.getElementById(`badge-${playerName}`);
-    
-    // 뱃지가 없으면 임시로 생성
-    if (!badge) {
-        const listEl = document.getElementById('player-list-container');
-        if (!listEl) return;
-        badge = document.createElement('span');
-        badge.id = `badge-${playerName}`;
-        badge.className = 'player-badge';
-        badge.style.opacity = '0.6';
-        badge.style.fontStyle = 'italic';
-        badge.innerHTML = `👀 ${playerName}`;
-        listEl.appendChild(badge);
-    }
+        let badge = document.getElementById(`badge-${playerName}`);
+        
+        // 플레이어 뱃지가 없으면 관전자용 등으로 임시 생성
+        if (!badge) {
+            const listEl = document.getElementById('player-list-container');
+            if (!listEl) return;
+            badge = document.createElement('span');
+            badge.id = `badge-${playerName}`;
+            badge.className = 'player-badge';
+            badge.style.opacity = '0.6';
+            badge.innerHTML = `👀 ${playerName}`;
+            listEl.appendChild(badge);
+        }
 
-    const existing = badge.querySelector('.emoji-bubble');
-    if (existing) existing.remove();
-    const bubble = document.createElement('div');
-    bubble.className = 'emoji-bubble';
-    bubble.innerText = emote;
-    badge.appendChild(bubble);
-    setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
-};
+        const existing = badge.querySelector('.emoji-bubble');
+        if (existing) existing.remove();
+
+        const bubble = document.createElement('div');
+        bubble.className = 'emoji-bubble';
+        bubble.innerText = emote;
+        badge.appendChild(bubble);
+
+        // 2.5초 후 제거
+        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
+    };
 </script>
 </body>
 </html>
