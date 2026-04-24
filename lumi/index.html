@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.7</title>
+    <title>루미큐브 : Ver. 60.75</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -39,19 +39,6 @@ body[data-theme='classic'] {
     --tile-text-black: #000000;
     --chat-bg: rgba(255, 255, 255, 0.95);
     --btn-bg: rgba(0, 0, 0, 0.05);
-}
-
-body[data-theme='dark'] { 
-    --bg-color: #0f1011; 
-    --panel-bg: #1c1e20; 
-    --board-bg: #141618; 
-    --rack-bg: #0f1011; 
-    --modal-bg: #24272a; 
-    --main-text: #f0f0f0; 
-    --tile-bg: #e0e0e0;
-    --tile-text-black: #111111;
-    --chat-bg: rgba(30, 33, 36, 0.98);
-    --btn-bg: rgba(255, 255, 255, 0.08);
 }
 
 body {
@@ -1012,6 +999,592 @@ body[data-theme='kitty'] .theme-btn.active {
     box-shadow: 0 0 8px #cc0000 !important;
 }
 
+/* ☁️ 시나모롤 테마 */
+
+body[data-theme='cinnamoroll'] {
+    --bg-color:    #e8f4ff !important;
+    --panel-bg:    #c8e6ff !important;
+    --board-bg:    #daeeff !important;
+    --rack-bg:     #aed6f8 !important;
+    --modal-bg:    #f0f8ff !important;
+    --main-text:   #1a4a7a !important;
+    --turn-blue:   #4a90d9 !important;
+    --accent-gold: #7ab8f5 !important;
+    --accent-green:#4a90d9 !important;
+    --btn-bg:      rgba(174,214,248,0.4) !important;
+
+    background-image:
+        radial-gradient(circle at 15% 15%, rgba(200,230,255,0.5) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(174,214,248,0.4) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.3) 0%, transparent 60%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>☁️</text></svg>") 12 12, auto !important;
+}
+
+body[data-theme='cinnamoroll'] #game-board {
+    background-color: #daeeff !important;
+    background-image:
+        radial-gradient(circle, rgba(74,144,217,0.15) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(174,214,248,0.12) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+body[data-theme='cinnamoroll'] #ui-layer {
+    background: linear-gradient(135deg, #c8e6ff 0%, #aed6f8 50%, #c8e6ff 100%) !important;
+    border-bottom: 3px solid #7ab8f5 !important;
+    box-shadow: 0 4px 15px rgba(74,144,217,0.2) !important;
+}
+
+body[data-theme='cinnamoroll'] #my-rack {
+    background: linear-gradient(180deg, #aed6f8 0%, #7ab8f5 100%) !important;
+    border-top: 3px solid #4a90d9 !important;
+    box-shadow: 0 -4px 15px rgba(74,144,217,0.2) !important;
+}
+
+body[data-theme='cinnamoroll'] .tile,
+body[data-theme='cinnamoroll'] #main-container .tile,
+body[data-theme='cinnamoroll'] #game-board .tile,
+body[data-theme='cinnamoroll'] #my-rack .tile {
+    background: linear-gradient(145deg, #f5faff, #e0f0ff) !important;
+    box-shadow:
+        0 4px 0 #5a9fd4,
+        0 6px 15px rgba(74,144,217,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.95) !important;
+    border: 1.5px solid #aed6f8 !important;
+    border-radius: 12px !important;
+}
+body[data-theme='cinnamoroll'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow:
+        0 7px 0 #5a9fd4,
+        0 10px 20px rgba(74,144,217,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.95) !important;
+}
+body[data-theme='cinnamoroll'] .tile.joker {
+    color: #1a4a7a !important;
+    background: linear-gradient(145deg, #e8f4ff, #c8e6ff) !important;
+}
+
+body[data-theme='cinnamoroll'] button {
+    background: linear-gradient(135deg, #f0f8ff, #c8e6ff) !important;
+    color: #1a4a7a !important;
+    border: 1.5px solid #7ab8f5 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 0 #5a9fd4, 0 4px 10px rgba(74,144,217,0.2) !important;
+    font-weight: 800 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='cinnamoroll'] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #5a9fd4, 0 6px 15px rgba(74,144,217,0.3) !important;
+    background: linear-gradient(135deg, #ffffff, #daeeff) !important;
+}
+body[data-theme='cinnamoroll'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #5a9fd4 !important;
+}
+
+body[data-theme='cinnamoroll'] .player-badge {
+    background: rgba(174,214,248,0.5) !important;
+    border: 1.5px solid #7ab8f5 !important;
+    color: #1a4a7a !important;
+    border-radius: 20px !important;
+}
+body[data-theme='cinnamoroll'] .active-turn-badge {
+    background: linear-gradient(135deg, #4a90d9, #7ab8f5) !important;
+    border-color: #2a70b9 !important;
+    color: white !important;
+    box-shadow: 0 0 14px rgba(74,144,217,0.6) !important;
+    animation: cinna-glow 1.8s ease-in-out infinite !important;
+}
+@keyframes cinna-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(74,144,217,0.5); }
+    50%       { box-shadow: 0 0 22px rgba(74,144,217,0.9); }
+}
+body[data-theme='cinnamoroll'] .tile-count {
+    background: #2a70b9 !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+body[data-theme='cinnamoroll'] #chat-log-container {
+    background: rgba(240,248,255,0.97) !important;
+    border: 1.5px solid #7ab8f5 !important;
+    box-shadow: 0 8px 32px rgba(74,144,217,0.2) !important;
+}
+body[data-theme='cinnamoroll'] #game-log {
+    border-right: 1.5px solid rgba(122,184,245,0.3) !important;
+}
+body[data-theme='cinnamoroll'] #chat-input-container {
+    background: linear-gradient(135deg, #c8e6ff, #aed6f8) !important;
+    border: 1.5px solid #7ab8f5 !important;
+}
+body[data-theme='cinnamoroll'] #chat-input { color: #1a4a7a !important; }
+body[data-theme='cinnamoroll'] #chat-input::placeholder {
+    color: rgba(26,74,122,0.4) !important;
+}
+
+body[data-theme='cinnamoroll'] #pool-badge {
+    background: linear-gradient(135deg, #4a90d9, #2a70b9) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(74,144,217,0.4) !important;
+}
+
+@keyframes hint-glow-cinna {
+    0%, 100% { box-shadow: 0 0 5px #f5a623; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #f5a623; transform: scale(1.08); }
+}
+body[data-theme='cinnamoroll'] .hint-target {
+    animation: hint-glow-cinna 0.9s infinite !important;
+    border: 3px solid #f5a623 !important;
+    z-index: 1000 !important;
+}
+
+body[data-theme='cinnamoroll'] .danger-player {
+    background: rgba(231,76,60,0.2) !important;
+    border: 2px solid #e74c3c !important;
+    animation: danger-pulse-cinna 0.8s infinite !important;
+}
+@keyframes danger-pulse-cinna {
+    0%, 100% { box-shadow: 0 0 5px #e74c3c; transform: scale(1); }
+    50%       { box-shadow: 0 0 18px #e74c3c; transform: scale(1.05); }
+}
+
+body[data-theme='cinnamoroll'] .modal-card {
+    background: linear-gradient(145deg, #f0f8ff, #c8e6ff) !important;
+    border: 2px solid #7ab8f5 !important;
+    box-shadow: 0 10px 40px rgba(74,144,217,0.25) !important;
+}
+
+body[data-theme='cinnamoroll'] .lobby-player-tag {
+    background: linear-gradient(135deg, #4a90d9, #2a70b9) !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(74,144,217,0.3) !important;
+}
+body[data-theme='cinnamoroll'] .lobby-player-tag.spec-tag {
+    background: rgba(174,214,248,0.3) !important;
+    border: 1px dashed #7ab8f5 !important;
+    color: #1a4a7a !important;
+}
+
+body[data-theme='cinnamoroll'] #emote-picker {
+    background: linear-gradient(145deg, #f0f8ff, #c8e6ff) !important;
+    border: 1.5px solid #7ab8f5 !important;
+    box-shadow: 0 -4px 20px rgba(74,144,217,0.2) !important;
+}
+body[data-theme='cinnamoroll'] .emote-btn:hover {
+    background: rgba(74,144,217,0.15) !important;
+}
+
+body[data-theme='cinnamoroll'] #selection-box {
+    border: 1.5px solid rgba(74,144,217,0.7) !important;
+    background: rgba(74,144,217,0.12) !important;
+}
+
+body[data-theme='cinnamoroll'] .theme-btn.active {
+    border-color: #4a90d9 !important;
+    box-shadow: 0 0 8px #4a90d9 !important;
+}
+
+
+/* 🐾 포챠코 테마 */
+
+body[data-theme='pochacco'] {
+    --bg-color:    #f0f0f8 !important;
+    --panel-bg:    #dcdcf0 !important;
+    --board-bg:    #e8e8f5 !important;
+    --rack-bg:     #c8c8e8 !important;
+    --modal-bg:    #f5f5fb !important;
+    --main-text:   #2a2a5a !important;
+    --turn-blue:   #5a5aaa !important;
+    --accent-gold: #8888cc !important;
+    --accent-green:#5a5aaa !important;
+    --btn-bg:      rgba(200,200,232,0.4) !important;
+
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(200,200,232,0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(160,160,210,0.3) 0%, transparent 50%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🐾</text></svg>") 12 12, auto !important;
+}
+
+body[data-theme='pochacco'] #game-board {
+    background-color: #e8e8f5 !important;
+    background-image:
+        radial-gradient(circle, rgba(90,90,170,0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(160,160,210,0.1) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+body[data-theme='pochacco'] #ui-layer {
+    background: linear-gradient(135deg, #dcdcf0 0%, #c8c8e8 50%, #dcdcf0 100%) !important;
+    border-bottom: 3px solid #8888cc !important;
+    box-shadow: 0 4px 15px rgba(90,90,170,0.2) !important;
+}
+
+body[data-theme='pochacco'] #my-rack {
+    background: linear-gradient(180deg, #c8c8e8 0%, #a8a8d0 100%) !important;
+    border-top: 3px solid #5a5aaa !important;
+    box-shadow: 0 -4px 15px rgba(90,90,170,0.2) !important;
+}
+
+body[data-theme='pochacco'] .tile,
+body[data-theme='pochacco'] #main-container .tile,
+body[data-theme='pochacco'] #game-board .tile,
+body[data-theme='pochacco'] #my-rack .tile {
+    background: linear-gradient(145deg, #ffffff, #f0f0fa) !important;
+    box-shadow:
+        0 4px 0 #6a6ab8,
+        0 6px 15px rgba(90,90,170,0.25),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+    border: 1.5px solid #b8b8e0 !important;
+    border-radius: 10px !important;
+}
+body[data-theme='pochacco'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow:
+        0 7px 0 #6a6ab8,
+        0 10px 20px rgba(90,90,170,0.35),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+}
+body[data-theme='pochacco'] .tile.joker {
+    color: #3a3a8a !important;
+    background: linear-gradient(145deg, #f0f0fa, #e0e0f5) !important;
+}
+
+body[data-theme='pochacco'] button {
+    background: linear-gradient(135deg, #f5f5fb, #dcdcf0) !important;
+    color: #2a2a5a !important;
+    border: 1.5px solid #8888cc !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 0 #6a6ab8, 0 4px 10px rgba(90,90,170,0.2) !important;
+    font-weight: 800 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='pochacco'] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #6a6ab8, 0 6px 15px rgba(90,90,170,0.3) !important;
+    background: linear-gradient(135deg, #ffffff, #e8e8f8) !important;
+}
+body[data-theme='pochacco'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #6a6ab8 !important;
+}
+
+body[data-theme='pochacco'] .player-badge {
+    background: rgba(200,200,232,0.5) !important;
+    border: 1.5px solid #8888cc !important;
+    color: #2a2a5a !important;
+    border-radius: 20px !important;
+}
+body[data-theme='pochacco'] .active-turn-badge {
+    background: linear-gradient(135deg, #5a5aaa, #8888cc) !important;
+    border-color: #3a3a8a !important;
+    color: white !important;
+    box-shadow: 0 0 14px rgba(90,90,170,0.6) !important;
+    animation: pocha-glow 1.8s ease-in-out infinite !important;
+}
+@keyframes pocha-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(90,90,170,0.5); }
+    50%       { box-shadow: 0 0 22px rgba(90,90,170,0.9); }
+}
+body[data-theme='pochacco'] .tile-count {
+    background: #3a3a8a !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+body[data-theme='pochacco'] #chat-log-container {
+    background: rgba(245,245,251,0.97) !important;
+    border: 1.5px solid #8888cc !important;
+    box-shadow: 0 8px 32px rgba(90,90,170,0.2) !important;
+}
+body[data-theme='pochacco'] #game-log {
+    border-right: 1.5px solid rgba(136,136,204,0.3) !important;
+}
+body[data-theme='pochacco'] #chat-input-container {
+    background: linear-gradient(135deg, #dcdcf0, #c8c8e8) !important;
+    border: 1.5px solid #8888cc !important;
+}
+body[data-theme='pochacco'] #chat-input { color: #2a2a5a !important; }
+body[data-theme='pochacco'] #chat-input::placeholder {
+    color: rgba(42,42,90,0.4) !important;
+}
+
+body[data-theme='pochacco'] #pool-badge {
+    background: linear-gradient(135deg, #5a5aaa, #3a3a8a) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(90,90,170,0.4) !important;
+}
+
+@keyframes hint-glow-pocha {
+    0%, 100% { box-shadow: 0 0 5px #f5a623; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #f5a623; transform: scale(1.08); }
+}
+body[data-theme='pochacco'] .hint-target {
+    animation: hint-glow-pocha 0.9s infinite !important;
+    border: 3px solid #f5a623 !important;
+    z-index: 1000 !important;
+}
+
+body[data-theme='pochacco'] .danger-player {
+    background: rgba(231,76,60,0.2) !important;
+    border: 2px solid #e74c3c !important;
+    animation: danger-pulse-pocha 0.8s infinite !important;
+}
+@keyframes danger-pulse-pocha {
+    0%, 100% { box-shadow: 0 0 5px #e74c3c; transform: scale(1); }
+    50%       { box-shadow: 0 0 18px #e74c3c; transform: scale(1.05); }
+}
+
+body[data-theme='pochacco'] .modal-card {
+    background: linear-gradient(145deg, #f5f5fb, #dcdcf0) !important;
+    border: 2px solid #8888cc !important;
+    box-shadow: 0 10px 40px rgba(90,90,170,0.25) !important;
+}
+
+body[data-theme='pochacco'] .lobby-player-tag {
+    background: linear-gradient(135deg, #5a5aaa, #3a3a8a) !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(90,90,170,0.3) !important;
+}
+body[data-theme='pochacco'] .lobby-player-tag.spec-tag {
+    background: rgba(200,200,232,0.3) !important;
+    border: 1px dashed #8888cc !important;
+    color: #2a2a5a !important;
+}
+
+body[data-theme='pochacco'] #emote-picker {
+    background: linear-gradient(145deg, #f5f5fb, #dcdcf0) !important;
+    border: 1.5px solid #8888cc !important;
+    box-shadow: 0 -4px 20px rgba(90,90,170,0.2) !important;
+}
+body[data-theme='pochacco'] .emote-btn:hover {
+    background: rgba(90,90,170,0.12) !important;
+}
+
+body[data-theme='pochacco'] #selection-box {
+    border: 1.5px solid rgba(90,90,170,0.7) !important;
+    background: rgba(90,90,170,0.1) !important;
+}
+
+body[data-theme='pochacco'] .theme-btn.active {
+    border-color: #5a5aaa !important;
+    box-shadow: 0 0 8px #5a5aaa !important;
+}
+
+
+/* ⚫ 다크 테마 리뉴얼 */
+
+body[data-theme='dark'] {
+    --bg-color:    #0d0d0f !important;
+    --panel-bg:    #17181c !important;
+    --board-bg:    #111215 !important;
+    --rack-bg:     #0d0d0f !important;
+    --modal-bg:    #1c1d22 !important;
+    --main-text:   #e8e8f0 !important;
+    --tile-bg:     #d8d8e0 !important;
+    --tile-text-black: #0d0d0f !important;
+    --turn-blue:   #5b8dee !important;
+    --accent-gold: #e8b84b !important;
+    --accent-green:#3dd68c !important;
+    --accent-red:  #f05c5c !important;
+    --accent-purple:#a56eff !important;
+    --chat-bg:     rgba(17,18,21,0.97) !important;
+    --btn-bg:      rgba(255,255,255,0.06) !important;
+}
+
+/* 보드판 — 은은한 별빛 느낌 */
+body[data-theme='dark'] #game-board {
+    background-color: #111215 !important;
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+/* 상단 UI 바 */
+body[data-theme='dark'] #ui-layer {
+    background: linear-gradient(135deg, #1c1d22 0%, #17181c 100%) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* 하단 랙 */
+body[data-theme='dark'] #my-rack {
+    background: linear-gradient(180deg, #17181c 0%, #0d0d0f 100%) !important;
+    border-top: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* 타일 — 깨끗하고 선명하게 */
+body[data-theme='dark'] .tile,
+body[data-theme='dark'] #main-container .tile,
+body[data-theme='dark'] #game-board .tile,
+body[data-theme='dark'] #my-rack .tile {
+    background: linear-gradient(145deg, #e8e8f0, #d0d0dc) !important;
+    box-shadow:
+        0 4px 0 #1a1a20,
+        0 6px 18px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 8px !important;
+}
+body[data-theme='dark'] .tile:hover {
+    transform: translateY(-3px) scale(1.04) !important;
+    box-shadow:
+        0 7px 0 #1a1a20,
+        0 10px 24px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body[data-theme='dark'] .tile.joker {
+    color: #a56eff !important;
+    background: linear-gradient(145deg, #e8e0ff, #d8d0f8) !important;
+}
+
+/* 버튼 */
+body[data-theme='dark'] button {
+    background: rgba(255,255,255,0.06) !important;
+    color: #e8e8f0 !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+    font-weight: 700 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='dark'] button:hover {
+    background: rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+body[data-theme='dark'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4) !important;
+}
+
+/* 플레이어 뱃지 */
+body[data-theme='dark'] .player-badge {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #e8e8f0 !important;
+    border-radius: 12px !important;
+}
+body[data-theme='dark'] .active-turn-badge {
+    background: rgba(91,141,238,0.2) !important;
+    border-color: #5b8dee !important;
+    color: #a0c0ff !important;
+    box-shadow: 0 0 14px rgba(91,141,238,0.4) !important;
+    animation: dark-glow 2s ease-in-out infinite !important;
+}
+@keyframes dark-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(91,141,238,0.3); border-color: #5b8dee; }
+    50%       { box-shadow: 0 0 20px rgba(91,141,238,0.7); border-color: #7aaaf5; }
+}
+body[data-theme='dark'] .tile-count {
+    background: rgba(255,255,255,0.12) !important;
+    color: #e8e8f0 !important;
+    border-radius: 6px !important;
+}
+
+/* 채팅창 */
+body[data-theme='dark'] #chat-log-container {
+    background: rgba(17,18,21,0.97) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+}
+body[data-theme='dark'] #game-log {
+    border-right: 1px solid rgba(255,255,255,0.06) !important;
+}
+body[data-theme='dark'] #chat-input-container {
+    background: #17181c !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+}
+body[data-theme='dark'] #chat-input { color: #e8e8f0 !important; }
+body[data-theme='dark'] #chat-input::placeholder {
+    color: rgba(232,232,240,0.3) !important;
+}
+
+/* 풀 뱃지 */
+body[data-theme='dark'] #pool-badge {
+    background: linear-gradient(135deg, #a56eff, #7a44cc) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: white !important;
+    box-shadow: 0 3px 12px rgba(165,110,255,0.4) !important;
+}
+
+/* 힌트 글로우 */
+@keyframes hint-glow-dark {
+    0%, 100% { box-shadow: 0 0 5px #e8b84b; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #e8b84b; transform: scale(1.06); }
+}
+body[data-theme='dark'] .hint-target {
+    animation: hint-glow-dark 1s infinite !important;
+    border: 2px solid #e8b84b !important;
+    z-index: 1000 !important;
+}
+
+/* 위험 플레이어 */
+body[data-theme='dark'] .danger-player {
+    background: rgba(240,92,92,0.2) !important;
+    border: 2px solid #f05c5c !important;
+    animation: danger-pulse-dark 0.8s infinite !important;
+}
+@keyframes danger-pulse-dark {
+    0%, 100% { box-shadow: 0 0 5px #f05c5c; transform: scale(1); }
+    50%       { box-shadow: 0 0 20px #f05c5c; transform: scale(1.05); }
+}
+
+/* 모달 카드 */
+body[data-theme='dark'] .modal-card {
+    background: linear-gradient(145deg, #1c1d22, #17181c) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7) !important;
+}
+
+/* 로비 태그 */
+body[data-theme='dark'] .lobby-player-tag {
+    background: linear-gradient(135deg, #5b8dee, #3a6ccc) !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(91,141,238,0.3) !important;
+}
+body[data-theme='dark'] .lobby-player-tag.spec-tag {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px dashed rgba(255,255,255,0.2) !important;
+    color: #a0a0b8 !important;
+}
+
+/* 이모트 피커 */
+body[data-theme='dark'] #emote-picker {
+    background: linear-gradient(145deg, #1c1d22, #17181c) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+body[data-theme='dark'] .emote-btn:hover {
+    background: rgba(255,255,255,0.08) !important;
+}
+
+/* 선택 박스 */
+body[data-theme='dark'] #selection-box {
+    border: 1px solid rgba(91,141,238,0.7) !important;
+    background: rgba(91,141,238,0.1) !important;
+}
+
+/* 테마 버튼 active */
+body[data-theme='dark'] .theme-btn.active {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 8px #5b8dee !important;
+}
+
     </style>
 </head>
 
@@ -1034,6 +1607,8 @@ body[data-theme='kitty'] .theme-btn.active {
                 <button class="theme-btn pink"    onclick="window.setTheme('pink')"    title="키티">🎀</button>
                 <button class="theme-btn vintage" onclick="window.setTheme('vintage')" title="빈티지 키티">🪞</button>
                 <button class="theme-btn kitty" onclick="window.setTheme('kitty')" title="고전 키티">❤</button>
+                <button class="theme-btn cinnamoroll" onclick="window.setTheme('cinnamoroll')" title="시나모롤">☁️</button>
+                <button class="theme-btn pochacco" onclick="window.setTheme('pochacco')" title="포챠코">🐾</button>
             </div>
 
             <span id="reg-score-badge"></span>
