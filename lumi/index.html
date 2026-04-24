@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 61</title>
+    <title>루미큐브 : Ver. 61.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1603,6 +1603,169 @@ body[data-theme='dark'] .theme-btn.active {
     animation: screen-shake 0.6s ease-in-out;
 }
 
+/* ⬛ 딥 네이비 테마 */
+body[data-theme='navy'] {
+    --bg-color:    #0d1422 !important;
+    --panel-bg:    #162038 !important;
+    --board-bg:    #0f1828 !important;
+    --rack-bg:     #0d1422 !important;
+    --modal-bg:    #1b2a47 !important;
+    --main-text:   #eef0f8 !important;
+    --tile-bg:     #e8eaf8 !important;
+    --tile-text-black: #1a1e36 !important;
+    --turn-blue:   #5b8dee !important;
+    --accent-gold: #f0c060 !important;
+    --accent-green:#4de8a0 !important;
+    --accent-red:  #ff6b6b !important;
+    --accent-purple:#b899ff !important;
+    --chat-bg:     rgba(8,12,20,0.96) !important;
+    --btn-bg:      rgba(107,147,201,0.08) !important;
+}
+body[data-theme='navy'] #game-board {
+    background-color: #0f1828 !important;
+    background-image:
+        linear-gradient(rgba(107,147,201,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(107,147,201,0.07) 1px, transparent 1px) !important;
+    background-size: 42px 42px !important;
+    filter: none !important;
+}
+body[data-theme='navy'] #ui-layer {
+    background: linear-gradient(135deg, #1b2a47 0%, #162038 100%) !important;
+    border-bottom: 1px solid rgba(107,147,201,0.18) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5) !important;
+}
+body[data-theme='navy'] #my-rack {
+    background: linear-gradient(180deg, #162038 0%, #0d1422 100%) !important;
+    border-top: 1px solid rgba(107,147,201,0.15) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
+}
+body[data-theme='navy'] .tile,
+body[data-theme='navy'] #main-container .tile,
+body[data-theme='navy'] #game-board .tile,
+body[data-theme='navy'] #my-rack .tile {
+    background: linear-gradient(150deg, #e8eaf8, #cdd0e8) !important;
+    box-shadow: 0 4px 0 #080c14, 0 6px 18px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    border-radius: 8px !important;
+    color: #1a1e36 !important;
+}
+body[data-theme='navy'] .tile:hover {
+    transform: translateY(-4px) scale(1.05) !important;
+    box-shadow: 0 8px 0 #080c14, 0 12px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body[data-theme='navy'] .tile.joker {
+    color: #7040cc !important;
+    background: linear-gradient(150deg, #e8e2ff, #d4ccf8) !important;
+    border-color: rgba(180,160,255,0.4) !important;
+}
+body[data-theme='navy'] button {
+    background: rgba(107,147,201,0.08) !important;
+    color: #eef0f8 !important;
+    border: 1px solid rgba(107,147,201,0.2) !important;
+    border-radius: 9px !important;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+    font-weight: 700 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='navy'] button:hover {
+    background: rgba(107,147,201,0.16) !important;
+    border-color: rgba(107,147,201,0.35) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4) !important;
+}
+body[data-theme='navy'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4) !important;
+}
+body[data-theme='navy'] .player-badge {
+    background: rgba(107,147,201,0.10) !important;
+    border: 1px solid rgba(107,147,201,0.22) !important;
+    color: #eef0f8 !important;
+    border-radius: 10px !important;
+}
+body[data-theme='navy'] .active-turn-badge {
+    background: rgba(91,141,238,0.2) !important;
+    border-color: #5b8dee !important;
+    color: #aac8ff !important;
+    box-shadow: 0 0 14px rgba(91,141,238,0.35) !important;
+    animation: navy-glow 2s ease-in-out infinite !important;
+}
+@keyframes navy-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(91,141,238,0.25); border-color: #5b8dee; }
+    50%       { box-shadow: 0 0 20px rgba(91,141,238,0.6); border-color: #7aaaf5; }
+}
+body[data-theme='navy'] .tile-count {
+    background: rgba(107,147,201,0.14) !important;
+    color: #eef0f8 !important;
+    border-radius: 6px !important;
+}
+body[data-theme='navy'] #chat-log-container {
+    background: rgba(8,12,20,0.96) !important;
+    border: 1px solid rgba(107,147,201,0.12) !important;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5) !important;
+}
+body[data-theme='navy'] #game-log { border-right: 1px solid rgba(107,147,201,0.08) !important; }
+body[data-theme='navy'] #chat-input-container {
+    background: #111a2e !important;
+    border: 1px solid rgba(107,147,201,0.12) !important;
+}
+body[data-theme='navy'] #chat-input { color: #eef0f8 !important; }
+body[data-theme='navy'] #chat-input::placeholder { color: rgba(200,204,224,0.35) !important; }
+body[data-theme='navy'] #pool-badge {
+    background: linear-gradient(135deg, #7a44cc, #9055dd) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: #efe0ff !important;
+    box-shadow: 0 3px 12px rgba(144,85,221,0.35) !important;
+}
+@keyframes hint-glow-navy {
+    0%, 100% { box-shadow: 0 4px 0 #080c14, 0 0 8px #f0c060; transform: scale(1); }
+    50%       { box-shadow: 0 4px 0 #080c14, 0 0 22px 5px #f0c060; transform: scale(1.06); }
+}
+body[data-theme='navy'] .hint-target {
+    animation: hint-glow-navy 1s infinite !important;
+    border: 2px solid #f0c060 !important;
+    z-index: 1000 !important;
+}
+body[data-theme='navy'] .danger-player {
+    background: rgba(255,107,107,0.15) !important;
+    border: 2px solid #ff6b6b !important;
+    animation: danger-pulse-navy 0.8s infinite !important;
+}
+@keyframes danger-pulse-navy {
+    0%, 100% { box-shadow: 0 0 6px #ff6b6b; transform: scale(1); }
+    50%       { box-shadow: 0 0 20px #ff6b6b; transform: scale(1.05); }
+}
+body[data-theme='navy'] .modal-card {
+    background: linear-gradient(145deg, #1b2a47, #162038) !important;
+    border: 1px solid rgba(107,147,201,0.15) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.65) !important;
+    border-radius: 14px !important;
+}
+body[data-theme='navy'] .lobby-player-tag {
+    background: linear-gradient(135deg, #3a5a8c, #213355) !important;
+    color: #c8ddf8 !important;
+    box-shadow: 0 3px 10px rgba(58,90,140,0.4) !important;
+}
+body[data-theme='navy'] .lobby-player-tag.spec-tag {
+    background: rgba(107,147,201,0.07) !important;
+    border: 1px dashed rgba(107,147,201,0.3) !important;
+    color: #7a90b0 !important;
+}
+body[data-theme='navy'] #emote-picker {
+    background: linear-gradient(145deg, #1b2a47, #162038) !important;
+    border: 1px solid rgba(107,147,201,0.12) !important;
+}
+body[data-theme='navy'] .emote-btn:hover { background: rgba(107,147,201,0.12) !important; }
+body[data-theme='navy'] #selection-box {
+    border: 1px solid rgba(91,141,238,0.6) !important;
+    background: rgba(91,141,238,0.1) !important;
+}
+body[data-theme='navy'] .theme-btn.active {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 8px rgba(91,141,238,0.5) !important;
+}
+
     </style>
 </head>
 
@@ -1627,6 +1790,7 @@ body[data-theme='dark'] .theme-btn.active {
                 <button class="theme-btn kitty" onclick="window.setTheme('kitty')" title="고전 키티">❤</button>
                 <button class="theme-btn cinnamoroll" onclick="window.setTheme('cinnamoroll')" title="시나모롤">☁️</button>
                 <button class="theme-btn pochacco" onclick="window.setTheme('pochacco')" title="포챠코">🐾</button>
+                <button class="theme-btn navy"     onclick="window.setTheme('navy')"     title="딥 네이비">🌊</button>
             </div>
 
             <span id="reg-score-badge"></span>
