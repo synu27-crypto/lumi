@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.6</title>
+    <title>루미큐브 : Ver. 60.7</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -807,7 +807,7 @@ body[data-theme='vintage'] .theme-btn.active {
 
 /* 🐱 고전 키티 테마 (Hello Kitty Classic) */
 
-body[data-theme='vintage'] {
+body[data-theme='kitty'] {
     --bg-color:    #ffffff !important;
     --panel-bg:    #fff0f0 !important;
     --board-bg:    #fff5f5 !important;
@@ -827,7 +827,7 @@ body[data-theme='vintage'] {
 }
 
 /* ── 보드판 — 흰 바탕에 빨간 격자 느낌 ── */
-body[data-theme='vintage'] #game-board {
+body[data-theme='kitty'] #game-board {
     background-color: #fff5f5 !important;
     background-image:
         radial-gradient(circle, rgba(204,0,0,0.18) 1.5px, transparent 1.5px),
@@ -838,24 +838,24 @@ body[data-theme='vintage'] #game-board {
 }
 
 /* ── 상단 UI 바 — 흰 바탕에 얇은 빨간 라인 ── */
-body[data-theme='vintage'] #ui-layer {
+body[data-theme='kitty'] #ui-layer {
     background: #ffffff !important;
     border-bottom: 3px solid #cc0000 !important;
     box-shadow: 0 3px 0 #ff9999, 0 4px 15px rgba(204,0,0,0.1) !important;
 }
 
 /* ── 하단 랙 — 연한 빨강 ── */
-body[data-theme='vintage'] #my-rack {
+body[data-theme='kitty'] #my-rack {
     background: linear-gradient(180deg, #ffe0e0 0%, #ffcccc 100%) !important;
     border-top: 3px solid #cc0000 !important;
     box-shadow: 0 -3px 0 #ff9999, 0 -4px 15px rgba(204,0,0,0.1) !important;
 }
 
 /* ── 타일 — 깨끗한 흰색, 빨간 포인트 ── */
-body[data-theme='vintage'] .tile,
-body[data-theme='vintage'] #main-container .tile,
-body[data-theme='vintage'] #game-board .tile,
-body[data-theme='vintage'] #my-rack .tile {
+body[data-theme='kitty'] .tile,
+body[data-theme='kitty'] #main-container .tile,
+body[data-theme='kitty'] #game-board .tile,
+body[data-theme='kitty'] #my-rack .tile {
     background: linear-gradient(145deg, #ffffff, #fff0f0) !important;
     box-shadow:
         0 4px 0 #cc0000,
@@ -865,20 +865,20 @@ body[data-theme='vintage'] #my-rack .tile {
     border-radius: 8px !important;
     filter: none !important;
 }
-body[data-theme='vintage'] .tile:hover {
+body[data-theme='kitty'] .tile:hover {
     transform: translateY(-3px) scale(1.05) !important;
     box-shadow:
         0 7px 0 #cc0000,
         0 10px 20px rgba(204,0,0,0.25),
         inset 0 1px 0 rgba(255,255,255,1) !important;
 }
-body[data-theme='vintage'] .tile.joker {
+body[data-theme='kitty'] .tile.joker {
     color: #cc0000 !important;
     background: linear-gradient(145deg, #fff0f0, #ffe0e0) !important;
 }
 
 /* ── 버튼 — 흰 바탕, 빨간 테두리 ── */
-body[data-theme='vintage'] button {
+body[data-theme='kitty'] button {
     background: #ffffff !important;
     color: #cc0000 !important;
     border: 2px solid #cc0000 !important;
@@ -888,24 +888,24 @@ body[data-theme='vintage'] button {
     letter-spacing: 0.03em !important;
     transition: all 0.15s !important;
 }
-body[data-theme='vintage'] button:hover {
+body[data-theme='kitty'] button:hover {
     background: #fff0f0 !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 5px 0 #aa0000, 0 6px 15px rgba(204,0,0,0.25) !important;
 }
-body[data-theme='vintage'] button:active {
+body[data-theme='kitty'] button:active {
     transform: translateY(1px) !important;
     box-shadow: 0 2px 0 #aa0000 !important;
 }
 
 /* ── 플레이어 뱃지 ── */
-body[data-theme='vintage'] .player-badge {
+body[data-theme='kitty'] .player-badge {
     background: #ffffff !important;
     border: 2px solid #ffaaaa !important;
     color: #cc0000 !important;
     border-radius: 20px !important;
 }
-body[data-theme='vintage'] .active-turn-badge {
+body[data-theme='kitty'] .active-turn-badge {
     background: #cc0000 !important;
     border-color: #aa0000 !important;
     color: #ffffff !important;
@@ -916,32 +916,32 @@ body[data-theme='vintage'] .active-turn-badge {
     0%, 100% { box-shadow: 0 0 6px rgba(204,0,0,0.4); }
     50%       { box-shadow: 0 0 20px rgba(204,0,0,0.8); }
 }
-body[data-theme='vintage'] .tile-count {
+body[data-theme='kitty'] .tile-count {
     background: #cc0000 !important;
     color: #ffffff !important;
     border-radius: 6px !important;
 }
 
 /* ── 채팅창 ── */
-body[data-theme='vintage'] #chat-log-container {
+body[data-theme='kitty'] #chat-log-container {
     background: rgba(255,255,255,0.98) !important;
     border: 2px solid #ffaaaa !important;
     box-shadow: 0 8px 32px rgba(204,0,0,0.1) !important;
 }
-body[data-theme='vintage'] #game-log {
+body[data-theme='kitty'] #game-log {
     border-right: 1.5px solid rgba(204,0,0,0.15) !important;
 }
-body[data-theme='vintage'] #chat-input-container {
+body[data-theme='kitty'] #chat-input-container {
     background: #fff0f0 !important;
     border: 2px solid #ffaaaa !important;
 }
-body[data-theme='vintage'] #chat-input { color: #cc0000 !important; }
-body[data-theme='vintage'] #chat-input::placeholder {
+body[data-theme='kitty'] #chat-input { color: #cc0000 !important; }
+body[data-theme='kitty'] #chat-input::placeholder {
     color: rgba(204,0,0,0.35) !important;
 }
 
 /* ── 풀 뱃지 ── */
-body[data-theme='vintage'] #pool-badge {
+body[data-theme='kitty'] #pool-badge {
     background: #cc0000 !important;
     border: none !important;
     border-radius: 20px !important;
@@ -950,64 +950,64 @@ body[data-theme='vintage'] #pool-badge {
 }
 
 /* ── 힌트 글로우 ── */
-@keyframes hint-glow-vintage {
+@keyframes hint-glow-kitty {
     0%, 100% { box-shadow: 0 0 5px #cc0000; transform: scale(1); }
     50%       { box-shadow: 0 0 22px 6px #cc0000; transform: scale(1.08); }
 }
-body[data-theme='vintage'] .hint-target {
-    animation: hint-glow-vintage 0.9s infinite !important;
+body[data-theme='kitty'] .hint-target {
+    animation: hint-glow-kitty 0.9s infinite !important;
     border: 3px solid #cc0000 !important;
     z-index: 1000 !important;
 }
 
 /* ── 위험 플레이어 ── */
-body[data-theme='vintage'] .danger-player {
+body[data-theme='kitty'] .danger-player {
     background: rgba(204,0,0,0.2) !important;
     border: 2px solid #cc0000 !important;
-    animation: danger-pulse-vintage 0.8s infinite !important;
+    animation: danger-pulse-kitty 0.8s infinite !important;
 }
-@keyframes danger-pulse-vintage {
+@keyframes danger-pulse-kitty {
     0%, 100% { box-shadow: 0 0 5px #cc0000; transform: scale(1); }
     50%       { box-shadow: 0 0 18px #cc0000; transform: scale(1.05); }
 }
 
 /* ── 모달 카드 ── */
-body[data-theme='vintage'] .modal-card {
+body[data-theme='kitty'] .modal-card {
     background: #ffffff !important;
     border: 2px solid #ffaaaa !important;
     box-shadow: 0 10px 40px rgba(204,0,0,0.15) !important;
 }
 
 /* ── 로비 태그 ── */
-body[data-theme='vintage'] .lobby-player-tag {
+body[data-theme='kitty'] .lobby-player-tag {
     background: #cc0000 !important;
     color: #ffffff !important;
     box-shadow: 0 3px 10px rgba(204,0,0,0.25) !important;
 }
-body[data-theme='vintage'] .lobby-player-tag.spec-tag {
+body[data-theme='kitty'] .lobby-player-tag.spec-tag {
     background: #fff0f0 !important;
     border: 1px dashed #ffaaaa !important;
     color: #cc0000 !important;
 }
 
 /* ── 이모트 피커 ── */
-body[data-theme='vintage'] #emote-picker {
+body[data-theme='kitty'] #emote-picker {
     background: #ffffff !important;
     border: 2px solid #ffaaaa !important;
     box-shadow: 0 -4px 20px rgba(204,0,0,0.1) !important;
 }
-body[data-theme='vintage'] .emote-btn:hover {
+body[data-theme='kitty'] .emote-btn:hover {
     background: rgba(204,0,0,0.08) !important;
 }
 
 /* ── 선택 박스 ── */
-body[data-theme='vintage'] #selection-box {
+body[data-theme='kitty'] #selection-box {
     border: 1.5px solid rgba(204,0,0,0.6) !important;
     background: rgba(204,0,0,0.08) !important;
 }
 
 /* ── 테마 버튼 active ── */
-body[data-theme='vintage'] .theme-btn.active {
+body[data-theme='kitty'] .theme-btn.active {
     border-color: #cc0000 !important;
     box-shadow: 0 0 8px #cc0000 !important;
 }
@@ -1033,7 +1033,7 @@ body[data-theme='vintage'] .theme-btn.active {
                 <button class="theme-btn dark"    onclick="window.setTheme('dark')"    title="다크">⚫</button>
                 <button class="theme-btn pink"    onclick="window.setTheme('pink')"    title="키티">🎀</button>
                 <button class="theme-btn vintage" onclick="window.setTheme('vintage')" title="빈티지 키티">🪞</button>
-                <button class="theme-btn vintage" onclick="window.setTheme('kitty')" title="고전 키티">❤</button>
+                <button class="theme-btn kitty" onclick="window.setTheme('kitty')" title="고전 키티">❤</button>
             </div>
 
             <span id="reg-score-badge"></span>
