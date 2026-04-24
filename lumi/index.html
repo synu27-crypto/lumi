@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.4</title>
+    <title>루미큐브 : Ver. 60.5</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -389,61 +389,209 @@ body[data-theme='pink'] button {
     border: 1px solid #f06292 !important;
 }
 
-/* 🎀 핑크 테마 전용 채팅창 스타일링 */
+/* 🎀 핑크 키티 테마 — 전면 리뉴얼 */
 
-/* 1. 채팅 로그와 게임 로그가 담긴 전체 박스 */
+/* ── 1. CSS 변수 & 전체 배경 ── */
+body[data-theme='pink'] {
+    --bg-color:    #fff0f7 !important;
+    --panel-bg:    #ffd6e8 !important;
+    --board-bg:    #ffe8f3 !important;
+    --rack-bg:     #ffb6d4 !important;
+    --modal-bg:    #fff0f7 !important;
+    --main-text:   #b5005b !important;
+    --turn-blue:   #ff69b4 !important;
+    --accent-gold: #ff85a1 !important;
+    --accent-green:#ff4da6 !important;
+    --btn-bg:      rgba(255,182,210,0.4) !important;
+    
+    /* 배경에 하트 패턴 추가 */
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(255,182,210,0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255,105,180,0.2) 0%, transparent 50%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🎀</text></svg>") 12 12, auto !important;
+}
+
+/* ── 2. 보드판 — 하트 도트 패턴 ── */
+body[data-theme='pink'] #game-board {
+    background-color: #ffe8f3 !important;
+    background-image: 
+        radial-gradient(circle, rgba(255,105,180,0.25) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(255,182,210,0.15) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+/* ── 3. 상단 UI 바 — 줄무늬 리본 느낌 ── */
+body[data-theme='pink'] #ui-layer {
+    background: linear-gradient(135deg, #ffd6e8 0%, #ffb6d4 50%, #ffd6e8 100%) !important;
+    border-bottom: 3px solid #ff85a1 !important;
+    box-shadow: 0 4px 15px rgba(255,105,180,0.3) !important;
+}
+
+/* ── 4. 하단 랙 — 핑크 그라데이션 ── */
+body[data-theme='pink'] #my-rack {
+    background: linear-gradient(180deg, #ffb6d4 0%, #ff85a1 100%) !important;
+    border-top: 3px solid #ff69b4 !important;
+    box-shadow: 0 -4px 15px rgba(255,105,180,0.3) !important;
+}
+
+/* ── 5. 타일 — 뽀얀 핑크, 둥글둥글 ── */
+body[data-theme='pink'] .tile,
+body[data-theme='pink'] #main-container .tile,
+body[data-theme='pink'] #game-board .tile,
+body[data-theme='pink'] #my-rack .tile {
+    background: linear-gradient(145deg, #fff5f8, #ffe4ef) !important;
+    box-shadow: 
+        0 4px 0 #e8789a,
+        0 6px 15px rgba(255,105,180,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+    border: 1.5px solid #ffb6d4 !important;
+    border-radius: 10px !important;
+}
+body[data-theme='pink'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 
+        0 7px 0 #e8789a,
+        0 10px 20px rgba(255,105,180,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body[data-theme='pink'] .tile.joker {
+    color: #ff3385 !important;
+    background: linear-gradient(145deg, #fff0f7, #ffd6e8) !important;
+}
+
+/* ── 6. 버튼 — 둥글고 귀엽게 ── */
+body[data-theme='pink'] button {
+    background: linear-gradient(135deg, #fff0f7, #ffd6e8) !important;
+    color: #b5005b !important;
+    border: 1.5px solid #ff85a1 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 0 #e8789a, 0 4px 10px rgba(255,105,180,0.2) !important;
+    font-weight: 800 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='pink'] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #e8789a, 0 6px 15px rgba(255,105,180,0.3) !important;
+}
+body[data-theme='pink'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #e8789a !important;
+}
+
+/* ── 7. 플레이어 뱃지 ── */
+body[data-theme='pink'] .player-badge {
+    background: rgba(255,182,210,0.5) !important;
+    border: 1.5px solid #ff85a1 !important;
+    color: #b5005b !important;
+    border-radius: 20px !important;
+}
+body[data-theme='pink'] .active-turn-badge {
+    background: linear-gradient(135deg, #ff69b4, #ff85a1) !important;
+    border-color: #ff3385 !important;
+    color: white !important;
+    box-shadow: 0 0 12px rgba(255,105,180,0.6) !important;
+    animation: kitty-glow 1.5s ease-in-out infinite !important;
+}
+@keyframes kitty-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(255,105,180,0.5); }
+    50%       { box-shadow: 0 0 20px rgba(255,105,180,0.9); }
+}
+body[data-theme='pink'] .tile-count {
+    background: #ff3385 !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+/* ── 8. 채팅창 ── */
 body[data-theme='pink'] #chat-log-container {
-    background: rgba(255, 245, 248, 0.98) !important; /* 아주 연한 핑크 배경 */
-    border: 1px solid #f06292 !important; /* 진분홍 테두리 */
-    box-shadow: 0 8px 32px rgba(163, 42, 88, 0.2) !important;
+    background: rgba(255,240,247,0.97) !important;
+    border: 1.5px solid #ff85a1 !important;
+    box-shadow: 0 8px 32px rgba(255,105,180,0.25) !important;
 }
-
-/* 2. 개별 로그 영역 구분선 */
 body[data-theme='pink'] #game-log {
-    border-right: 1px solid rgba(240, 98, 146, 0.2) !important;
+    border-right: 1.5px solid rgba(255,133,161,0.3) !important;
 }
-
-/* 3. 하단 채팅 입력 칸 박스 */
 body[data-theme='pink'] #chat-input-container {
-    background: #ffdae9 !important; /* 연분홍 배경 */
-    border: 1px solid #f06292 !important;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #ffd6e8, #ffb6d4) !important;
+    border: 1.5px solid #ff85a1 !important;
 }
-
-/* 4. 실제 글자가 써지는 입력창 내부 */
 body[data-theme='pink'] #chat-input {
-    color: #a32a58 !important; /* 진한 자주색 글씨 */
+    color: #b5005b !important;
 }
-
-/* 5. 입력창 내의 placeholder(안내문구) 색상 */
 body[data-theme='pink'] #chat-input::placeholder {
-    color: rgba(163, 42, 88, 0.5) !important;
+    color: rgba(181,0,91,0.45) !important;
 }
 
-/* 🎀 핑크 테마 전용 힌트 (형광 민트색으로 시인성 극대화) */
+/* ── 9. 풀 뱃지 ── */
+body[data-theme='pink'] #pool-badge {
+    background: linear-gradient(135deg, #ff69b4, #ff3385) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 10px rgba(255,51,133,0.4) !important;
+}
+
+/* ── 10. 힌트 글로우 — 형광 민트 유지 (시인성) ── */
 @keyframes hint-glow-pink {
-    0%   { box-shadow: 0 0 5px #00e5ff; transform: scale(1); }
-    50%  { box-shadow: 0 0 25px 8px #00e5ff; transform: scale(1.1); }
-    100% { box-shadow: 0 0 5px #00e5ff; transform: scale(1); }
+    0%, 100% { box-shadow: 0 0 5px #00e5ff; transform: scale(1); }
+    50%       { box-shadow: 0 0 25px 8px #00e5ff; transform: scale(1.1); }
 }
-
 body[data-theme='pink'] .hint-target {
-    animation: hint-glow-pink 0.8s infinite !important; /* 속도 살짝 빠르게 */
-    border: 3px solid #00e5ff !important; /* 테두리 굵게 */
+    animation: hint-glow-pink 0.8s infinite !important;
+    border: 3px solid #00e5ff !important;
     z-index: 1000 !important;
 }
 
-/* === 타일 소량 보유자 강조 효과 === */
-.danger-player {
-    background: rgba(231, 76, 60, 0.3) !important;
-    border: 2px solid #e74c3c !important;
-    animation: danger-pulse 0.8s infinite;
+/* ── 11. 위험 플레이어 — 핑크 테마용 ── */
+body[data-theme='pink'] .danger-player {
+    background: rgba(255,51,133,0.3) !important;
+    border: 2px solid #ff3385 !important;
+    animation: danger-pulse-pink 0.8s infinite !important;
+}
+@keyframes danger-pulse-pink {
+    0%, 100% { box-shadow: 0 0 5px #ff3385; transform: scale(1); }
+    50%       { box-shadow: 0 0 20px #ff3385; transform: scale(1.05); }
 }
 
-@keyframes danger-pulse {
-    0% { transform: scale(1); box-shadow: 0 0 5px #e74c3c; }
-    50% { transform: scale(1.05); box-shadow: 0 0 20px #e74c3c; }
-    100% { transform: scale(1); box-shadow: 0 0 5px #e74c3c; }
+/* ── 12. 모달 카드 ── */
+body[data-theme='pink'] .modal-card {
+    background: linear-gradient(145deg, #fff0f7, #ffd6e8) !important;
+    border: 2px solid #ff85a1 !important;
+    box-shadow: 0 10px 40px rgba(255,105,180,0.3) !important;
+}
+
+/* ── 13. 로비 플레이어 태그 ── */
+body[data-theme='pink'] .lobby-player-tag {
+    background: linear-gradient(135deg, #ff69b4, #ff3385) !important;
+    box-shadow: 0 3px 10px rgba(255,51,133,0.3) !important;
+}
+body[data-theme='pink'] .lobby-player-tag.spec-tag {
+    background: rgba(255,182,210,0.3) !important;
+    border: 1px dashed #ff85a1 !important;
+    color: #b5005b !important;
+}
+
+/* ── 14. 이모트 피커 ── */
+body[data-theme='pink'] #emote-picker {
+    background: linear-gradient(145deg, #fff0f7, #ffd6e8) !important;
+    border: 1.5px solid #ff85a1 !important;
+    box-shadow: 0 -4px 20px rgba(255,105,180,0.3) !important;
+}
+body[data-theme='pink'] .emote-btn:hover {
+    background: rgba(255,105,180,0.2) !important;
+}
+
+/* ── 15. 선택 박스 ── */
+body[data-theme='pink'] #selection-box {
+    border: 1.5px solid rgba(255,51,133,0.8) !important;
+    background: rgba(255,105,180,0.15) !important;
+}
+
+/* ── 16. 테마 버튼 active 상태 ── */
+body[data-theme='pink'] .theme-btn.active {
+    border-color: #ff3385 !important;
+    box-shadow: 0 0 8px #ff3385 !important;
 }
 
     </style>
@@ -1470,7 +1618,7 @@ div.ondragstart = (e) => {
         { e: '👀', t: '빤히...빤히...' },
         { e: '😭', t: '아 진짜 왜 이래' },
         { e: '😘', t: '고마워~' },
-        { e: '⏳', t: '날 새겠네' },
+        { e: '😨', t: '안 돼 안 돼 안 돼' },
         { e: '💀', t: '실화임?' },
         { e: '😱', t: '등록하지마' }
     ] ; // <--- 반드시 대괄호와 세미콜론으로 닫아주어야 합니다.
