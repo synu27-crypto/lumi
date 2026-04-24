@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>루미큐브 : Ver. 70</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>루미큐브 : Ver. 60.9</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1603,112 +1603,6 @@ body[data-theme='dark'] .theme-btn.active {
     animation: screen-shake 0.6s ease-in-out;
 }
 
-/* ===== 모바일 전용 CSS ===== */
-@media (max-width: 768px) {
-
-    /* 상단 UI 바 — 두 줄로 */
-    #ui-layer {
-        height: auto !important;
-        min-height: 50px;
-        flex-wrap: wrap;
-        padding: 6px 10px !important;
-        gap: 5px;
-    }
-
-    /* 플레이어 뱃지 — 작게 */
-    .player-badge {
-        font-size: 0.65rem !important;
-        padding: 3px 8px !important;
-    }
-    .tile-count { font-size: 0.65rem !important; }
-
-    /* 상단 우측 버튼들 — 스크롤 가능하게 */
-    #ui-layer > div:last-child {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto !important;
-        gap: 5px !important;
-        padding-bottom: 4px;
-        width: 100%;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* 버튼 — 작게 */
-    button {
-        padding: 6px 10px !important;
-        font-size: 0.75rem !important;
-        white-space: nowrap;
-    }
-
-    /* 테마 버튼 */
-    .theme-btn {
-        width: 22px !important;
-        height: 22px !important;
-        font-size: 0.75rem !important;
-    }
-
-    /* 하단 랙 — 높이 줄이기 */
-    #my-rack {
-        height: 110px !important;
-    }
-
-    /* 타일 — 살짝 작게 */
-    .tile {
-        width: 38px !important;
-        height: 54px !important;
-        font-size: 1.1rem !important;
-    }
-
-    /* 채팅 래퍼 위치 조정 */
-    #chat-wrapper {
-        bottom: 170px !important;
-        right: 8px !important;
-        width: calc(100vw - 16px) !important;
-    }
-
-    #chat-log-container {
-        height: 200px !important;
-    }
-
-    /* 로그/채팅 버튼 */
-    #ui-layer + div + div + button {
-        bottom: 125px !important;
-        right: 8px !important;
-        padding: 8px 14px !important;
-        font-size: 0.8rem !important;
-    }
-
-    /* 모달 카드 */
-    .modal-card {
-        min-width: unset !important;
-        width: 90vw !important;
-        padding: 24px 16px !important;
-    }
-
-    /* 이모트 피커 */
-    #emote-picker {
-        width: 240px !important;
-    }
-
-    /* 랙 컨트롤 버튼 */
-    #rack-controls {
-        top: 3px !important;
-        right: 5px !important;
-        gap: 4px !important;
-    }
-    #rack-controls button {
-        padding: 4px 7px !important;
-        font-size: 0.65rem !important;
-    }
-
-#btn-chat-toggle {
-    bottom: 125px !important;
-    right: 8px !important;
-    padding: 8px 14px !important;
-    font-size: 0.8rem !important;
-}
-}
-
     </style>
 </head>
 
@@ -1767,7 +1661,7 @@ body[data-theme='dark'] .theme-btn.active {
         </div>
     </div>
 
-    <button id="btn-chat-toggle" onclick="window.toggleChat()" style="position:fixed; bottom:220px; right:20px; z-index:20001; background:var(--accent-purple); color:white; border-radius:20px; padding:10px 20px; font-weight:bold; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3);">📜 로그/채팅</button>
+    <button onclick="window.toggleChat()" style="position:fixed; bottom:220px; right:20px; z-index:20001; background:var(--accent-purple); color:white; border-radius:20px; padding:10px 20px; font-weight:bold; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3);">📜 로그/채팅</button>
 
     <div id="my-rack" ondragover="event.preventDefault()" ondrop="window.dropOnRack(event)">
         <div id="rack-controls">
@@ -2816,172 +2710,6 @@ div.ondragstart = (e) => {
     badge.appendChild(bubble);
     setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
 };
-
-// ===== 모바일 터치 드래그앤드롭 =====
-
-let touchDragData = null;     // 현재 드래그 중인 타일 정보
-let touchGhost = null;        // 드래그 중 따라다니는 유령 타일
-
-function createTouchGhost(tileEl) {
-    const ghost = tileEl.cloneNode(true);
-    ghost.id = 'touch-ghost';
-    ghost.style.cssText = `
-        position: fixed;
-        pointer-events: none;
-        z-index: 99999;
-        opacity: 0.85;
-        transform: scale(1.1);
-        transition: none;
-        width: ${tileEl.offsetWidth}px;
-        height: ${tileEl.offsetHeight}px;
-    `;
-    document.body.appendChild(ghost);
-    return ghost;
-}
-
-function removeTouchGhost() {
-    if (touchGhost) { touchGhost.remove(); touchGhost = null; }
-}
-
-function getTouchTarget(x, y) {
-    // 유령 타일 숨기고 좌표 아래 요소 확인
-    if (touchGhost) touchGhost.style.display = 'none';
-    const el = document.elementFromPoint(x, y);
-    if (touchGhost) touchGhost.style.display = '';
-    return el;
-}
-
-document.addEventListener('touchstart', function(e) {
-    const tileEl = e.target.closest('.tile');
-    if (!tileEl) return;
-    if (myRole !== 'player' || currentTurn !== myName) return;
-
-    e.preventDefault();
-    const touch = e.touches[0];
-
-    // 랙 타일인지 보드 타일인지 판별
-    const isRack = tileEl.id.startsWith('rack-');
-    const rawId = isRack ? tileEl.id.replace('rack-', '') : tileEl.id;
-
-    let group = [rawId];
-    if (selectedTiles.length > 0) {
-        const selectedRaw = selectedTiles.map(id => id.startsWith('rack-') ? id.replace('rack-', '') : id);
-        if (selectedRaw.includes(rawId)) group = selectedRaw;
-    }
-
-    touchDragData = {
-        primary: rawId,
-        group,
-        source: isRack ? 'rack' : 'board'
-    };
-
-    touchGhost = createTouchGhost(tileEl);
-    touchGhost.style.left = (touch.clientX - tileEl.offsetWidth / 2) + 'px';
-    touchGhost.style.top  = (touch.clientY - tileEl.offsetHeight / 2) + 'px';
-
-    playSFX('tilePick');
-}, { passive: false });
-
-document.addEventListener('touchmove', function(e) {
-    if (!touchDragData) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-
-    if (touchGhost) {
-        touchGhost.style.left = (touch.clientX - 22) + 'px';
-        touchGhost.style.top  = (touch.clientY - 32) + 'px';
-    }
-}, { passive: false });
-
-document.addEventListener('touchend', function(e) {
-    if (!touchDragData) return;
-    e.preventDefault();
-
-    const touch = e.changedTouches[0];
-    const target = getTouchTarget(touch.clientX, touch.clientY);
-    removeTouchGhost();
-
-    const boardEl = document.getElementById('game-board');
-    const rackEl  = document.getElementById('my-rack');
-
-    const onBoard = boardEl && boardEl.contains(target);
-    const onRack  = rackEl  && rackEl.contains(target);
-
-    if (onBoard) {
-        // 보드에 드롭 — dropOnBoard 흉내내기
-        const boardRect = boardEl.getBoundingClientRect();
-        let dropX = touch.clientX - boardRect.left - 22;
-        let dropY = touch.clientY - boardRect.top  - 32;
-
-        const SNAP_DIST = 40, TILE_W = 48, TILE_H = 68;
-        let snapped = false;
-
-        Object.entries(boardTiles).forEach(([tid, t]) => {
-            if (touchDragData.group.includes(tid) || snapped) return;
-            const dx = dropX - t.x, dy = dropY - t.y;
-            if (Math.abs(dy) < SNAP_DIST) {
-                if (dx > 0 && dx < SNAP_DIST * 2)  { dropX = t.x + TILE_W; dropY = t.y; snapped = true; }
-                else if (dx < 0 && dx > -SNAP_DIST * 2) { dropX = t.x - TILE_W; dropY = t.y; snapped = true; }
-            }
-            if (!snapped && Math.abs(dx) < SNAP_DIST) {
-                if (dy > 0 && dy < SNAP_DIST * 2)  { dropY = t.y + TILE_H; dropX = t.x; snapped = true; }
-                else if (dy < 0 && dy > -SNAP_DIST * 2) { dropY = t.y - TILE_H; dropX = t.x; snapped = true; }
-            }
-        });
-
-        const updates = {};
-        let primaryTileData = boardTiles[touchDragData.primary];
-        let deltaX = primaryTileData ? (dropX - primaryTileData.x) : 0;
-        let deltaY = primaryTileData ? (dropY - primaryTileData.y) : 0;
-
-        let isOverlapping = false;
-        Object.entries(boardTiles).forEach(([tid, t]) => {
-            if (touchDragData.group.includes(tid)) return;
-            if (Math.abs(t.y - dropY) < 10 && Math.abs(t.x - dropX) < 10) isOverlapping = true;
-        });
-        if (isOverlapping) {
-            const pushDist = TILE_W * touchDragData.group.length;
-            Object.entries(boardTiles).forEach(([tid, t]) => {
-                if (touchDragData.group.includes(tid)) return;
-                if (Math.abs(t.y - dropY) < 10 && t.x >= dropX - 5)
-                    updates[`board/${tid}/x`] = t.x + pushDist;
-            });
-        }
-
-        db.ref(`hands/${myName}`).once('value', s => {
-            const handData = s.val() || {};
-            touchDragData.group.forEach((id, idx) => {
-                const fromRack = touchDragData.source === 'rack' || !!handData[id];
-                let targetX = fromRack ? dropX + (idx * 48) : boardTiles[id]?.x + deltaX;
-                let targetY = fromRack ? dropY : boardTiles[id]?.y + deltaY;
-                if (fromRack && handData[id]) {
-                    updates[`board/${id}`] = { ...handData[id], x: targetX, y: targetY };
-                    updates[`hands/${myName}/${id}`] = null;
-                } else if (boardTiles[id]) {
-                    updates[`board/${id}/x`] = targetX;
-                    updates[`board/${id}/y`] = targetY;
-                }
-            });
-            db.ref('/').update(updates).then(() => playSFX('tileDrop'));
-            document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
-            selectedTiles = [];
-        });
-
-    } else if (onRack && touchDragData.source === 'board') {
-        // 랙으로 회수
-        const fakeEvent = {
-            preventDefault: () => {},
-            dataTransfer: {
-                getData: (key) => key === 'text/plain'
-                    ? JSON.stringify({ primary: touchDragData.primary, group: touchDragData.group })
-                    : ''
-            }
-        };
-        window.dropOnRack(fakeEvent);
-    }
-
-    touchDragData = null;
-}, { passive: false });
 </script>
 </body>
 </html>
