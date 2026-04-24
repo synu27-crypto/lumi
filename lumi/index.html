@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.75</title>
+    <title>루미큐브 : Ver. 60.8</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1871,6 +1871,17 @@ document.getElementById('entry-layer').style.display = 'none';
         listEl.appendChild(badge);
     });
 
+Object.entries(window.latestPlayersData).forEach(([name, data]) => {
+        if (!data.joined || data.role !== 'spectator') return;
+        const badge = document.createElement('span');
+        badge.id = `badge-${name}`;
+        badge.className = 'player-badge';
+        badge.style.opacity = '0.6';
+        badge.style.fontStyle = 'italic';
+        badge.innerHTML = `👀 ${name}`;
+        listEl.appendChild(badge);
+    });
+
     const isHost = (myName === currentHost);
     document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
     document.getElementById('btn-force-next').style.display  = isHost ? 'inline-block' : 'none';
@@ -2644,16 +2655,29 @@ div.ondragstart = (e) => {
     };
 
     window.showBubble = function(playerName, emote) {
-        const badge = document.getElementById(`badge-${playerName}`);
-        if (!badge) return;
-        const existing = badge.querySelector('.emoji-bubble');
-        if (existing) existing.remove();
-        const bubble = document.createElement('div');
-        bubble.className = 'emoji-bubble';
-        bubble.innerText = emote;
-        badge.appendChild(bubble);
-        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
-    };
+    let badge = document.getElementById(`badge-${playerName}`);
+    
+    // 뱃지가 없으면 임시로 생성
+    if (!badge) {
+        const listEl = document.getElementById('player-list-container');
+        if (!listEl) return;
+        badge = document.createElement('span');
+        badge.id = `badge-${playerName}`;
+        badge.className = 'player-badge';
+        badge.style.opacity = '0.6';
+        badge.style.fontStyle = 'italic';
+        badge.innerHTML = `👀 ${playerName}`;
+        listEl.appendChild(badge);
+    }
+
+    const existing = badge.querySelector('.emoji-bubble');
+    if (existing) existing.remove();
+    const bubble = document.createElement('div');
+    bubble.className = 'emoji-bubble';
+    bubble.innerText = emote;
+    badge.appendChild(bubble);
+    setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
+};
 </script>
 </body>
 </html>
