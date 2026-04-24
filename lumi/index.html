@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.95</title>
+    <title>루미큐브 : Ver. 61</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2102,7 +2102,12 @@ Object.entries(window.latestPlayersData).forEach(([name, data]) => {
     const container = document.getElementById('main-container');
     container.classList.add('screen-shaking');
     setTimeout(() => container.classList.remove('screen-shaking'), 600);
-});
+});db.ref('emotes').limitToLast(10).on('child_added', snap => {
+            const data = snap.val();
+            if (Date.now() - data.time > 10000) return;
+            window.showBubble(data.name, data.emote);
+        });
+
     }
 
     initDB();
