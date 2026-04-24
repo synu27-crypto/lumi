@@ -805,6 +805,213 @@ body[data-theme='vintage'] .theme-btn.active {
     box-shadow: 0 0 8px #c08060 !important;
 }
 
+/* 🐱 고전 키티 테마 (Hello Kitty Classic) */
+
+body[data-theme='vintage'] {
+    --bg-color:    #ffffff !important;
+    --panel-bg:    #fff0f0 !important;
+    --board-bg:    #fff5f5 !important;
+    --rack-bg:     #ffe0e0 !important;
+    --modal-bg:    #ffffff !important;
+    --main-text:   #cc0000 !important;
+    --turn-blue:   #cc0000 !important;
+    --accent-gold: #cc0000 !important;
+    --accent-green:#cc0000 !important;
+    --btn-bg:      rgba(255,220,220,0.5) !important;
+
+    background-image:
+        /* 작은 리본 패턴 느낌의 반복 도트 */
+        radial-gradient(circle at 25% 25%, rgba(204,0,0,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(204,0,0,0.04) 0%, transparent 50%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🎀</text></svg>") 12 12, auto !important;
+}
+
+/* ── 보드판 — 흰 바탕에 빨간 격자 느낌 ── */
+body[data-theme='vintage'] #game-board {
+    background-color: #fff5f5 !important;
+    background-image:
+        radial-gradient(circle, rgba(204,0,0,0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(204,0,0,0.07) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+/* ── 상단 UI 바 — 흰 바탕에 얇은 빨간 라인 ── */
+body[data-theme='vintage'] #ui-layer {
+    background: #ffffff !important;
+    border-bottom: 3px solid #cc0000 !important;
+    box-shadow: 0 3px 0 #ff9999, 0 4px 15px rgba(204,0,0,0.1) !important;
+}
+
+/* ── 하단 랙 — 연한 빨강 ── */
+body[data-theme='vintage'] #my-rack {
+    background: linear-gradient(180deg, #ffe0e0 0%, #ffcccc 100%) !important;
+    border-top: 3px solid #cc0000 !important;
+    box-shadow: 0 -3px 0 #ff9999, 0 -4px 15px rgba(204,0,0,0.1) !important;
+}
+
+/* ── 타일 — 깨끗한 흰색, 빨간 포인트 ── */
+body[data-theme='vintage'] .tile,
+body[data-theme='vintage'] #main-container .tile,
+body[data-theme='vintage'] #game-board .tile,
+body[data-theme='vintage'] #my-rack .tile {
+    background: linear-gradient(145deg, #ffffff, #fff0f0) !important;
+    box-shadow:
+        0 4px 0 #cc0000,
+        0 6px 15px rgba(204,0,0,0.2),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+    border: 1.5px solid #ffaaaa !important;
+    border-radius: 8px !important;
+    filter: none !important;
+}
+body[data-theme='vintage'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow:
+        0 7px 0 #cc0000,
+        0 10px 20px rgba(204,0,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+}
+body[data-theme='vintage'] .tile.joker {
+    color: #cc0000 !important;
+    background: linear-gradient(145deg, #fff0f0, #ffe0e0) !important;
+}
+
+/* ── 버튼 — 흰 바탕, 빨간 테두리 ── */
+body[data-theme='vintage'] button {
+    background: #ffffff !important;
+    color: #cc0000 !important;
+    border: 2px solid #cc0000 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 0 #aa0000, 0 4px 10px rgba(204,0,0,0.15) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.03em !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='vintage'] button:hover {
+    background: #fff0f0 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #aa0000, 0 6px 15px rgba(204,0,0,0.25) !important;
+}
+body[data-theme='vintage'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #aa0000 !important;
+}
+
+/* ── 플레이어 뱃지 ── */
+body[data-theme='vintage'] .player-badge {
+    background: #ffffff !important;
+    border: 2px solid #ffaaaa !important;
+    color: #cc0000 !important;
+    border-radius: 20px !important;
+}
+body[data-theme='vintage'] .active-turn-badge {
+    background: #cc0000 !important;
+    border-color: #aa0000 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(204,0,0,0.5) !important;
+    animation: kitty-classic-glow 1.5s ease-in-out infinite !important;
+}
+@keyframes kitty-classic-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba(204,0,0,0.4); }
+    50%       { box-shadow: 0 0 20px rgba(204,0,0,0.8); }
+}
+body[data-theme='vintage'] .tile-count {
+    background: #cc0000 !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+}
+
+/* ── 채팅창 ── */
+body[data-theme='vintage'] #chat-log-container {
+    background: rgba(255,255,255,0.98) !important;
+    border: 2px solid #ffaaaa !important;
+    box-shadow: 0 8px 32px rgba(204,0,0,0.1) !important;
+}
+body[data-theme='vintage'] #game-log {
+    border-right: 1.5px solid rgba(204,0,0,0.15) !important;
+}
+body[data-theme='vintage'] #chat-input-container {
+    background: #fff0f0 !important;
+    border: 2px solid #ffaaaa !important;
+}
+body[data-theme='vintage'] #chat-input { color: #cc0000 !important; }
+body[data-theme='vintage'] #chat-input::placeholder {
+    color: rgba(204,0,0,0.35) !important;
+}
+
+/* ── 풀 뱃지 ── */
+body[data-theme='vintage'] #pool-badge {
+    background: #cc0000 !important;
+    border: none !important;
+    border-radius: 20px !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(204,0,0,0.3) !important;
+}
+
+/* ── 힌트 글로우 ── */
+@keyframes hint-glow-vintage {
+    0%, 100% { box-shadow: 0 0 5px #cc0000; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #cc0000; transform: scale(1.08); }
+}
+body[data-theme='vintage'] .hint-target {
+    animation: hint-glow-vintage 0.9s infinite !important;
+    border: 3px solid #cc0000 !important;
+    z-index: 1000 !important;
+}
+
+/* ── 위험 플레이어 ── */
+body[data-theme='vintage'] .danger-player {
+    background: rgba(204,0,0,0.2) !important;
+    border: 2px solid #cc0000 !important;
+    animation: danger-pulse-vintage 0.8s infinite !important;
+}
+@keyframes danger-pulse-vintage {
+    0%, 100% { box-shadow: 0 0 5px #cc0000; transform: scale(1); }
+    50%       { box-shadow: 0 0 18px #cc0000; transform: scale(1.05); }
+}
+
+/* ── 모달 카드 ── */
+body[data-theme='vintage'] .modal-card {
+    background: #ffffff !important;
+    border: 2px solid #ffaaaa !important;
+    box-shadow: 0 10px 40px rgba(204,0,0,0.15) !important;
+}
+
+/* ── 로비 태그 ── */
+body[data-theme='vintage'] .lobby-player-tag {
+    background: #cc0000 !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(204,0,0,0.25) !important;
+}
+body[data-theme='vintage'] .lobby-player-tag.spec-tag {
+    background: #fff0f0 !important;
+    border: 1px dashed #ffaaaa !important;
+    color: #cc0000 !important;
+}
+
+/* ── 이모트 피커 ── */
+body[data-theme='vintage'] #emote-picker {
+    background: #ffffff !important;
+    border: 2px solid #ffaaaa !important;
+    box-shadow: 0 -4px 20px rgba(204,0,0,0.1) !important;
+}
+body[data-theme='vintage'] .emote-btn:hover {
+    background: rgba(204,0,0,0.08) !important;
+}
+
+/* ── 선택 박스 ── */
+body[data-theme='vintage'] #selection-box {
+    border: 1.5px solid rgba(204,0,0,0.6) !important;
+    background: rgba(204,0,0,0.08) !important;
+}
+
+/* ── 테마 버튼 active ── */
+body[data-theme='vintage'] .theme-btn.active {
+    border-color: #cc0000 !important;
+    box-shadow: 0 0 8px #cc0000 !important;
+}
+
     </style>
 </head>
 
@@ -826,6 +1033,7 @@ body[data-theme='vintage'] .theme-btn.active {
                 <button class="theme-btn dark"    onclick="window.setTheme('dark')"    title="다크">⚫</button>
                 <button class="theme-btn pink"    onclick="window.setTheme('pink')"    title="키티">🎀</button>
                 <button class="theme-btn vintage" onclick="window.setTheme('vintage')" title="빈티지 키티">🪞</button>
+                <button class="theme-btn vintage" onclick="window.setTheme('kitty')" title="고전 키티">❤</button>
             </div>
 
             <span id="reg-score-badge"></span>
