@@ -1677,33 +1677,41 @@ body[data-theme='navy'] #my-rack {
     border-top: 1px solid rgba(107,147,201,0.15) !important;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
 }
-/* 타일 — 깨끗하고 선명한 하얀색 배경으로 변경 */
+/* 💎 딥 네이비 테마 타일 - 고급스러운 세라믹 질감 */
 body[data-theme='navy'] .tile,
 body[data-theme='navy'] #main-container .tile,
 body[data-theme='navy'] #game-board .tile,
 body[data-theme='navy'] #my-rack .tile {
-    background: #ffffff !important; /* 완전 하얀색 */
-    box-shadow: 0 4px 0 #080c14, 0 6px 18px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,1) !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
+    /* 단순 흰색이 아닌, 빛을 받는 듯한 은은한 펄/세라믹 그라데이션 */
+    background: linear-gradient(145deg, #ffffff, #f4f7fa) !important;
+    /* 입체감(두께)을 투박한 검은색 대신 고급스러운 스틸 블루 색상으로 변경 */
+    box-shadow: 
+        0 4px 0 #748aa1, 
+        0 6px 15px rgba(0, 0, 0, 0.5), 
+        inset 0 2px 4px rgba(255, 255, 255, 1) !important;
+    border: 1px solid #c2d1e0 !important;
     border-radius: 8px !important;
 }
 
 body[data-theme='navy'] .tile:hover {
     transform: translateY(-4px) scale(1.05) !important;
-    box-shadow: 0 8px 0 #080c14, 0 12px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,1) !important;
+    box-shadow: 
+        0 8px 0 #748aa1, 
+        0 12px 25px rgba(0, 0, 0, 0.6), 
+        inset 0 2px 4px rgba(255, 255, 255, 1) !important;
 }
 
 body[data-theme='navy'] .tile.joker {
-    background: #ffffff !important; /* 조커도 하얀색 바탕 유지 */
-    color: #8e44ad !important; /* 선명한 보라색 */
-    border-color: rgba(142, 68, 173, 0.4) !important;
+    background: linear-gradient(145deg, #ffffff, #f4f7fa) !important;
+    color: #9b59b6 !important; /* 세련된 톤다운 퍼플 */
+    border-color: #d2b4de !important;
 }
 
-/* 딥 네이비 테마 안의 숫자 색상 강조 (하얀 바탕에 맞게 번짐 제거 및 진한 색상 적용) */
-body[data-theme='navy'] .tile.red    { color: #e74c3c !important; text-shadow: none !important; }
-body[data-theme='navy'] .tile.blue   { color: #2980b9 !important; text-shadow: none !important; }
-body[data-theme='navy'] .tile.yellow { color: #f39c12 !important; text-shadow: none !important; } /* 노란색은 잘 보이게 머스타드/주황 계열로 */
-body[data-theme='navy'] .tile.black  { color: #222222 !important; text-shadow: none !important; }
+/* 가독성 100% 보장: 세련되고 선명한 루미큐브 원색 (번짐 없음) */
+body[data-theme='navy'] .tile.red    { color: #ff4757 !important; text-shadow: none !important; }
+body[data-theme='navy'] .tile.blue   { color: #1e90ff !important; text-shadow: none !important; }
+body[data-theme='navy'] .tile.yellow { color: #ff9f43 !important; text-shadow: none !important; } /* 진한 귤색/주황 톤으로 하얀 바탕에서 완벽히 보임 */
+body[data-theme='navy'] .tile.black  { color: #2f3542 !important; text-shadow: none !important; }
 
 body[data-theme='navy'] button {
     background: rgba(107,147,201,0.08) !important;
@@ -2983,14 +2991,13 @@ div.ondragstart = (e) => {
         audioCtx.isBGMPlaying = false;
         btn.classList.remove('playing');
         icon.innerText = '🔇';
-        window.addGameLog("🎵 배경음악을 껐습니다.");
     } else {
         // 재생 처리
         audioCtx.bgm.play().then(() => {
             audioCtx.isBGMPlaying = true;
             btn.classList.add('playing');
             icon.innerText = '🔊';
-            window.addGameLog("🎵 배경음악을 켰습니다.");
+            // window.addGameLog("🎵 배경음악을 켰습니다."); <-- 이 줄을 삭제했습니다.
         }).catch(err => {
             console.error("BGM 재생 실패:", err);
             alert("브라우저 설정에 의해 차단되었습니다. 화면을 한 번 클릭 후 다시 눌러주세요!");
