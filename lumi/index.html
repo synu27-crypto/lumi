@@ -1677,25 +1677,34 @@ body[data-theme='navy'] #my-rack {
     border-top: 1px solid rgba(107,147,201,0.15) !important;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
 }
+/* 타일 — 깨끗하고 선명한 하얀색 배경으로 변경 */
 body[data-theme='navy'] .tile,
 body[data-theme='navy'] #main-container .tile,
 body[data-theme='navy'] #game-board .tile,
 body[data-theme='navy'] #my-rack .tile {
-    background: linear-gradient(150deg, #e8eaf8, #cdd0e8) !important;
-    box-shadow: 0 4px 0 #080c14, 0 6px 18px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.9) !important;
-    border: 1px solid rgba(255,255,255,0.3) !important;
+    background: #ffffff !important; /* 완전 하얀색 */
+    box-shadow: 0 4px 0 #080c14, 0 6px 18px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,1) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
     border-radius: 8px !important;
-    color: #1a1e36 !important;
 }
+
 body[data-theme='navy'] .tile:hover {
     transform: translateY(-4px) scale(1.05) !important;
-    box-shadow: 0 8px 0 #080c14, 0 12px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+    box-shadow: 0 8px 0 #080c14, 0 12px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,1) !important;
 }
+
 body[data-theme='navy'] .tile.joker {
-    color: #7040cc !important;
-    background: linear-gradient(150deg, #e8e2ff, #d4ccf8) !important;
-    border-color: rgba(180,160,255,0.4) !important;
+    background: #ffffff !important; /* 조커도 하얀색 바탕 유지 */
+    color: #8e44ad !important; /* 선명한 보라색 */
+    border-color: rgba(142, 68, 173, 0.4) !important;
 }
+
+/* 딥 네이비 테마 안의 숫자 색상 강조 (하얀 바탕에 맞게 번짐 제거 및 진한 색상 적용) */
+body[data-theme='navy'] .tile.red    { color: #e74c3c !important; text-shadow: none !important; }
+body[data-theme='navy'] .tile.blue   { color: #2980b9 !important; text-shadow: none !important; }
+body[data-theme='navy'] .tile.yellow { color: #f39c12 !important; text-shadow: none !important; } /* 노란색은 잘 보이게 머스타드/주황 계열로 */
+body[data-theme='navy'] .tile.black  { color: #222222 !important; text-shadow: none !important; }
+
 body[data-theme='navy'] button {
     background: rgba(107,147,201,0.08) !important;
     color: #eef0f8 !important;
