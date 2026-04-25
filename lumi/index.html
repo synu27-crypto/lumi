@@ -671,6 +671,84 @@ body[data-theme='cyber'] {
     z-index: 999998;
 }
 
+/* ─── 다른 플레이어용 축하 팝업 ─── */
+@keyframes celebPop {
+    0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5) rotate(-8deg); }
+    60%  { opacity:1; transform:translate(-50%,-50%) scale(1.08) rotate(2deg); }
+    80%  { transform:translate(-50%,-50%) scale(0.97) rotate(-1deg); }
+    100% { opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0deg); }
+}
+@keyframes celebOut {
+    0%   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    100% { opacity:0; transform:translate(-50%,-50%) scale(0.85); }
+}
+@keyframes celebFloat {
+    0%,100% { transform:translate(-50%,-50%) translateY(0px); }
+    50%     { transform:translate(-50%,-50%) translateY(-10px); }
+}
+
+#bd-celeb-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999998;
+    background: linear-gradient(135deg, rgba(30,10,50,0.97) 0%, rgba(10,10,40,0.97) 100%);
+    border: 2px solid rgba(255,107,157,0.6);
+    border-radius: 28px;
+    padding: 36px 52px;
+    text-align: center;
+    box-shadow:
+        0 0 50px rgba(199,125,255,0.5),
+        0 0 100px rgba(255,107,157,0.25),
+        inset 0 0 30px rgba(255,255,255,0.03);
+    animation: celebPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    min-width: 340px;
+    max-width: 90vw;
+}
+#bd-celeb-popup.closing {
+    animation: celebOut 0.45s ease forwards;
+}
+#bd-celeb-emoji {
+    font-size: 3.5rem;
+    display: block;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 18px rgba(255,200,0,0.9));
+    animation: bdFloat 1.6s ease-in-out infinite;
+}
+#bd-celeb-title {
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 900;
+    margin: 6px 0 4px;
+    animation: bdRainbow 2.5s linear infinite;
+    letter-spacing: 2px;
+}
+#bd-celeb-sub {
+    font-size: clamp(0.85rem, 2vw, 1.05rem);
+    color: rgba(255,255,255,0.75);
+    margin: 8px 0 22px;
+    line-height: 1.7;
+}
+#bd-celeb-btn {
+    padding: 11px 36px;
+    background: linear-gradient(135deg, #ff6b9d 0%, #c77dff 50%, #4d96ff 100%);
+    background-size: 300% 300%;
+    animation: bdShimmer 2.5s linear infinite;
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 5px 25px rgba(199,125,255,0.5);
+    letter-spacing: 0.5px;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+#bd-celeb-btn:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 35px rgba(199,125,255,0.7);
+}
+
 /* 상단 알림 배너 (다른 유저에게 보이는) */
 #bd-banner {
     position: fixed;
@@ -1216,6 +1294,35 @@ body[data-theme='cyber'] {
         }, 15000);
     };
 
+    // 🎉 다른 플레이어용 축하 팝업 (컨페티와 함께 표시)
+    window.showBirthdayCelebration = function() {
+        const existing = document.getElementById('bd-celeb-popup');
+        if (existing) existing.remove();
+
+        const popup = document.createElement('div');
+        popup.id = 'bd-celeb-popup';
+        popup.innerHTML = `
+            <span id="bd-celeb-emoji">🎂</span>
+            <div id="bd-celeb-title">생일 축하합니다!</div>
+            <div id="bd-celeb-sub">
+                🎀 진금님의 생일을 축하해 주세요! 🎀<br>
+                오늘만큼은 진금님께 살살 해주는 건 어떨까요? 💝
+            </div>
+            <button id="bd-celeb-btn" onclick="window.closeBirthdayCelebration()">🎁 축하합니다!</button>
+        `;
+        document.body.appendChild(popup);
+
+        // 10초 후 자동 닫기
+        setTimeout(() => window.closeBirthdayCelebration(), 10000);
+    };
+
+    window.closeBirthdayCelebration = function() {
+        const popup = document.getElementById('bd-celeb-popup');
+        if (!popup) return;
+        popup.classList.add('closing');
+        setTimeout(() => { if (popup.parentNode) popup.remove(); }, 450);
+    };
+
     // 다른 유저에게 보이는 배너 (Firebase 이벤트 수신)
     window.showBirthdayBanner = function() {
         const existing = document.getElementById('bd-banner');
@@ -1493,13 +1600,14 @@ body[data-theme='cyber'] {
                 window.showBubble(data.name, data.emote);
             });
 
-            // 🎂 생일 이벤트 수신 (다른 플레이어에게 배너 표시)
+            // 🎂 생일 이벤트 수신 (다른 플레이어에게 컨페티 + 축하 팝업 표시)
             db.ref('birthday_event').on('value', snap => {
                 const data = snap.val();
                 if (!data) return;
                 if (Date.now() - data.time > 30000) return; // 30초 이내만
                 if (myName === '진금') return; // 본인은 이미 오버레이로 봄
-                window.showBirthdayBanner();
+                window.launchConfetti();
+                window.showBirthdayCelebration();
             });
         }
 
