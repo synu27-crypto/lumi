@@ -75,12 +75,16 @@ body {
 }
 #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.8); }
 
+/* 보드판 배경 이미지(점)가 너무 어두우면 다크 테마처럼 보일 수 있어요 */
 body[data-theme='pink'] #game-board {
+    /* 배경색을 다시 한번 핑크로 고정 */
     background-color: var(--board-bg) !important;
+    /* 그리드 점 색상을 다크 테마의 회색이 아닌 투명도 있는 핑크로 변경 */
     background-image: radial-gradient(circle, rgba(255, 102, 163, 0.2) 1px, transparent 1px) !important;
-    filter: none !important;
+    filter: none !important; /* 혹시 모를 어두운 필터 제거 */
 }
 
+/* === 타일 === */
 .tile { 
     width: 44px; height: 64px; 
     background: var(--tile-bg) !important; 
@@ -104,6 +108,7 @@ body[data-theme='pink'] #game-board {
     z-index: 50 !important;
 }
 
+/* === 채팅 및 로그 === */
 #chat-wrapper {
     position: fixed;
     bottom: 270px !important;
@@ -146,6 +151,7 @@ body[data-theme='pink'] #game-board {
 }
 #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: var(--main-text); outline: none; }
 
+/* === 하단 랙 === */
 #my-rack { 
     height: 150px; 
     background: var(--rack-bg); 
@@ -169,6 +175,7 @@ body[data-theme='pink'] #game-board {
     background: transparent !important;
 }
 
+/* === 버튼 === */
 button { 
     padding: 8px 16px; font-weight: 700; cursor: pointer; 
     border-radius: 8px; border: 1px solid rgba(128,128,128,0.2); 
@@ -177,6 +184,7 @@ button {
 }
 button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
+/* === 플레이어 뱃지 === */
 .player-badge {
     background: rgba(128,128,128,0.1); color: var(--main-text);
     padding: 5px 12px; border-radius: 15px;
@@ -187,6 +195,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52,152,219,0.2) !important; }
 .tile-count { background: var(--main-text); color: var(--bg-color); padding: 1px 6px; border-radius: 5px; font-weight: 900; }
 
+/* === 모달/오버레이 === */
 #overlay-layer, #entry-layer { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
     background: rgba(0,0,0,0.85); 
@@ -210,6 +219,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     font-weight: 800; font-size: 0.8rem; margin-right: 10px; display: none;
 }
 
+/* === 테마 버튼 === */
 .theme-selector { display: flex; gap: 5px; }
 .theme-btn {
     width: 28px; height: 28px; padding: 0;
@@ -223,6 +233,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .theme-btn:hover { transform: scale(1.1); }
 .theme-btn.active { border-color: var(--accent-purple) !important; box-shadow: 0 0 8px var(--accent-purple); }
 
+/* === 힌트 === */
 @keyframes hint-glow {
     0%   { box-shadow: 0 0 5px var(--accent-gold); transform: scale(1); }
     50%  { box-shadow: 0 0 20px var(--accent-gold); transform: scale(1.05); }
@@ -230,6 +241,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 }
 .hint-target { animation: hint-glow 1s infinite; border: 2px solid var(--accent-gold) !important; z-index: 1000 !important; }
 
+/* === 로비 === */
 .lobby-player-tag { display: inline-flex; align-items: center; background: var(--turn-blue); color: #fff; padding: 8px 16px; border-radius: 20px; margin: 4px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 .lobby-player-tag.spec-tag { background: rgba(128,128,128,0.2); color: var(--main-text); border: 1px dashed rgba(128,128,128,0.5); box-shadow: none; }
 
@@ -237,18 +249,20 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .rank-table th { border-bottom: 1px solid rgba(128,128,128,0.2); padding: 8px; color: var(--accent-gold); }
 .rank-table td { padding: 8px; border-bottom: 1px solid rgba(128,128,128,0.1); }
 
+/* === 선택 박스 === */
 #selection-box { position: absolute; border: 1px solid rgba(52,152,219,0.8); background: rgba(52,152,219,0.2); pointer-events: none; display: none; z-index: 9999; }
 
+/* 말풍선 사이즈 줄이기 */
 .emoji-bubble {
     position: absolute; 
-    top: calc(100% + 5px);
+    top: calc(100% + 5px); /* 간격 살짝 밀착 */
     left: 50%;
     transform: translateX(-50%);
     background: white; 
     color: black;
-    padding: 4px 10px;
+    padding: 4px 10px; /* 안쪽 여백 줄임 */
     border-radius: 10px; 
-    font-size: 0.85rem;
+    font-size: 0.85rem; /* 폰트 크기 축소 */
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     z-index: 99999; 
     pointer-events: none; 
@@ -257,19 +271,20 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     font-weight: 600;
 }
 
+/* 이모티콘 선택창 버튼 사이즈 줄이기 */
 .emote-btn { 
-    font-size: 0.9rem;
+    font-size: 0.9rem;  /* 버튼 전체 폰트 축소 */
     cursor: pointer; 
     background: rgba(255,255,255,0.05);
     border: none; 
     border-radius: 6px; 
     transition: all 0.2s; 
-    padding: 6px 10px;
+    padding: 6px 10px; /* 버튼 여백 축소 */
     color: var(--main-text); 
     width: calc(50% - 6px); 
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 6px; /* 이모지-텍스트 사이 간격 좁힘 */
 }
 .emoji-bubble::after { 
     content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
@@ -292,52 +307,99 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     border-radius: 12px; 
     padding: 10px; 
     border: 1px solid rgba(0,0,0,0.1); 
-    gap: 8px;
+    gap: 8px;           /* 버튼들 사이 간격 */
     flex-wrap: wrap; 
-    width: 320px;
+    width: 320px;       /* 텍스트를 담기 위해 폭을 220px -> 320px로 확장 */
     z-index: 30000; 
     box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
-    max-height: 250px;
+    max-height: 250px;  /* 목록이 길어질 경우를 대비 */
     overflow-y: auto;
 }
 
 .emote-btn { 
-    font-size: 1.1rem;
+    font-size: 1.1rem;  /* 텍스트 가독성을 위해 살짝 조절 */
     cursor: pointer; 
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.05); /* 버튼 배경 살짝 넣기 */
     border: none; 
-    border-radius: 8px;
+    border-radius: 8px; /* 버튼을 둥글게 */
     transition: all 0.2s; 
     padding: 8px 12px; 
     color: var(--main-text); 
-    width: calc(50% - 8px);
+    width: calc(50% - 8px); /* 한 줄에 버튼 두 개씩 배치 */
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 10px;          /* 이모지와 텍스트 사이 간격 */
 }
 
 .emote-btn:hover { 
-    transform: translateY(-2px);
+    transform: translateY(-2px); /* 위로 살짝 올라가는 효과 */
     background: rgba(255,255,255,0.15); 
 }
 
+/* 🎀 핑크 테마 완전 통합: 타일, 보드, 상하단 패널 모두 강제 적용 */
+
+/* 1. 상하단 패널 및 배경색 강제 고정 */
 body[data-theme='pink'] {
-    --bg-color: #fff0f7 !important;
-    --panel-bg: #ffd6e8 !important;
-    --board-bg: #ffe8f3 !important;
-    --rack-bg: #ffb6d4 !important;
-    --modal-bg: #fff0f7 !important;
-    --main-text: #b5005b !important;
-    --turn-blue: #ff69b4 !important;
+    --bg-color: #fff0f5 !important;
+    --panel-bg: #ffdae9 !important; /* 상단 바 핑크색 */
+    --board-bg: #ffe4ee !important; /* 보드판 핑크색 */
+    --rack-bg: #ffc1d7 !important;  /* 하단 랙 핑크색 */
+    --main-text: #a32a58 !important; /* 진한 자주색 글씨 */
+}
+
+/* 2. 보드판 다크 느낌 완벽 제거 */
+body[data-theme='pink'] #game-board {
+    background-color: #ffe4ee !important;
+    background-image: radial-gradient(circle, rgba(255, 102, 163, 0.2) 1px, transparent 1px) !important;
+    filter: none !important;
+}
+
+/* 3. 타일 알맹이 핑크색 주입 (가장 강력한 경로 사용) */
+body[data-theme='pink'] .tile,
+body[data-theme='pink'] #main-container .tile,
+body[data-theme='pink'] #game-board .tile,
+body[data-theme='pink'] #my-rack .tile {
+    background-color: #fff5f8 !important; /* 뽀얀 분홍색 */
+    background: #fff5f8 !important;
+    box-shadow: 0 3px 0 #f06292, 0 4px 10px rgba(163, 42, 88, 0.2) !important;
+    border: 1px solid #f8bbd0 !important;
+}
+
+/* 4. 조커 색상 */
+body[data-theme='pink'] .tile.joker {
+    color: #ff3385 !important;
+}
+
+/* 5. 버튼 및 UI 요소 핑크 테마 최적화 */
+body[data-theme='pink'] button {
+    background: #ffffff !important;
+    color: #a32a58 !important;
+    border: 1px solid #f06292 !important;
+}
+
+/* 🎀 핑크 키티 테마 — 전면 리뉴얼 */
+
+/* ── 1. CSS 변수 & 전체 배경 ── */
+body[data-theme='pink'] {
+    --bg-color:    #fff0f7 !important;
+    --panel-bg:    #ffd6e8 !important;
+    --board-bg:    #ffe8f3 !important;
+    --rack-bg:     #ffb6d4 !important;
+    --modal-bg:    #fff0f7 !important;
+    --main-text:   #b5005b !important;
+    --turn-blue:   #ff69b4 !important;
     --accent-gold: #ff85a1 !important;
     --accent-green:#ff4da6 !important;
-    --btn-bg: rgba(255,182,210,0.4) !important;
+    --btn-bg:      rgba(255,182,210,0.4) !important;
+    
+    /* 배경에 하트 패턴 추가 */
     background-image: 
         radial-gradient(circle at 20% 20%, rgba(255,182,210,0.3) 0%, transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(255,105,180,0.2) 0%, transparent 50%) !important;
     cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🎀</text></svg>") 12 12, auto !important;
 }
 
+/* ── 2. 보드판 — 하트 도트 패턴 ── */
 body[data-theme='pink'] #game-board {
     background-color: #ffe8f3 !important;
     background-image: 
@@ -348,18 +410,21 @@ body[data-theme='pink'] #game-board {
     filter: none !important;
 }
 
+/* ── 3. 상단 UI 바 — 줄무늬 리본 느낌 ── */
 body[data-theme='pink'] #ui-layer {
     background: linear-gradient(135deg, #ffd6e8 0%, #ffb6d4 50%, #ffd6e8 100%) !important;
     border-bottom: 3px solid #ff85a1 !important;
     box-shadow: 0 4px 15px rgba(255,105,180,0.3) !important;
 }
 
+/* ── 4. 하단 랙 — 핑크 그라데이션 ── */
 body[data-theme='pink'] #my-rack {
     background: linear-gradient(180deg, #ffb6d4 0%, #ff85a1 100%) !important;
     border-top: 3px solid #ff69b4 !important;
     box-shadow: 0 -4px 15px rgba(255,105,180,0.3) !important;
 }
 
+/* ── 5. 타일 — 뽀얀 핑크, 둥글둥글 ── */
 body[data-theme='pink'] .tile,
 body[data-theme='pink'] #main-container .tile,
 body[data-theme='pink'] #game-board .tile,
@@ -372,7 +437,19 @@ body[data-theme='pink'] #my-rack .tile {
     border: 1.5px solid #ffb6d4 !important;
     border-radius: 10px !important;
 }
+body[data-theme='pink'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 
+        0 7px 0 #e8789a,
+        0 10px 20px rgba(255,105,180,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body[data-theme='pink'] .tile.joker {
+    color: #ff3385 !important;
+    background: linear-gradient(145deg, #fff0f7, #ffd6e8) !important;
+}
 
+/* ── 6. 버튼 — 둥글고 귀엽게 ── */
 body[data-theme='pink'] button {
     background: linear-gradient(135deg, #fff0f7, #ffd6e8) !important;
     color: #b5005b !important;
@@ -380,101 +457,1134 @@ body[data-theme='pink'] button {
     border-radius: 20px !important;
     box-shadow: 0 3px 0 #e8789a, 0 4px 10px rgba(255,105,180,0.2) !important;
     font-weight: 800 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='pink'] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #e8789a, 0 6px 15px rgba(255,105,180,0.3) !important;
+}
+body[data-theme='pink'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #e8789a !important;
 }
 
+/* ── 7. 플레이어 뱃지 ── */
 body[data-theme='pink'] .player-badge {
     background: rgba(255,182,210,0.5) !important;
     border: 1.5px solid #ff85a1 !important;
     color: #b5005b !important;
     border-radius: 20px !important;
 }
-
 body[data-theme='pink'] .active-turn-badge {
     background: linear-gradient(135deg, #ff69b4, #ff85a1) !important;
     border-color: #ff3385 !important;
     color: white !important;
+    box-shadow: 0 0 12px rgba(255,105,180,0.6) !important;
     animation: kitty-glow 1.5s ease-in-out infinite !important;
 }
-
 @keyframes kitty-glow {
     0%, 100% { box-shadow: 0 0 8px rgba(255,105,180,0.5); }
     50%       { box-shadow: 0 0 20px rgba(255,105,180,0.9); }
 }
-
-body[data-theme='dark'] {
-    --bg-color: #0d0d0f !important;
-    --panel-bg: #17181c !important;
-    --board-bg: #111215 !important;
-    --rack-bg: #0d0d0f !important;
-    --modal-bg: #1c1d22 !important;
-    --main-text: #e8e8f0 !important;
-    --turn-blue: #5b8dee !important;
-    --accent-gold: #e8b84b !important;
-    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🖤</text></svg>") 12 12, auto !important;
+body[data-theme='pink'] .tile-count {
+    background: #ff3385 !important;
+    color: white !important;
+    border-radius: 8px !important;
 }
 
+/* ── 8. 채팅창 ── */
+body[data-theme='pink'] #chat-log-container {
+    background: rgba(255,240,247,0.97) !important;
+    border: 1.5px solid #ff85a1 !important;
+    box-shadow: 0 8px 32px rgba(255,105,180,0.25) !important;
+}
+body[data-theme='pink'] #game-log {
+    border-right: 1.5px solid rgba(255,133,161,0.3) !important;
+}
+body[data-theme='pink'] #chat-input-container {
+    background: linear-gradient(135deg, #ffd6e8, #ffb6d4) !important;
+    border: 1.5px solid #ff85a1 !important;
+}
+body[data-theme='pink'] #chat-input {
+    color: #b5005b !important;
+}
+body[data-theme='pink'] #chat-input::placeholder {
+    color: rgba(181,0,91,0.45) !important;
+}
+
+/* ── 9. 풀 뱃지 ── */
+body[data-theme='pink'] #pool-badge {
+    background: linear-gradient(135deg, #ff69b4, #ff3385) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 10px rgba(255,51,133,0.4) !important;
+}
+
+/* ── 10. 힌트 글로우 — 형광 민트 유지 (시인성) ── */
+@keyframes hint-glow-pink {
+    0%, 100% { box-shadow: 0 0 5px #00e5ff; transform: scale(1); }
+    50%       { box-shadow: 0 0 25px 8px #00e5ff; transform: scale(1.1); }
+}
+body[data-theme='pink'] .hint-target {
+    animation: hint-glow-pink 0.8s infinite !important;
+    border: 3px solid #00e5ff !important;
+    z-index: 1000 !important;
+}
+
+/* ── 11. 위험 플레이어 — 핑크 테마용 ── */
+body[data-theme='pink'] .danger-player {
+    background: rgba(255,51,133,0.3) !important;
+    border: 2px solid #ff3385 !important;
+    animation: danger-pulse-pink 0.8s infinite !important;
+}
+@keyframes danger-pulse-pink {
+    0%, 100% { box-shadow: 0 0 5px #ff3385; transform: scale(1); }
+    50%       { box-shadow: 0 0 20px #ff3385; transform: scale(1.05); }
+}
+
+/* ── 12. 모달 카드 ── */
+body[data-theme='pink'] .modal-card {
+    background: linear-gradient(145deg, #fff0f7, #ffd6e8) !important;
+    border: 2px solid #ff85a1 !important;
+    box-shadow: 0 10px 40px rgba(255,105,180,0.3) !important;
+}
+
+/* ── 13. 로비 플레이어 태그 ── */
+body[data-theme='pink'] .lobby-player-tag {
+    background: linear-gradient(135deg, #ff69b4, #ff3385) !important;
+    box-shadow: 0 3px 10px rgba(255,51,133,0.3) !important;
+}
+body[data-theme='pink'] .lobby-player-tag.spec-tag {
+    background: rgba(255,182,210,0.3) !important;
+    border: 1px dashed #ff85a1 !important;
+    color: #b5005b !important;
+}
+
+/* ── 14. 이모트 피커 ── */
+body[data-theme='pink'] #emote-picker {
+    background: linear-gradient(145deg, #fff0f7, #ffd6e8) !important;
+    border: 1.5px solid #ff85a1 !important;
+    box-shadow: 0 -4px 20px rgba(255,105,180,0.3) !important;
+}
+body[data-theme='pink'] .emote-btn:hover {
+    background: rgba(255,105,180,0.2) !important;
+}
+
+/* ── 15. 선택 박스 ── */
+body[data-theme='pink'] #selection-box {
+    border: 1.5px solid rgba(255,51,133,0.8) !important;
+    background: rgba(255,105,180,0.15) !important;
+}
+
+/* ── 16. 테마 버튼 active 상태 ── */
+body[data-theme='pink'] .theme-btn.active {
+    border-color: #ff3385 !important;
+    box-shadow: 0 0 8px #ff3385 !important;
+}
+
+/* 🪞 빈티지 키티 테마 */
+
+body[data-theme='vintage'] {
+    --bg-color:    #f5ede0 !important;
+    --panel-bg:    #e8d5bc !important;
+    --board-bg:    #ede0cc !important;
+    --rack-bg:     #d9c4a8 !important;
+    --modal-bg:    #f5ede0 !important;
+    --main-text:   #6b3a2a !important;
+    --turn-blue:   #c08060 !important;
+    --accent-gold: #b8860b !important;
+    --accent-green:#8b6914 !important;
+    --btn-bg:      rgba(192,128,96,0.2) !important;
+
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(192,128,96,0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(176,112,80,0.12) 0%, transparent 50%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🌸</text></svg>") 12 12, auto !important;
+}
+
+/* ── 보드판 — 낡은 종이 느낌 ── */
+body[data-theme='vintage'] #game-board {
+    background-color: #ede0cc !important;
+    background-image:
+        radial-gradient(circle, rgba(176,112,80,0.2) 1px, transparent 1px),
+        radial-gradient(circle, rgba(192,128,96,0.1) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+    /* 낡은 종이 질감 느낌 */
+    box-shadow: inset 0 0 80px rgba(107,58,42,0.08) !important;
+}
+
+/* ── 상단 UI 바 ── */
+body[data-theme='vintage'] #ui-layer {
+    background: linear-gradient(135deg, #e8d5bc 0%, #d9c4a8 50%, #e8d5bc 100%) !important;
+    border-bottom: 3px solid #c08060 !important;
+    box-shadow: 0 4px 15px rgba(107,58,42,0.2) !important;
+}
+
+/* ── 하단 랙 ── */
+body[data-theme='vintage'] #my-rack {
+    background: linear-gradient(180deg, #d9c4a8 0%, #c9b090 100%) !important;
+    border-top: 3px solid #c08060 !important;
+    box-shadow: 0 -4px 15px rgba(107,58,42,0.2) !important;
+}
+
+/* ── 타일 — 누렇게 바랜 오래된 카드 느낌 ── */
+body[data-theme='vintage'] .tile,
+body[data-theme='vintage'] #main-container .tile,
+body[data-theme='vintage'] #game-board .tile,
+body[data-theme='vintage'] #my-rack .tile {
+    background: linear-gradient(145deg, #fdf6ec, #f0e0c8) !important;
+    box-shadow:
+        0 4px 0 #a07050,
+        0 6px 15px rgba(107,58,42,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.8) !important;
+    border: 1.5px solid #c9a880 !important;
+    border-radius: 6px !important;
+    /* 타일 숫자 색상 빈티지 처리 */
+    filter: sepia(15%) !important;
+}
+body[data-theme='vintage'] .tile:hover {
+    transform: translateY(-3px) rotate(1deg) !important;
+    box-shadow:
+        0 7px 0 #a07050,
+        0 10px 20px rgba(107,58,42,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.8) !important;
+}
+body[data-theme='vintage'] .tile.joker {
+    color: #8b2252 !important;
+    background: linear-gradient(145deg, #fdf0e8, #f0d8c0) !important;
+}
+
+/* ── 버튼 ── */
+body[data-theme='vintage'] button {
+    background: linear-gradient(135deg, #f0e0c8, #e0c8a8) !important;
+    color: #6b3a2a !important;
+    border: 1.5px solid #c08060 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 3px 0 #a07050, 0 4px 10px rgba(107,58,42,0.2) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.02em !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='vintage'] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #a07050, 0 6px 15px rgba(107,58,42,0.3) !important;
+    background: linear-gradient(135deg, #f5e8d0, #e8d0b0) !important;
+}
+body[data-theme='vintage'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #a07050 !important;
+}
+
+/* ── 플레이어 뱃지 ── */
+body[data-theme='vintage'] .player-badge {
+    background: rgba(192,128,96,0.2) !important;
+    border: 1.5px solid #c08060 !important;
+    color: #6b3a2a !important;
+    border-radius: 8px !important;
+}
+body[data-theme='vintage'] .active-turn-badge {
+    background: linear-gradient(135deg, #c08060, #a07050) !important;
+    border-color: #8b5a3a !important;
+    color: #fdf6ec !important;
+    box-shadow: 0 0 12px rgba(192,128,96,0.5) !important;
+    animation: vintage-glow 2s ease-in-out infinite !important;
+}
+@keyframes vintage-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba(192,128,96,0.4); }
+    50%       { box-shadow: 0 0 18px rgba(192,128,96,0.8); }
+}
+body[data-theme='vintage'] .tile-count {
+    background: #8b5a3a !important;
+    color: #fdf6ec !important;
+    border-radius: 6px !important;
+}
+
+/* ── 채팅창 ── */
+body[data-theme='vintage'] #chat-log-container {
+    background: rgba(245,237,224,0.97) !important;
+    border: 1.5px solid #c08060 !important;
+    box-shadow: 0 8px 32px rgba(107,58,42,0.2) !important;
+}
+body[data-theme='vintage'] #game-log {
+    border-right: 1.5px solid rgba(192,128,96,0.3) !important;
+}
+body[data-theme='vintage'] #chat-input-container {
+    background: linear-gradient(135deg, #e8d5bc, #d9c4a8) !important;
+    border: 1.5px solid #c08060 !important;
+}
+body[data-theme='vintage'] #chat-input {
+    color: #6b3a2a !important;
+}
+body[data-theme='vintage'] #chat-input::placeholder {
+    color: rgba(107,58,42,0.45) !important;
+}
+
+/* ── 풀 뱃지 ── */
+body[data-theme='vintage'] #pool-badge {
+    background: linear-gradient(135deg, #c08060, #a07050) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: #fdf6ec !important;
+    box-shadow: 0 3px 10px rgba(107,58,42,0.3) !important;
+}
+
+/* ── 힌트 글로우 ── */
+@keyframes hint-glow-vintage {
+    0%, 100% { box-shadow: 0 0 5px #b8860b; transform: scale(1); }
+    50%       { box-shadow: 0 0 20px 6px #b8860b; transform: scale(1.08); }
+}
+body[data-theme='vintage'] .hint-target {
+    animation: hint-glow-vintage 1s infinite !important;
+    border: 3px solid #b8860b !important;
+    z-index: 1000 !important;
+}
+
+/* ── 위험 플레이어 ── */
+body[data-theme='vintage'] .danger-player {
+    background: rgba(139,58,42,0.25) !important;
+    border: 2px solid #8b3a2a !important;
+    animation: danger-pulse-vintage 0.8s infinite !important;
+}
+@keyframes danger-pulse-vintage {
+    0%, 100% { box-shadow: 0 0 5px #8b3a2a; transform: scale(1); }
+    50%       { box-shadow: 0 0 18px #8b3a2a; transform: scale(1.05); }
+}
+
+/* ── 모달 카드 ── */
+body[data-theme='vintage'] .modal-card {
+    background: linear-gradient(145deg, #f5ede0, #e8d5bc) !important;
+    border: 2px solid #c08060 !important;
+    box-shadow: 0 10px 40px rgba(107,58,42,0.25) !important;
+}
+
+/* ── 로비 플레이어 태그 ── */
+body[data-theme='vintage'] .lobby-player-tag {
+    background: linear-gradient(135deg, #c08060, #a07050) !important;
+    color: #fdf6ec !important;
+    box-shadow: 0 3px 10px rgba(107,58,42,0.25) !important;
+}
+body[data-theme='vintage'] .lobby-player-tag.spec-tag {
+    background: rgba(192,128,96,0.2) !important;
+    border: 1px dashed #c08060 !important;
+    color: #6b3a2a !important;
+}
+
+/* ── 이모트 피커 ── */
+body[data-theme='vintage'] #emote-picker {
+    background: linear-gradient(145deg, #f5ede0, #e8d5bc) !important;
+    border: 1.5px solid #c08060 !important;
+    box-shadow: 0 -4px 20px rgba(107,58,42,0.2) !important;
+}
+body[data-theme='vintage'] .emote-btn:hover {
+    background: rgba(192,128,96,0.2) !important;
+}
+
+/* ── 선택 박스 ── */
+body[data-theme='vintage'] #selection-box {
+    border: 1.5px solid rgba(107,58,42,0.6) !important;
+    background: rgba(192,128,96,0.12) !important;
+}
+
+/* ── 테마 버튼 active 상태 ── */
+body[data-theme='vintage'] .theme-btn.active {
+    border-color: #c08060 !important;
+    box-shadow: 0 0 8px #c08060 !important;
+}
+
+/* 🐱 고전 키티 테마 (Hello Kitty Classic) */
+
+body[data-theme='kitty'] {
+    --bg-color:    #ffffff !important;
+    --panel-bg:    #fff0f0 !important;
+    --board-bg:    #fff5f5 !important;
+    --rack-bg:     #ffe0e0 !important;
+    --modal-bg:    #ffffff !important;
+    --main-text:   #cc0000 !important;
+    --turn-blue:   #cc0000 !important;
+    --accent-gold: #cc0000 !important;
+    --accent-green:#cc0000 !important;
+    --btn-bg:      rgba(255,220,220,0.5) !important;
+
+    background-image:
+        /* 작은 리본 패턴 느낌의 반복 도트 */
+        radial-gradient(circle at 25% 25%, rgba(204,0,0,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(204,0,0,0.04) 0%, transparent 50%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🎀</text></svg>") 12 12, auto !important;
+}
+
+/* ── 보드판 — 흰 바탕에 빨간 격자 느낌 ── */
+body[data-theme='kitty'] #game-board {
+    background-color: #fff5f5 !important;
+    background-image:
+        radial-gradient(circle, rgba(204,0,0,0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(204,0,0,0.07) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+/* ── 상단 UI 바 — 흰 바탕에 얇은 빨간 라인 ── */
+body[data-theme='kitty'] #ui-layer {
+    background: #ffffff !important;
+    border-bottom: 3px solid #cc0000 !important;
+    box-shadow: 0 3px 0 #ff9999, 0 4px 15px rgba(204,0,0,0.1) !important;
+}
+
+/* ── 하단 랙 — 연한 빨강 ── */
+body[data-theme='kitty'] #my-rack {
+    background: linear-gradient(180deg, #ffe0e0 0%, #ffcccc 100%) !important;
+    border-top: 3px solid #cc0000 !important;
+    box-shadow: 0 -3px 0 #ff9999, 0 -4px 15px rgba(204,0,0,0.1) !important;
+}
+
+/* ── 타일 — 깨끗한 흰색, 빨간 포인트 ── */
+body[data-theme='kitty'] .tile,
+body[data-theme='kitty'] #main-container .tile,
+body[data-theme='kitty'] #game-board .tile,
+body[data-theme='kitty'] #my-rack .tile {
+    background: linear-gradient(145deg, #ffffff, #fff0f0) !important;
+    box-shadow:
+        0 4px 0 #cc0000,
+        0 6px 15px rgba(204,0,0,0.2),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+    border: 1.5px solid #ffaaaa !important;
+    border-radius: 8px !important;
+    filter: none !important;
+}
+body[data-theme='kitty'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow:
+        0 7px 0 #cc0000,
+        0 10px 20px rgba(204,0,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+}
+body[data-theme='kitty'] .tile.joker {
+    color: #cc0000 !important;
+    background: linear-gradient(145deg, #fff0f0, #ffe0e0) !important;
+}
+
+/* ── 버튼 — 흰 바탕, 빨간 테두리 ── */
+body[data-theme='kitty'] button {
+    background: #ffffff !important;
+    color: #cc0000 !important;
+    border: 2px solid #cc0000 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 0 #aa0000, 0 4px 10px rgba(204,0,0,0.15) !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.03em !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='kitty'] button:hover {
+    background: #fff0f0 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #aa0000, 0 6px 15px rgba(204,0,0,0.25) !important;
+}
+body[data-theme='kitty'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #aa0000 !important;
+}
+
+/* ── 플레이어 뱃지 ── */
+body[data-theme='kitty'] .player-badge {
+    background: #ffffff !important;
+    border: 2px solid #ffaaaa !important;
+    color: #cc0000 !important;
+    border-radius: 20px !important;
+}
+body[data-theme='kitty'] .active-turn-badge {
+    background: #cc0000 !important;
+    border-color: #aa0000 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 15px rgba(204,0,0,0.5) !important;
+    animation: kitty-classic-glow 1.5s ease-in-out infinite !important;
+}
+@keyframes kitty-classic-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba(204,0,0,0.4); }
+    50%       { box-shadow: 0 0 20px rgba(204,0,0,0.8); }
+}
+body[data-theme='kitty'] .tile-count {
+    background: #cc0000 !important;
+    color: #ffffff !important;
+    border-radius: 6px !important;
+}
+
+/* ── 채팅창 ── */
+body[data-theme='kitty'] #chat-log-container {
+    background: rgba(255,255,255,0.98) !important;
+    border: 2px solid #ffaaaa !important;
+    box-shadow: 0 8px 32px rgba(204,0,0,0.1) !important;
+}
+body[data-theme='kitty'] #game-log {
+    border-right: 1.5px solid rgba(204,0,0,0.15) !important;
+}
+body[data-theme='kitty'] #chat-input-container {
+    background: #fff0f0 !important;
+    border: 2px solid #ffaaaa !important;
+}
+body[data-theme='kitty'] #chat-input { color: #cc0000 !important; }
+body[data-theme='kitty'] #chat-input::placeholder {
+    color: rgba(204,0,0,0.35) !important;
+}
+
+/* ── 풀 뱃지 ── */
+body[data-theme='kitty'] #pool-badge {
+    background: #cc0000 !important;
+    border: none !important;
+    border-radius: 20px !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(204,0,0,0.3) !important;
+}
+
+/* ── 힌트 글로우 ── */
+@keyframes hint-glow-kitty {
+    0%, 100% { box-shadow: 0 0 5px #cc0000; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #cc0000; transform: scale(1.08); }
+}
+body[data-theme='kitty'] .hint-target {
+    animation: hint-glow-kitty 0.9s infinite !important;
+    border: 3px solid #cc0000 !important;
+    z-index: 1000 !important;
+}
+
+/* ── 위험 플레이어 ── */
+body[data-theme='kitty'] .danger-player {
+    background: rgba(204,0,0,0.2) !important;
+    border: 2px solid #cc0000 !important;
+    animation: danger-pulse-kitty 0.8s infinite !important;
+}
+@keyframes danger-pulse-kitty {
+    0%, 100% { box-shadow: 0 0 5px #cc0000; transform: scale(1); }
+    50%       { box-shadow: 0 0 18px #cc0000; transform: scale(1.05); }
+}
+
+/* ── 모달 카드 ── */
+body[data-theme='kitty'] .modal-card {
+    background: #ffffff !important;
+    border: 2px solid #ffaaaa !important;
+    box-shadow: 0 10px 40px rgba(204,0,0,0.15) !important;
+}
+
+/* ── 로비 태그 ── */
+body[data-theme='kitty'] .lobby-player-tag {
+    background: #cc0000 !important;
+    color: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(204,0,0,0.25) !important;
+}
+body[data-theme='kitty'] .lobby-player-tag.spec-tag {
+    background: #fff0f0 !important;
+    border: 1px dashed #ffaaaa !important;
+    color: #cc0000 !important;
+}
+
+/* ── 이모트 피커 ── */
+body[data-theme='kitty'] #emote-picker {
+    background: #ffffff !important;
+    border: 2px solid #ffaaaa !important;
+    box-shadow: 0 -4px 20px rgba(204,0,0,0.1) !important;
+}
+body[data-theme='kitty'] .emote-btn:hover {
+    background: rgba(204,0,0,0.08) !important;
+}
+
+/* ── 선택 박스 ── */
+body[data-theme='kitty'] #selection-box {
+    border: 1.5px solid rgba(204,0,0,0.6) !important;
+    background: rgba(204,0,0,0.08) !important;
+}
+
+/* ── 테마 버튼 active ── */
+body[data-theme='kitty'] .theme-btn.active {
+    border-color: #cc0000 !important;
+    box-shadow: 0 0 8px #cc0000 !important;
+}
+
+/* ☁️ 시나모롤 테마 */
+
+body[data-theme='cinnamoroll'] {
+    --bg-color:    #e8f4ff !important;
+    --panel-bg:    #c8e6ff !important;
+    --board-bg:    #daeeff !important;
+    --rack-bg:     #aed6f8 !important;
+    --modal-bg:    #f0f8ff !important;
+    --main-text:   #1a4a7a !important;
+    --turn-blue:   #4a90d9 !important;
+    --accent-gold: #7ab8f5 !important;
+    --accent-green:#4a90d9 !important;
+    --btn-bg:      rgba(174,214,248,0.4) !important;
+
+    background-image:
+        radial-gradient(circle at 15% 15%, rgba(200,230,255,0.5) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(174,214,248,0.4) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.3) 0%, transparent 60%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>☁️</text></svg>") 12 12, auto !important;
+}
+
+body[data-theme='cinnamoroll'] #game-board {
+    background-color: #daeeff !important;
+    background-image:
+        radial-gradient(circle, rgba(74,144,217,0.15) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(174,214,248,0.12) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+body[data-theme='cinnamoroll'] #ui-layer {
+    background: linear-gradient(135deg, #c8e6ff 0%, #aed6f8 50%, #c8e6ff 100%) !important;
+    border-bottom: 3px solid #7ab8f5 !important;
+    box-shadow: 0 4px 15px rgba(74,144,217,0.2) !important;
+}
+
+body[data-theme='cinnamoroll'] #my-rack {
+    background: linear-gradient(180deg, #aed6f8 0%, #7ab8f5 100%) !important;
+    border-top: 3px solid #4a90d9 !important;
+    box-shadow: 0 -4px 15px rgba(74,144,217,0.2) !important;
+}
+
+body[data-theme='cinnamoroll'] .tile,
+body[data-theme='cinnamoroll'] #main-container .tile,
+body[data-theme='cinnamoroll'] #game-board .tile,
+body[data-theme='cinnamoroll'] #my-rack .tile {
+    background: linear-gradient(145deg, #f5faff, #e0f0ff) !important;
+    box-shadow:
+        0 4px 0 #5a9fd4,
+        0 6px 15px rgba(74,144,217,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.95) !important;
+    border: 1.5px solid #aed6f8 !important;
+    border-radius: 12px !important;
+}
+body[data-theme='cinnamoroll'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow:
+        0 7px 0 #5a9fd4,
+        0 10px 20px rgba(74,144,217,0.35),
+        inset 0 1px 0 rgba(255,255,255,0.95) !important;
+}
+body[data-theme='cinnamoroll'] .tile.joker {
+    color: #1a4a7a !important;
+    background: linear-gradient(145deg, #e8f4ff, #c8e6ff) !important;
+}
+
+body[data-theme='cinnamoroll'] button {
+    background: linear-gradient(135deg, #f0f8ff, #c8e6ff) !important;
+    color: #1a4a7a !important;
+    border: 1.5px solid #7ab8f5 !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 0 #5a9fd4, 0 4px 10px rgba(74,144,217,0.2) !important;
+    font-weight: 800 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='cinnamoroll'] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #5a9fd4, 0 6px 15px rgba(74,144,217,0.3) !important;
+    background: linear-gradient(135deg, #ffffff, #daeeff) !important;
+}
+body[data-theme='cinnamoroll'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #5a9fd4 !important;
+}
+
+body[data-theme='cinnamoroll'] .player-badge {
+    background: rgba(174,214,248,0.5) !important;
+    border: 1.5px solid #7ab8f5 !important;
+    color: #1a4a7a !important;
+    border-radius: 20px !important;
+}
+body[data-theme='cinnamoroll'] .active-turn-badge {
+    background: linear-gradient(135deg, #4a90d9, #7ab8f5) !important;
+    border-color: #2a70b9 !important;
+    color: white !important;
+    box-shadow: 0 0 14px rgba(74,144,217,0.6) !important;
+    animation: cinna-glow 1.8s ease-in-out infinite !important;
+}
+@keyframes cinna-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(74,144,217,0.5); }
+    50%       { box-shadow: 0 0 22px rgba(74,144,217,0.9); }
+}
+body[data-theme='cinnamoroll'] .tile-count {
+    background: #2a70b9 !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+body[data-theme='cinnamoroll'] #chat-log-container {
+    background: rgba(240,248,255,0.97) !important;
+    border: 1.5px solid #7ab8f5 !important;
+    box-shadow: 0 8px 32px rgba(74,144,217,0.2) !important;
+}
+body[data-theme='cinnamoroll'] #game-log {
+    border-right: 1.5px solid rgba(122,184,245,0.3) !important;
+}
+body[data-theme='cinnamoroll'] #chat-input-container {
+    background: linear-gradient(135deg, #c8e6ff, #aed6f8) !important;
+    border: 1.5px solid #7ab8f5 !important;
+}
+body[data-theme='cinnamoroll'] #chat-input { color: #1a4a7a !important; }
+body[data-theme='cinnamoroll'] #chat-input::placeholder {
+    color: rgba(26,74,122,0.4) !important;
+}
+
+body[data-theme='cinnamoroll'] #pool-badge {
+    background: linear-gradient(135deg, #4a90d9, #2a70b9) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(74,144,217,0.4) !important;
+}
+
+@keyframes hint-glow-cinna {
+    0%, 100% { box-shadow: 0 0 5px #f5a623; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #f5a623; transform: scale(1.08); }
+}
+body[data-theme='cinnamoroll'] .hint-target {
+    animation: hint-glow-cinna 0.9s infinite !important;
+    border: 3px solid #f5a623 !important;
+    z-index: 1000 !important;
+}
+
+body[data-theme='cinnamoroll'] .danger-player {
+    background: rgba(231,76,60,0.2) !important;
+    border: 2px solid #e74c3c !important;
+    animation: danger-pulse-cinna 0.8s infinite !important;
+}
+@keyframes danger-pulse-cinna {
+    0%, 100% { box-shadow: 0 0 5px #e74c3c; transform: scale(1); }
+    50%       { box-shadow: 0 0 18px #e74c3c; transform: scale(1.05); }
+}
+
+body[data-theme='cinnamoroll'] .modal-card {
+    background: linear-gradient(145deg, #f0f8ff, #c8e6ff) !important;
+    border: 2px solid #7ab8f5 !important;
+    box-shadow: 0 10px 40px rgba(74,144,217,0.25) !important;
+}
+
+body[data-theme='cinnamoroll'] .lobby-player-tag {
+    background: linear-gradient(135deg, #4a90d9, #2a70b9) !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(74,144,217,0.3) !important;
+}
+body[data-theme='cinnamoroll'] .lobby-player-tag.spec-tag {
+    background: rgba(174,214,248,0.3) !important;
+    border: 1px dashed #7ab8f5 !important;
+    color: #1a4a7a !important;
+}
+
+body[data-theme='cinnamoroll'] #emote-picker {
+    background: linear-gradient(145deg, #f0f8ff, #c8e6ff) !important;
+    border: 1.5px solid #7ab8f5 !important;
+    box-shadow: 0 -4px 20px rgba(74,144,217,0.2) !important;
+}
+body[data-theme='cinnamoroll'] .emote-btn:hover {
+    background: rgba(74,144,217,0.15) !important;
+}
+
+body[data-theme='cinnamoroll'] #selection-box {
+    border: 1.5px solid rgba(74,144,217,0.7) !important;
+    background: rgba(74,144,217,0.12) !important;
+}
+
+body[data-theme='cinnamoroll'] .theme-btn.active {
+    border-color: #4a90d9 !important;
+    box-shadow: 0 0 8px #4a90d9 !important;
+}
+
+
+/* 🐾 포챠코 테마 */
+
+body[data-theme='pochacco'] {
+    --bg-color:    #f0f0f8 !important;
+    --panel-bg:    #dcdcf0 !important;
+    --board-bg:    #e8e8f5 !important;
+    --rack-bg:     #c8c8e8 !important;
+    --modal-bg:    #f5f5fb !important;
+    --main-text:   #2a2a5a !important;
+    --turn-blue:   #5a5aaa !important;
+    --accent-gold: #8888cc !important;
+    --accent-green:#5a5aaa !important;
+    --btn-bg:      rgba(200,200,232,0.4) !important;
+
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(200,200,232,0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(160,160,210,0.3) 0%, transparent 50%) !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🐾</text></svg>") 12 12, auto !important;
+}
+
+body[data-theme='pochacco'] #game-board {
+    background-color: #e8e8f5 !important;
+    background-image:
+        radial-gradient(circle, rgba(90,90,170,0.18) 1.5px, transparent 1.5px),
+        radial-gradient(circle, rgba(160,160,210,0.1) 1px, transparent 1px) !important;
+    background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
+    filter: none !important;
+}
+
+body[data-theme='pochacco'] #ui-layer {
+    background: linear-gradient(135deg, #dcdcf0 0%, #c8c8e8 50%, #dcdcf0 100%) !important;
+    border-bottom: 3px solid #8888cc !important;
+    box-shadow: 0 4px 15px rgba(90,90,170,0.2) !important;
+}
+
+body[data-theme='pochacco'] #my-rack {
+    background: linear-gradient(180deg, #c8c8e8 0%, #a8a8d0 100%) !important;
+    border-top: 3px solid #5a5aaa !important;
+    box-shadow: 0 -4px 15px rgba(90,90,170,0.2) !important;
+}
+
+body[data-theme='pochacco'] .tile,
+body[data-theme='pochacco'] #main-container .tile,
+body[data-theme='pochacco'] #game-board .tile,
+body[data-theme='pochacco'] #my-rack .tile {
+    background: linear-gradient(145deg, #ffffff, #f0f0fa) !important;
+    box-shadow:
+        0 4px 0 #6a6ab8,
+        0 6px 15px rgba(90,90,170,0.25),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+    border: 1.5px solid #b8b8e0 !important;
+    border-radius: 10px !important;
+}
+body[data-theme='pochacco'] .tile:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow:
+        0 7px 0 #6a6ab8,
+        0 10px 20px rgba(90,90,170,0.35),
+        inset 0 1px 0 rgba(255,255,255,1) !important;
+}
+body[data-theme='pochacco'] .tile.joker {
+    color: #3a3a8a !important;
+    background: linear-gradient(145deg, #f0f0fa, #e0e0f5) !important;
+}
+
+body[data-theme='pochacco'] button {
+    background: linear-gradient(135deg, #f5f5fb, #dcdcf0) !important;
+    color: #2a2a5a !important;
+    border: 1.5px solid #8888cc !important;
+    border-radius: 20px !important;
+    box-shadow: 0 3px 0 #6a6ab8, 0 4px 10px rgba(90,90,170,0.2) !important;
+    font-weight: 800 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='pochacco'] button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 5px 0 #6a6ab8, 0 6px 15px rgba(90,90,170,0.3) !important;
+    background: linear-gradient(135deg, #ffffff, #e8e8f8) !important;
+}
+body[data-theme='pochacco'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 2px 0 #6a6ab8 !important;
+}
+
+body[data-theme='pochacco'] .player-badge {
+    background: rgba(200,200,232,0.5) !important;
+    border: 1.5px solid #8888cc !important;
+    color: #2a2a5a !important;
+    border-radius: 20px !important;
+}
+body[data-theme='pochacco'] .active-turn-badge {
+    background: linear-gradient(135deg, #5a5aaa, #8888cc) !important;
+    border-color: #3a3a8a !important;
+    color: white !important;
+    box-shadow: 0 0 14px rgba(90,90,170,0.6) !important;
+    animation: pocha-glow 1.8s ease-in-out infinite !important;
+}
+@keyframes pocha-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(90,90,170,0.5); }
+    50%       { box-shadow: 0 0 22px rgba(90,90,170,0.9); }
+}
+body[data-theme='pochacco'] .tile-count {
+    background: #3a3a8a !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+body[data-theme='pochacco'] #chat-log-container {
+    background: rgba(245,245,251,0.97) !important;
+    border: 1.5px solid #8888cc !important;
+    box-shadow: 0 8px 32px rgba(90,90,170,0.2) !important;
+}
+body[data-theme='pochacco'] #game-log {
+    border-right: 1.5px solid rgba(136,136,204,0.3) !important;
+}
+body[data-theme='pochacco'] #chat-input-container {
+    background: linear-gradient(135deg, #dcdcf0, #c8c8e8) !important;
+    border: 1.5px solid #8888cc !important;
+}
+body[data-theme='pochacco'] #chat-input { color: #2a2a5a !important; }
+body[data-theme='pochacco'] #chat-input::placeholder {
+    color: rgba(42,42,90,0.4) !important;
+}
+
+body[data-theme='pochacco'] #pool-badge {
+    background: linear-gradient(135deg, #5a5aaa, #3a3a8a) !important;
+    border: none !important;
+    border-radius: 20px !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(90,90,170,0.4) !important;
+}
+
+@keyframes hint-glow-pocha {
+    0%, 100% { box-shadow: 0 0 5px #f5a623; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #f5a623; transform: scale(1.08); }
+}
+body[data-theme='pochacco'] .hint-target {
+    animation: hint-glow-pocha 0.9s infinite !important;
+    border: 3px solid #f5a623 !important;
+    z-index: 1000 !important;
+}
+
+body[data-theme='pochacco'] .danger-player {
+    background: rgba(231,76,60,0.2) !important;
+    border: 2px solid #e74c3c !important;
+    animation: danger-pulse-pocha 0.8s infinite !important;
+}
+@keyframes danger-pulse-pocha {
+    0%, 100% { box-shadow: 0 0 5px #e74c3c; transform: scale(1); }
+    50%       { box-shadow: 0 0 18px #e74c3c; transform: scale(1.05); }
+}
+
+body[data-theme='pochacco'] .modal-card {
+    background: linear-gradient(145deg, #f5f5fb, #dcdcf0) !important;
+    border: 2px solid #8888cc !important;
+    box-shadow: 0 10px 40px rgba(90,90,170,0.25) !important;
+}
+
+body[data-theme='pochacco'] .lobby-player-tag {
+    background: linear-gradient(135deg, #5a5aaa, #3a3a8a) !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(90,90,170,0.3) !important;
+}
+body[data-theme='pochacco'] .lobby-player-tag.spec-tag {
+    background: rgba(200,200,232,0.3) !important;
+    border: 1px dashed #8888cc !important;
+    color: #2a2a5a !important;
+}
+
+body[data-theme='pochacco'] #emote-picker {
+    background: linear-gradient(145deg, #f5f5fb, #dcdcf0) !important;
+    border: 1.5px solid #8888cc !important;
+    box-shadow: 0 -4px 20px rgba(90,90,170,0.2) !important;
+}
+body[data-theme='pochacco'] .emote-btn:hover {
+    background: rgba(90,90,170,0.12) !important;
+}
+
+body[data-theme='pochacco'] #selection-box {
+    border: 1.5px solid rgba(90,90,170,0.7) !important;
+    background: rgba(90,90,170,0.1) !important;
+}
+
+body[data-theme='pochacco'] .theme-btn.active {
+    border-color: #5a5aaa !important;
+    box-shadow: 0 0 8px #5a5aaa !important;
+}
+
+
+/* ⚫ 다크 테마 리뉴얼 */
+
+body[data-theme='dark'] {
+    --bg-color:    #0d0d0f !important;
+    --panel-bg:    #17181c !important;
+    --board-bg:    #111215 !important;
+    --rack-bg:     #0d0d0f !important;
+    --modal-bg:    #1c1d22 !important;
+    --main-text:   #e8e8f0 !important;
+    --tile-bg:     #d8d8e0 !important;
+    --tile-text-black: #0d0d0f !important;
+    --turn-blue:   #5b8dee !important;
+    --accent-gold: #e8b84b !important;
+    --accent-green:#3dd68c !important;
+    --accent-red:  #f05c5c !important;
+    --accent-purple:#a56eff !important;
+    --chat-bg:     rgba(17,18,21,0.97) !important;
+    --btn-bg:      rgba(255,255,255,0.06) !important;
+cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🖤</text></svg>") 12 12, auto !important;
+}
+
+/* 보드판 — 은은한 별빛 느낌 */
 body[data-theme='dark'] #game-board {
     background-color: #111215 !important;
     background-image:
         radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px),
         radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px) !important;
     background-size: 40px 40px, 20px 20px !important;
+    background-position: 0 0, 10px 10px !important;
     filter: none !important;
 }
 
-body[data-theme='vintage'] {
-    --bg-color: #f5ede0 !important;
-    --panel-bg: #e8d5bc !important;
-    --board-bg: #ede0cc !important;
-    --rack-bg: #d9c4a8 !important;
-    --main-text: #6b3a2a !important;
-    --turn-blue: #c08060 !important;
-    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🌸</text></svg>") 12 12, auto !important;
+/* 상단 UI 바 */
+body[data-theme='dark'] #ui-layer {
+    background: linear-gradient(135deg, #1c1d22 0%, #17181c 100%) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.5) !important;
 }
 
-body[data-theme='kitty'] {
-    --bg-color: #ffffff !important;
-    --panel-bg: #fff0f0 !important;
-    --board-bg: #fff5f5 !important;
-    --rack-bg: #ffe0e0 !important;
-    --main-text: #cc0000 !important;
-    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🎀</text></svg>") 12 12, auto !important;
+/* 하단 랙 */
+body[data-theme='dark'] #my-rack {
+    background: linear-gradient(180deg, #17181c 0%, #0d0d0f 100%) !important;
+    border-top: 1px solid rgba(255,255,255,0.06) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
 }
 
-body[data-theme='cinnamoroll'] {
-    --bg-color: #e8f4ff !important;
-    --panel-bg: #c8e6ff !important;
-    --board-bg: #daeeff !important;
-    --rack-bg: #aed6f8 !important;
-    --main-text: #1a4a7a !important;
-    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>☁️</text></svg>") 12 12, auto !important;
+/* 타일 — 깨끗하고 선명하게 */
+body[data-theme='dark'] .tile,
+body[data-theme='dark'] #main-container .tile,
+body[data-theme='dark'] #game-board .tile,
+body[data-theme='dark'] #my-rack .tile {
+    background: linear-gradient(145deg, #e8e8f0, #d0d0dc) !important;
+    box-shadow:
+        0 4px 0 #1a1a20,
+        0 6px 18px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 8px !important;
+}
+body[data-theme='dark'] .tile:hover {
+    transform: translateY(-3px) scale(1.04) !important;
+    box-shadow:
+        0 7px 0 #1a1a20,
+        0 10px 24px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body[data-theme='dark'] .tile.joker {
+    color: #a56eff !important;
+    background: linear-gradient(145deg, #e8e0ff, #d8d0f8) !important;
 }
 
-body[data-theme='pochacco'] {
-    --bg-color: #f0f0f8 !important;
-    --panel-bg: #dcdcf0 !important;
-    --board-bg: #e8e8f5 !important;
-    --rack-bg: #c8c8e8 !important;
-    --main-text: #2a2a5a !important;
-    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🐾</text></svg>") 12 12, auto !important;
+/* 버튼 */
+body[data-theme='dark'] button {
+    background: rgba(255,255,255,0.06) !important;
+    color: #e8e8f0 !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+    font-weight: 700 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='dark'] button:hover {
+    background: rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.18) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+body[data-theme='dark'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4) !important;
 }
 
-body[data-theme='navy'] {
-    --bg-color: #0d1422 !important;
-    --panel-bg: #162038 !important;
-    --board-bg: #0f1828 !important;
-    --rack-bg: #0d1422 !important;
-    --main-text: #eef0f8 !important;
-    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🌟</text></svg>") 12 12, auto !important;
+/* 플레이어 뱃지 */
+body[data-theme='dark'] .player-badge {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #e8e8f0 !important;
+    border-radius: 12px !important;
+}
+body[data-theme='dark'] .active-turn-badge {
+    background: rgba(91,141,238,0.2) !important;
+    border-color: #5b8dee !important;
+    color: #a0c0ff !important;
+    box-shadow: 0 0 14px rgba(91,141,238,0.4) !important;
+    animation: dark-glow 2s ease-in-out infinite !important;
+}
+@keyframes dark-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(91,141,238,0.3); border-color: #5b8dee; }
+    50%       { box-shadow: 0 0 20px rgba(91,141,238,0.7); border-color: #7aaaf5; }
+}
+body[data-theme='dark'] .tile-count {
+    background: rgba(255,255,255,0.12) !important;
+    color: #e8e8f0 !important;
+    border-radius: 6px !important;
 }
 
-body[data-theme='cyber'] {
-    --bg-color: #050505 !important;
-    --panel-bg: #0a0a0f !important;
-    --board-bg: #08080a !important;
-    --rack-bg: #050505 !important;
-    --main-text: #00ffcc !important;
-    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>⚡</text></svg>") 12 12, auto !important;
+/* 채팅창 */
+body[data-theme='dark'] #chat-log-container {
+    background: rgba(17,18,21,0.97) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+}
+body[data-theme='dark'] #game-log {
+    border-right: 1px solid rgba(255,255,255,0.06) !important;
+}
+body[data-theme='dark'] #chat-input-container {
+    background: #17181c !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+}
+body[data-theme='dark'] #chat-input { color: #e8e8f0 !important; }
+body[data-theme='dark'] #chat-input::placeholder {
+    color: rgba(232,232,240,0.3) !important;
+}
+
+/* 풀 뱃지 */
+body[data-theme='dark'] #pool-badge {
+    background: linear-gradient(135deg, #a56eff, #7a44cc) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: white !important;
+    box-shadow: 0 3px 12px rgba(165,110,255,0.4) !important;
+}
+
+/* 힌트 글로우 */
+@keyframes hint-glow-dark {
+    0%, 100% { box-shadow: 0 0 5px #e8b84b; transform: scale(1); }
+    50%       { box-shadow: 0 0 22px 6px #e8b84b; transform: scale(1.06); }
+}
+body[data-theme='dark'] .hint-target {
+    animation: hint-glow-dark 1s infinite !important;
+    border: 2px solid #e8b84b !important;
+    z-index: 1000 !important;
+}
+
+/* 위험 플레이어 */
+body[data-theme='dark'] .danger-player {
+    background: rgba(240,92,92,0.2) !important;
+    border: 2px solid #f05c5c !important;
+    animation: danger-pulse-dark 0.8s infinite !important;
+}
+@keyframes danger-pulse-dark {
+    0%, 100% { box-shadow: 0 0 5px #f05c5c; transform: scale(1); }
+    50%       { box-shadow: 0 0 20px #f05c5c; transform: scale(1.05); }
+}
+
+/* 모달 카드 */
+body[data-theme='dark'] .modal-card {
+    background: linear-gradient(145deg, #1c1d22, #17181c) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7) !important;
+}
+
+/* 로비 태그 */
+body[data-theme='dark'] .lobby-player-tag {
+    background: linear-gradient(135deg, #5b8dee, #3a6ccc) !important;
+    color: white !important;
+    box-shadow: 0 3px 10px rgba(91,141,238,0.3) !important;
+}
+body[data-theme='dark'] .lobby-player-tag.spec-tag {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px dashed rgba(255,255,255,0.2) !important;
+    color: #a0a0b8 !important;
+}
+
+/* 이모트 피커 */
+body[data-theme='dark'] #emote-picker {
+    background: linear-gradient(145deg, #1c1d22, #17181c) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5) !important;
+}
+body[data-theme='dark'] .emote-btn:hover {
+    background: rgba(255,255,255,0.08) !important;
+}
+
+/* 선택 박스 */
+body[data-theme='dark'] #selection-box {
+    border: 1px solid rgba(91,141,238,0.7) !important;
+    background: rgba(91,141,238,0.1) !important;
+}
+
+/* 테마 버튼 active */
+body[data-theme='dark'] .theme-btn.active {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 8px #5b8dee !important;
 }
 
 @keyframes screen-shake {
@@ -491,8 +1601,249 @@ body[data-theme='cyber'] {
     100% { transform: translate(0, 0) rotate(0deg); }
 }
 
-.screen-shaking { animation: screen-shake 0.6s ease-in-out; }
+.screen-shaking {
+    animation: screen-shake 0.6s ease-in-out;
+}
 
+/* ⬛ 딥 네이비 테마 */
+body[data-theme='navy'] {
+    --bg-color:    #0d1422 !important;
+    --panel-bg:    #162038 !important;
+    --board-bg:    #0f1828 !important;
+    --rack-bg:     #0d1422 !important;
+    --modal-bg:    #1b2a47 !important;
+    --main-text:   #eef0f8 !important;
+    --tile-bg:     #e8eaf8 !important;
+    --tile-text-black: #1a1e36 !important;
+    --turn-blue:   #5b8dee !important;
+    --accent-gold: #f0c060 !important;
+    --accent-green:#4de8a0 !important;
+    --accent-red:  #ff6b6b !important;
+    --accent-purple:#b899ff !important;
+    --chat-bg:     rgba(8,12,20,0.96) !important;
+    --btn-bg:      rgba(107,147,201,0.08) !important;
+cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🌟</text></svg>") 12 12, auto !important;
+}
+body[data-theme='navy'] #game-board {
+    background-color: #0f1828 !important;
+    background-image:
+        linear-gradient(rgba(107,147,201,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(107,147,201,0.07) 1px, transparent 1px) !important;
+    background-size: 42px 42px !important;
+    filter: none !important;
+}
+body[data-theme='navy'] #ui-layer {
+    background: linear-gradient(135deg, #1b2a47 0%, #162038 100%) !important;
+    border-bottom: 1px solid rgba(107,147,201,0.18) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.5) !important;
+}
+body[data-theme='navy'] #my-rack {
+    background: linear-gradient(180deg, #162038 0%, #0d1422 100%) !important;
+    border-top: 1px solid rgba(107,147,201,0.15) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.4) !important;
+}
+body[data-theme='navy'] .tile,
+body[data-theme='navy'] #main-container .tile,
+body[data-theme='navy'] #game-board .tile,
+body[data-theme='navy'] #my-rack .tile {
+    background: linear-gradient(150deg, #e8eaf8, #cdd0e8) !important;
+    box-shadow: 0 4px 0 #080c14, 0 6px 18px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    border-radius: 8px !important;
+    color: #1a1e36 !important;
+}
+body[data-theme='navy'] .tile:hover {
+    transform: translateY(-4px) scale(1.05) !important;
+    box-shadow: 0 8px 0 #080c14, 0 12px 24px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+}
+body[data-theme='navy'] .tile.joker {
+    color: #7040cc !important;
+    background: linear-gradient(150deg, #e8e2ff, #d4ccf8) !important;
+    border-color: rgba(180,160,255,0.4) !important;
+}
+body[data-theme='navy'] button {
+    background: rgba(107,147,201,0.08) !important;
+    color: #eef0f8 !important;
+    border: 1px solid rgba(107,147,201,0.2) !important;
+    border-radius: 9px !important;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+    font-weight: 700 !important;
+    transition: all 0.15s !important;
+}
+body[data-theme='navy'] button:hover {
+    background: rgba(107,147,201,0.16) !important;
+    border-color: rgba(107,147,201,0.35) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4) !important;
+}
+body[data-theme='navy'] button:active {
+    transform: translateY(1px) !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4) !important;
+}
+body[data-theme='navy'] .player-badge {
+    background: rgba(107,147,201,0.10) !important;
+    border: 1px solid rgba(107,147,201,0.22) !important;
+    color: #eef0f8 !important;
+    border-radius: 10px !important;
+}
+body[data-theme='navy'] .active-turn-badge {
+    background: rgba(91,141,238,0.2) !important;
+    border-color: #5b8dee !important;
+    color: #aac8ff !important;
+    box-shadow: 0 0 14px rgba(91,141,238,0.35) !important;
+    animation: navy-glow 2s ease-in-out infinite !important;
+}
+@keyframes navy-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(91,141,238,0.25); border-color: #5b8dee; }
+    50%       { box-shadow: 0 0 20px rgba(91,141,238,0.6); border-color: #7aaaf5; }
+}
+body[data-theme='navy'] .tile-count {
+    background: rgba(107,147,201,0.14) !important;
+    color: #eef0f8 !important;
+    border-radius: 6px !important;
+}
+body[data-theme='navy'] #chat-log-container {
+    background: rgba(8,12,20,0.96) !important;
+    border: 1px solid rgba(107,147,201,0.12) !important;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5) !important;
+}
+body[data-theme='navy'] #game-log { border-right: 1px solid rgba(107,147,201,0.08) !important; }
+body[data-theme='navy'] #chat-input-container {
+    background: #111a2e !important;
+    border: 1px solid rgba(107,147,201,0.12) !important;
+}
+body[data-theme='navy'] #chat-input { color: #eef0f8 !important; }
+body[data-theme='navy'] #chat-input::placeholder { color: rgba(200,204,224,0.35) !important; }
+body[data-theme='navy'] #pool-badge {
+    background: linear-gradient(135deg, #7a44cc, #9055dd) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: #efe0ff !important;
+    box-shadow: 0 3px 12px rgba(144,85,221,0.35) !important;
+}
+@keyframes hint-glow-navy {
+    0%, 100% { box-shadow: 0 4px 0 #080c14, 0 0 8px #f0c060; transform: scale(1); }
+    50%       { box-shadow: 0 4px 0 #080c14, 0 0 22px 5px #f0c060; transform: scale(1.06); }
+}
+body[data-theme='navy'] .hint-target {
+    animation: hint-glow-navy 1s infinite !important;
+    border: 2px solid #f0c060 !important;
+    z-index: 1000 !important;
+}
+body[data-theme='navy'] .danger-player {
+    background: rgba(255,107,107,0.15) !important;
+    border: 2px solid #ff6b6b !important;
+    animation: danger-pulse-navy 0.8s infinite !important;
+}
+@keyframes danger-pulse-navy {
+    0%, 100% { box-shadow: 0 0 6px #ff6b6b; transform: scale(1); }
+    50%       { box-shadow: 0 0 20px #ff6b6b; transform: scale(1.05); }
+}
+body[data-theme='navy'] .modal-card {
+    background: linear-gradient(145deg, #1b2a47, #162038) !important;
+    border: 1px solid rgba(107,147,201,0.15) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.65) !important;
+    border-radius: 14px !important;
+}
+body[data-theme='navy'] .lobby-player-tag {
+    background: linear-gradient(135deg, #3a5a8c, #213355) !important;
+    color: #c8ddf8 !important;
+    box-shadow: 0 3px 10px rgba(58,90,140,0.4) !important;
+}
+body[data-theme='navy'] .lobby-player-tag.spec-tag {
+    background: rgba(107,147,201,0.07) !important;
+    border: 1px dashed rgba(107,147,201,0.3) !important;
+    color: #7a90b0 !important;
+}
+body[data-theme='navy'] #emote-picker {
+    background: linear-gradient(145deg, #1b2a47, #162038) !important;
+    border: 1px solid rgba(107,147,201,0.12) !important;
+}
+body[data-theme='navy'] .emote-btn:hover { background: rgba(107,147,201,0.12) !important; }
+body[data-theme='navy'] #selection-box {
+    border: 1px solid rgba(91,141,238,0.6) !important;
+    background: rgba(91,141,238,0.1) !important;
+}
+body[data-theme='navy'] .theme-btn.active {
+    border-color: #5b8dee !important;
+    box-shadow: 0 0 8px rgba(91,141,238,0.5) !important;
+}
+
+/* ⚡ 네온 사이버펑크 테마 */
+body[data-theme='cyber'] {
+    --bg-color:    #050505 !important;
+    --panel-bg:    #0a0a0f !important;
+    --board-bg:    #08080a !important;
+    --rack-bg:     #050505 !important;
+    --modal-bg:    #0f0f15 !important;
+    --main-text:   #00ffcc !important; /* 형광 민트 */
+    --turn-blue:   #bc13fe !important; /* 네온 퍼플 */
+    --accent-gold: #f5ed00 !important; /* 네온 옐로우 */
+    --accent-green:#00ff00 !important;
+    --btn-bg:      rgba(188, 19, 254, 0.1) !important;
+
+    background-image: 
+        linear-gradient(rgba(188, 19, 254, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(188, 19, 254, 0.05) 1px, transparent 1px) !important;
+    background-size: 50px 50px !important;
+    cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>⚡</text></svg>") 12 12, auto !important;
+}
+
+/* 보드판 - 사이버 그리드 */
+body[data-theme='cyber'] #game-board {
+    background-color: #08080a !important;
+    background-image: 
+        linear-gradient(rgba(0, 255, 204, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 204, 0.1) 1px, transparent 1px) !important;
+    background-size: 45px 45px !important;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.2)) !important;
+}
+
+/* 타일 - 유리 질감에 네온 테두리 */
+body[data-theme='cyber'] .tile,
+body[data-theme='cyber'] #main-container .tile {
+    background: rgba(20, 20, 30, 0.95) !important;
+    color: #ffffff !important;
+    border: 1px solid #bc13fe !important;
+    box-shadow: 0 0 10px rgba(188, 19, 254, 0.5), inset 0 0 5px rgba(188, 19, 254, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+body[data-theme='cyber'] .tile:hover {
+    transform: translateY(-5px) scale(1.05) !important;
+    box-shadow: 0 0 20px rgba(188, 19, 254, 0.8) !important;
+    border-color: #00ffcc !important;
+}
+
+/* 버튼 - 홀로그램 느낌 */
+body[data-theme='cyber'] button {
+    background: transparent !important;
+    color: #00ffcc !important;
+    border: 1px solid #00ffcc !important;
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.4) !important;
+    text-transform: uppercase;
+}
+
+body[data-theme='cyber'] button:hover {
+    background: #00ffcc !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px #00ffcc !important;
+}
+
+/* 뱃지 - 활성화된 턴 강조 */
+body[data-theme='cyber'] .active-turn-badge {
+    background: rgba(188, 19, 254, 0.2) !important;
+    border-color: #bc13fe !important;
+    box-shadow: 0 0 15px #bc13fe !important;
+    animation: cyber-pulse 1.5s infinite !important;
+}
+
+@keyframes cyber-pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; filter: brightness(1.2); }
+}
+
+/* BGM 버튼 전용 스타일 */
 .bgm-btn {
     font-size: 1rem;
     padding: 6px 10px;
@@ -509,183 +1860,6 @@ body[data-theme='cyber'] {
     border-color: var(--accent-purple);
     color: var(--accent-purple);
     box-shadow: 0 0 10px rgba(157, 80, 187, 0.3);
-}
-
-/* ====================================================
-   🎂 생일 축하 오버레이 스타일 (진금 전용)
-   ==================================================== */
-@keyframes bdFadeIn  { from{opacity:0;transform:scale(0.92);} to{opacity:1;transform:scale(1);} }
-@keyframes bdFadeOut { from{opacity:1;transform:scale(1);}    to{opacity:0;transform:scale(0.92);} }
-
-@keyframes bdBounce {
-    0%,100% { transform: scale(1) rotate(-1.5deg); }
-    50%     { transform: scale(1.1) rotate(1.5deg); }
-}
-
-@keyframes bdFloat {
-    0%,100% { transform: translateY(0px); }
-    50%     { transform: translateY(-16px); }
-}
-
-@keyframes bdRainbow {
-    0%   { color:#ff6b6b; text-shadow:0 0 30px rgba(255,100,100,0.8); }
-    16%  { color:#ffd93d; text-shadow:0 0 30px rgba(255,220,60,0.8); }
-    33%  { color:#6bcb77; text-shadow:0 0 30px rgba(107,203,119,0.8); }
-    50%  { color:#4d96ff; text-shadow:0 0 30px rgba(77,150,255,0.8); }
-    66%  { color:#c77dff; text-shadow:0 0 30px rgba(199,125,255,0.8); }
-    83%  { color:#ff6b9d; text-shadow:0 0 30px rgba(255,107,157,0.8); }
-    100% { color:#ff6b6b; text-shadow:0 0 30px rgba(255,100,100,0.8); }
-}
-
-@keyframes bdShimmer {
-    0%   { background-position: 200% center; }
-    100% { background-position: -200% center; }
-}
-
-@keyframes bdSpark {
-    0%   { opacity:0; transform:scale(0.4) rotate(0deg); }
-    40%  { opacity:1; transform:scale(1.3) rotate(160deg); }
-    100% { opacity:0; transform:scale(0.2) rotate(360deg); }
-}
-
-@keyframes bdRibbon {
-    0%,100% { transform: rotate(-5deg) scale(1); }
-    50%     { transform: rotate(5deg) scale(1.1); }
-}
-
-@keyframes bdStars {
-    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity:1; }
-    100% { transform: translateY(-60px) rotate(360deg) scale(0); opacity:0; }
-}
-
-#birthday-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: radial-gradient(ellipse at center, rgba(80,0,80,0.92) 0%, rgba(0,0,0,0.96) 100%);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 999999;
-    backdrop-filter: blur(12px);
-    animation: bdFadeIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
-}
-
-#birthday-overlay.closing {
-    animation: bdFadeOut 0.5s ease forwards;
-}
-
-#bd-inner {
-    position: relative;
-    text-align: center;
-    padding: 50px 60px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 32px;
-    box-shadow:
-        0 0 60px rgba(255,105,180,0.3),
-        0 0 120px rgba(200,100,255,0.15),
-        inset 0 0 40px rgba(255,255,255,0.02);
-    max-width: 600px;
-    width: 90vw;
-}
-
-#bd-cake {
-    font-size: clamp(4rem, 10vw, 7rem);
-    display: block;
-    margin-bottom: 8px;
-    animation: bdFloat 1.8s ease-in-out infinite;
-    filter: drop-shadow(0 0 25px rgba(255,200,0,0.9));
-}
-
-#bd-main-text {
-    font-family: 'Georgia', 'Times New Roman', serif;
-    font-size: clamp(2.2rem, 6vw, 4.2rem);
-    font-weight: 900;
-    margin: 8px 0;
-    animation: bdBounce 1.4s ease-in-out infinite, bdRainbow 2.5s linear infinite;
-    letter-spacing: 3px;
-}
-
-#bd-name-text {
-    font-size: clamp(1.3rem, 3.5vw, 2.2rem);
-    color: #fff;
-    margin: 6px 0 16px;
-    animation: bdFloat 2.2s ease-in-out infinite;
-    animation-delay: 0.3s;
-    opacity: 0.95;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-#bd-sub-text {
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
-    color: rgba(255,255,255,0.65);
-    margin-bottom: 28px;
-    line-height: 1.7;
-}
-
-#bd-close-btn {
-    padding: 14px 48px;
-    background: linear-gradient(135deg, #ff6b9d 0%, #c77dff 50%, #4d96ff 100%);
-    background-size: 300% 300%;
-    animation: bdShimmer 2.5s linear infinite;
-    border: none;
-    border-radius: 50px;
-    color: white;
-    font-size: 1.15rem;
-    font-weight: 900;
-    cursor: pointer;
-    box-shadow: 0 6px 30px rgba(199,125,255,0.55), 0 2px 8px rgba(0,0,0,0.3);
-    letter-spacing: 1px;
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-#bd-close-btn:hover {
-    transform: translateY(-3px) scale(1.04);
-    box-shadow: 0 10px 40px rgba(199,125,255,0.7);
-}
-#bd-close-btn:active { transform: translateY(0) scale(0.98); }
-
-.bd-spark {
-    position: absolute;
-    font-size: 1.6rem;
-    animation: bdSpark 2s ease-in-out infinite;
-    pointer-events: none;
-    user-select: none;
-}
-
-.bd-ribbon {
-    position: absolute;
-    font-size: 2.2rem;
-    animation: bdRibbon 2s ease-in-out infinite;
-    pointer-events: none;
-}
-
-/* 컨페티 캔버스 */
-#birthday-confetti-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    pointer-events: none;
-    z-index: 999998;
-}
-
-/* 상단 알림 배너 (다른 유저에게 보이는) */
-#bd-banner {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: linear-gradient(135deg, #ff6b9d, #c77dff, #4d96ff);
-    color: white;
-    text-align: center;
-    padding: 12px;
-    font-size: 1.1rem;
-    font-weight: 900;
-    z-index: 50000;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    animation: bdFadeIn 0.5s ease forwards;
-    cursor: pointer;
 }
     </style>
 </head>
