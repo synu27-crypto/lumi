@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.5</title>
+    <title>루미큐브 : Ver. 60.51</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -75,12 +75,16 @@ body {
 }
 #game-board.not-my-turn { pointer-events: none; opacity: 0.7; filter: brightness(0.8); }
 
+/* 보드판 배경 이미지(점)가 너무 어두우면 다크 테마처럼 보일 수 있어요 */
 body[data-theme='pink'] #game-board {
+    /* 배경색을 다시 한번 핑크로 고정 */
     background-color: var(--board-bg) !important;
+    /* 그리드 점 색상을 다크 테마의 회색이 아닌 투명도 있는 핑크로 변경 */
     background-image: radial-gradient(circle, rgba(255, 102, 163, 0.2) 1px, transparent 1px) !important;
-    filter: none !important;
+    filter: none !important; /* 혹시 모를 어두운 필터 제거 */
 }
 
+/* === 타일 === */
 .tile { 
     width: 44px; height: 64px; 
     background: var(--tile-bg) !important; 
@@ -104,6 +108,7 @@ body[data-theme='pink'] #game-board {
     z-index: 50 !important;
 }
 
+/* === 채팅 및 로그 === */
 #chat-wrapper {
     position: fixed;
     bottom: 270px !important;
@@ -146,6 +151,7 @@ body[data-theme='pink'] #game-board {
 }
 #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: var(--main-text); outline: none; }
 
+/* === 하단 랙 === */
 #my-rack { 
     height: 150px; 
     background: var(--rack-bg); 
@@ -169,6 +175,7 @@ body[data-theme='pink'] #game-board {
     background: transparent !important;
 }
 
+/* === 버튼 === */
 button { 
     padding: 8px 16px; font-weight: 700; cursor: pointer; 
     border-radius: 8px; border: 1px solid rgba(128,128,128,0.2); 
@@ -177,6 +184,7 @@ button {
 }
 button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
+/* === 플레이어 뱃지 === */
 .player-badge {
     background: rgba(128,128,128,0.1); color: var(--main-text);
     padding: 5px 12px; border-radius: 15px;
@@ -187,6 +195,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52,152,219,0.2) !important; }
 .tile-count { background: var(--main-text); color: var(--bg-color); padding: 1px 6px; border-radius: 5px; font-weight: 900; }
 
+/* === 모달/오버레이 === */
 #overlay-layer, #entry-layer { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
     background: rgba(0,0,0,0.85); 
@@ -210,6 +219,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     font-weight: 800; font-size: 0.8rem; margin-right: 10px; display: none;
 }
 
+/* === 테마 버튼 === */
 .theme-selector { display: flex; gap: 5px; }
 .theme-btn {
     width: 28px; height: 28px; padding: 0;
@@ -223,6 +233,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .theme-btn:hover { transform: scale(1.1); }
 .theme-btn.active { border-color: var(--accent-purple) !important; box-shadow: 0 0 8px var(--accent-purple); }
 
+/* === 힌트 === */
 @keyframes hint-glow {
     0%   { box-shadow: 0 0 5px var(--accent-gold); transform: scale(1); }
     50%  { box-shadow: 0 0 20px var(--accent-gold); transform: scale(1.05); }
@@ -230,6 +241,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 }
 .hint-target { animation: hint-glow 1s infinite; border: 2px solid var(--accent-gold) !important; z-index: 1000 !important; }
 
+/* === 로비 === */
 .lobby-player-tag { display: inline-flex; align-items: center; background: var(--turn-blue); color: #fff; padding: 8px 16px; border-radius: 20px; margin: 4px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 .lobby-player-tag.spec-tag { background: rgba(128,128,128,0.2); color: var(--main-text); border: 1px dashed rgba(128,128,128,0.5); box-shadow: none; }
 
@@ -237,18 +249,20 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .rank-table th { border-bottom: 1px solid rgba(128,128,128,0.2); padding: 8px; color: var(--accent-gold); }
 .rank-table td { padding: 8px; border-bottom: 1px solid rgba(128,128,128,0.1); }
 
+/* === 선택 박스 === */
 #selection-box { position: absolute; border: 1px solid rgba(52,152,219,0.8); background: rgba(52,152,219,0.2); pointer-events: none; display: none; z-index: 9999; }
 
+/* 말풍선 사이즈 줄이기 */
 .emoji-bubble {
     position: absolute; 
-    top: calc(100% + 5px);
+    top: calc(100% + 5px); /* 간격 살짝 밀착 */
     left: 50%;
     transform: translateX(-50%);
     background: white; 
     color: black;
-    padding: 4px 10px;
+    padding: 4px 10px; /* 안쪽 여백 줄임 */
     border-radius: 10px; 
-    font-size: 0.85rem;
+    font-size: 0.85rem; /* 폰트 크기 축소 */
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     z-index: 99999; 
     pointer-events: none; 
@@ -257,19 +271,20 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     font-weight: 600;
 }
 
+/* 이모티콘 선택창 버튼 사이즈 줄이기 */
 .emote-btn { 
-    font-size: 0.9rem;
+    font-size: 0.9rem;  /* 버튼 전체 폰트 축소 */
     cursor: pointer; 
     background: rgba(255,255,255,0.05);
     border: none; 
     border-radius: 6px; 
     transition: all 0.2s; 
-    padding: 6px 10px;
+    padding: 6px 10px; /* 버튼 여백 축소 */
     color: var(--main-text); 
     width: calc(50% - 6px); 
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 6px; /* 이모지-텍스트 사이 간격 좁힘 */
 }
 .emoji-bubble::after { 
     content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
@@ -292,32 +307,32 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     border-radius: 12px; 
     padding: 10px; 
     border: 1px solid rgba(0,0,0,0.1); 
-    gap: 8px;
+    gap: 8px;           /* 버튼들 사이 간격 */
     flex-wrap: wrap; 
-    width: 320px;
+    width: 320px;       /* 텍스트를 담기 위해 폭을 220px -> 320px로 확장 */
     z-index: 30000; 
     box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
-    max-height: 250px;
+    max-height: 250px;  /* 목록이 길어질 경우를 대비 */
     overflow-y: auto;
 }
 
 .emote-btn { 
-    font-size: 1.1rem;
+    font-size: 1.1rem;  /* 텍스트 가독성을 위해 살짝 조절 */
     cursor: pointer; 
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.05); /* 버튼 배경 살짝 넣기 */
     border: none; 
-    border-radius: 8px;
+    border-radius: 8px; /* 버튼을 둥글게 */
     transition: all 0.2s; 
     padding: 8px 12px; 
     color: var(--main-text); 
-    width: calc(50% - 8px);
+    width: calc(50% - 8px); /* 한 줄에 버튼 두 개씩 배치 */
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 10px;          /* 이모지와 텍스트 사이 간격 */
 }
 
 .emote-btn:hover { 
-    transform: translateY(-2px);
+    transform: translateY(-2px); /* 위로 살짝 올라가는 효과 */
     background: rgba(255,255,255,0.15); 
 }
 
@@ -1847,260 +1862,6 @@ body[data-theme='cyber'] .active-turn-badge {
     box-shadow: 0 0 10px rgba(157, 80, 187, 0.3);
 }
 
-/* ====================================================
-   🎂 생일 축하 오버레이 스타일 (진금 전용)
-   ==================================================== */
-@keyframes bdFadeIn  { from{opacity:0;transform:scale(0.92);} to{opacity:1;transform:scale(1);} }
-@keyframes bdFadeOut { from{opacity:1;transform:scale(1);}    to{opacity:0;transform:scale(0.92);} }
-
-@keyframes bdBounce {
-    0%,100% { transform: scale(1) rotate(-1.5deg); }
-    50%     { transform: scale(1.1) rotate(1.5deg); }
-}
-
-@keyframes bdFloat {
-    0%,100% { transform: translateY(0px); }
-    50%     { transform: translateY(-16px); }
-}
-
-@keyframes bdRainbow {
-    0%   { color:#ff6b6b; text-shadow:0 0 30px rgba(255,100,100,0.8); }
-    16%  { color:#ffd93d; text-shadow:0 0 30px rgba(255,220,60,0.8); }
-    33%  { color:#6bcb77; text-shadow:0 0 30px rgba(107,203,119,0.8); }
-    50%  { color:#4d96ff; text-shadow:0 0 30px rgba(77,150,255,0.8); }
-    66%  { color:#c77dff; text-shadow:0 0 30px rgba(199,125,255,0.8); }
-    83%  { color:#ff6b9d; text-shadow:0 0 30px rgba(255,107,157,0.8); }
-    100% { color:#ff6b6b; text-shadow:0 0 30px rgba(255,100,100,0.8); }
-}
-
-@keyframes bdShimmer {
-    0%   { background-position: 200% center; }
-    100% { background-position: -200% center; }
-}
-
-@keyframes bdSpark {
-    0%   { opacity:0; transform:scale(0.4) rotate(0deg); }
-    40%  { opacity:1; transform:scale(1.3) rotate(160deg); }
-    100% { opacity:0; transform:scale(0.2) rotate(360deg); }
-}
-
-@keyframes bdRibbon {
-    0%,100% { transform: rotate(-5deg) scale(1); }
-    50%     { transform: rotate(5deg) scale(1.1); }
-}
-
-@keyframes bdStars {
-    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity:1; }
-    100% { transform: translateY(-60px) rotate(360deg) scale(0); opacity:0; }
-}
-
-#birthday-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: radial-gradient(ellipse at center, rgba(80,0,80,0.92) 0%, rgba(0,0,0,0.96) 100%);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 999999;
-    backdrop-filter: blur(12px);
-    animation: bdFadeIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
-}
-
-#birthday-overlay.closing {
-    animation: bdFadeOut 0.5s ease forwards;
-}
-
-#bd-inner {
-    position: relative;
-    text-align: center;
-    padding: 50px 60px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 32px;
-    box-shadow:
-        0 0 60px rgba(255,105,180,0.3),
-        0 0 120px rgba(200,100,255,0.15),
-        inset 0 0 40px rgba(255,255,255,0.02);
-    max-width: 600px;
-    width: 90vw;
-}
-
-#bd-cake {
-    font-size: clamp(4rem, 10vw, 7rem);
-    display: block;
-    margin-bottom: 8px;
-    animation: bdFloat 1.8s ease-in-out infinite;
-    filter: drop-shadow(0 0 25px rgba(255,200,0,0.9));
-}
-
-#bd-main-text {
-    font-family: 'Georgia', 'Times New Roman', serif;
-    font-size: clamp(2.2rem, 6vw, 4.2rem);
-    font-weight: 900;
-    margin: 8px 0;
-    animation: bdBounce 1.4s ease-in-out infinite, bdRainbow 2.5s linear infinite;
-    letter-spacing: 3px;
-}
-
-#bd-name-text {
-    font-size: clamp(1.3rem, 3.5vw, 2.2rem);
-    color: #fff;
-    margin: 6px 0 16px;
-    animation: bdFloat 2.2s ease-in-out infinite;
-    animation-delay: 0.3s;
-    opacity: 0.95;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-#bd-sub-text {
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
-    color: rgba(255,255,255,0.65);
-    margin-bottom: 28px;
-    line-height: 1.7;
-}
-
-#bd-close-btn {
-    padding: 14px 48px;
-    background: linear-gradient(135deg, #ff6b9d 0%, #c77dff 50%, #4d96ff 100%);
-    background-size: 300% 300%;
-    animation: bdShimmer 2.5s linear infinite;
-    border: none;
-    border-radius: 50px;
-    color: white;
-    font-size: 1.15rem;
-    font-weight: 900;
-    cursor: pointer;
-    box-shadow: 0 6px 30px rgba(199,125,255,0.55), 0 2px 8px rgba(0,0,0,0.3);
-    letter-spacing: 1px;
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-#bd-close-btn:hover {
-    transform: translateY(-3px) scale(1.04);
-    box-shadow: 0 10px 40px rgba(199,125,255,0.7);
-}
-#bd-close-btn:active { transform: translateY(0) scale(0.98); }
-
-.bd-spark {
-    position: absolute;
-    font-size: 1.6rem;
-    animation: bdSpark 2s ease-in-out infinite;
-    pointer-events: none;
-    user-select: none;
-}
-
-.bd-ribbon {
-    position: absolute;
-    font-size: 2.2rem;
-    animation: bdRibbon 2s ease-in-out infinite;
-    pointer-events: none;
-}
-
-/* 컨페티 캔버스 */
-#birthday-confetti-canvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    pointer-events: none;
-    z-index: 999998;
-}
-
-/* ─── 다른 플레이어용 축하 팝업 ─── */
-@keyframes celebPop {
-    0%   { opacity:0; transform:translate(-50%,-50%) scale(0.5) rotate(-8deg); }
-    60%  { opacity:1; transform:translate(-50%,-50%) scale(1.08) rotate(2deg); }
-    80%  { transform:translate(-50%,-50%) scale(0.97) rotate(-1deg); }
-    100% { opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0deg); }
-}
-@keyframes celebOut {
-    0%   { opacity:1; transform:translate(-50%,-50%) scale(1); }
-    100% { opacity:0; transform:translate(-50%,-50%) scale(0.85); }
-}
-@keyframes celebFloat {
-    0%,100% { transform:translate(-50%,-50%) translateY(0px); }
-    50%     { transform:translate(-50%,-50%) translateY(-10px); }
-}
-
-#bd-celeb-popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 9999998;
-    background: linear-gradient(135deg, rgba(30,10,50,0.97) 0%, rgba(10,10,40,0.97) 100%);
-    border: 2px solid rgba(255,107,157,0.6);
-    border-radius: 28px;
-    padding: 36px 52px;
-    text-align: center;
-    box-shadow:
-        0 0 50px rgba(199,125,255,0.5),
-        0 0 100px rgba(255,107,157,0.25),
-        inset 0 0 30px rgba(255,255,255,0.03);
-    animation: celebPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
-    min-width: 340px;
-    max-width: 90vw;
-}
-#bd-celeb-popup.closing {
-    animation: celebOut 0.45s ease forwards;
-}
-#bd-celeb-emoji {
-    font-size: 3.5rem;
-    display: block;
-    margin-bottom: 10px;
-    filter: drop-shadow(0 0 18px rgba(255,200,0,0.9));
-    animation: bdFloat 1.6s ease-in-out infinite;
-}
-#bd-celeb-title {
-    font-size: clamp(1.4rem, 3.5vw, 2rem);
-    font-weight: 900;
-    margin: 6px 0 4px;
-    animation: bdRainbow 2.5s linear infinite;
-    letter-spacing: 2px;
-}
-#bd-celeb-sub {
-    font-size: clamp(0.85rem, 2vw, 1.05rem);
-    color: rgba(255,255,255,0.75);
-    margin: 8px 0 22px;
-    line-height: 1.7;
-}
-#bd-celeb-btn {
-    padding: 11px 36px;
-    background: linear-gradient(135deg, #ff6b9d 0%, #c77dff 50%, #4d96ff 100%);
-    background-size: 300% 300%;
-    animation: bdShimmer 2.5s linear infinite;
-    border: none;
-    border-radius: 50px;
-    color: white;
-    font-size: 1rem;
-    font-weight: 900;
-    cursor: pointer;
-    box-shadow: 0 5px 25px rgba(199,125,255,0.5);
-    letter-spacing: 0.5px;
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-#bd-celeb-btn:hover {
-    transform: translateY(-2px) scale(1.04);
-    box-shadow: 0 8px 35px rgba(199,125,255,0.7);
-}
-
-/* 상단 알림 배너 (다른 유저에게 보이는) */
-#bd-banner {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: linear-gradient(135deg, #ff6b9d, #c77dff, #4d96ff);
-    color: white;
-    text-align: center;
-    padding: 12px;
-    font-size: 1.1rem;
-    font-weight: 900;
-    z-index: 50000;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    animation: bdFadeIn 0.5s ease forwards;
-    cursor: pointer;
-}
     </style>
 </head>
 
@@ -2128,8 +1889,8 @@ body[data-theme='cyber'] .active-turn-badge {
                 <button class="theme-btn navy"     onclick="window.setTheme('navy')"     title="딥 네이비">🌊</button>
                 <button class="theme-btn cyber" onclick="window.setTheme('cyber')" title="네온">⚡</button>
                 <button id="bgm-toggle-btn" class="bgm-btn" onclick="window.toggleBGM()" title="배경음악 ON/OFF">
-                    <span id="bgm-icon">🔇</span> <span style="font-size: 0.75rem;">BGM</span>
-                </button>
+    <span id="bgm-icon">🔇</span> <span style="font-size: 0.75rem;">BGM</span>
+</button>
             </div>
 
             <span id="reg-score-badge"></span>
@@ -2228,13 +1989,16 @@ body[data-theme='cyber'] .active-turn-badge {
         document.querySelectorAll('.theme-btn').forEach(btn => {
             btn.classList.toggle('active', btn.classList.contains(themeName));
         });
-        if(window.applyAutoSort) window.applyAutoSort();
+// 🎀 테마 바꿀 때 내 랙(Rack)의 타일들을 다시 그려서 색상을 갱신합니다.
+    if(window.applyAutoSort) window.applyAutoSort();
     };
 
+    // ✅ 수정 1: addGameLog - 객체가 아닌 문자열로 저장
     window.addGameLog = function(message) {
         if (!myName) return;
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        // 문자열로 저장 (기존엔 {time, msg} 객체로 저장해서 "[object Object]" 가 출력됐음)
         db.ref('logs').push(`[${timeStr}] ${message}`);
     };
 
@@ -2291,6 +2055,46 @@ body[data-theme='cyber'] .active-turn-badge {
             if (currentRun.length >= 3) sets.push(currentRun.map(t => ({ type: 'rack', id: t.id })));
         });
 
+        if (isReg) {
+            const rows = {};
+            Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
+            for (let y in rows) {
+                const rowTiles = rows[y].sort((a,b) => a.x - b.x);
+                let currentBoardSet = [];
+                for (let i = 0; i < rowTiles.length; i++) {
+                    currentBoardSet.push(rowTiles[i]);
+                    if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
+                        if (currentBoardSet.length >= 3) {
+                            const nonJokers = currentBoardSet.filter(t => t.num !== 'J');
+                            if (nonJokers.length > 0) {
+                                const isGroup = nonJokers.every(t => t.num === nonJokers[0].num);
+                                hand.forEach(handTile => {
+                                    if (handTile.num === 'J') return;
+                                    if (isGroup && currentBoardSet.length < 4) {
+                                        const boardColors = currentBoardSet.map(t => t.color);
+                                        if (handTile.num === nonJokers[0].num && !boardColors.includes(handTile.color)) {
+                                            sets.push([{ type:'rack', id:handTile.id }, ...currentBoardSet.map(t => ({ type:'board', id:t.id }))]);
+                                        }
+                                    } else if (!isGroup) {
+                                        const color = nonJokers[0].color;
+                                        const firstRealIdx = currentBoardSet.findIndex(t => t.num !== 'J');
+                                        const firstRealNum = Number(currentBoardSet[firstRealIdx].num);
+                                        const firstNum = firstRealNum - firstRealIdx;
+                                        const lastNum = firstNum + currentBoardSet.length - 1;
+                                        const hn = Number(handTile.num);
+                                        if (handTile.color === color && ((hn === firstNum-1 && hn >= 1) || (hn === lastNum+1 && hn <= 13))) {
+                                            sets.push([{ type:'rack', id:handTile.id }, ...currentBoardSet.map(t => ({ type:'board', id:t.id }))]);
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        currentBoardSet = [];
+                    }
+                }
+            }
+        }
+
         if (sets.length === 0) return alert("현재 낼 수 있는 타일이 없습니다.");
         const allTargetIds = new Set();
         sets.forEach(setInfo => setInfo.forEach(item => allTargetIds.add(item.type === 'board' ? item.id : "rack-" + item.id)));
@@ -2298,391 +2102,8 @@ body[data-theme='cyber'] .active-turn-badge {
         setTimeout(() => document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target')), 5000);
     };
 
-    // =====================================================
-    // 🎂 생일 축하 시스템 (진금 전용)
-    // =====================================================
-
-    window.checkAndPlayBirthday = function(name) {
-        if (name !== '진금') return;
-        // 이번 브라우저 세션에서 이미 재생됐으면 스킵
-        if (window.sessionStorage.getItem('birthday-played-jingeum')) return;
-        window.sessionStorage.setItem('birthday-played-jingeum', '1');
-
-        setTimeout(() => {
-            window.launchConfetti();
-            window.showBirthdayOverlay();
-            window.playBirthdayMusic();
-            // 다른 유저들에게도 공지 (Firebase 통해서)
-            if (db) {
-                db.ref('birthday_event').set({ name: '진금', time: Date.now() });
-            }
-        }, 800);
-    };
-
-    window.showBirthdayOverlay = function() {
-        // 기존 오버레이가 있으면 제거
-        const existing = document.getElementById('birthday-overlay');
-        if (existing) existing.remove();
-
-        const overlay = document.createElement('div');
-        overlay.id = 'birthday-overlay';
-
-        overlay.innerHTML = `
-            <div id="bd-inner">
-                <!-- 반짝이 스파크들 -->
-                <div class="bd-spark" style="top:-10px;left:8%;animation-delay:0s;">✨</div>
-                <div class="bd-spark" style="top:5px;right:12%;animation-delay:0.4s;">🌟</div>
-                <div class="bd-spark" style="top:30%;left:-15px;animation-delay:0.7s;">⭐</div>
-                <div class="bd-spark" style="top:30%;right:-15px;animation-delay:1.1s;">✨</div>
-                <div class="bd-spark" style="bottom:15px;left:10%;animation-delay:0.2s;">🎊</div>
-                <div class="bd-spark" style="bottom:20px;right:8%;animation-delay:0.9s;">🎉</div>
-                <div class="bd-spark" style="top:50%;left:3%;animation-delay:0.5s;">💫</div>
-                <div class="bd-spark" style="top:50%;right:3%;animation-delay:1.3s;">⚡</div>
-                
-                <!-- 리본 -->
-                <div class="bd-ribbon" style="top:-20px;left:18%;animation-delay:0s;">🎀</div>
-                <div class="bd-ribbon" style="top:-20px;right:18%;animation-delay:0.6s;">🎀</div>
-                
-                <!-- 케이크 -->
-                <span id="bd-cake">🎂</span>
-                
-                <!-- 메인 텍스트 -->
-                <div id="bd-main-text">생일 축하합니다!</div>
-                <div id="bd-name-text">🎀 진금님, 오늘도 빛나는 하루! 🎀</div>
-                <div id="bd-sub-text">
-                    루미큐브에서도 행복한 생일 보내세요 🎮<br>
-                    오늘 게임은 당연히 진금님 승리! 🏆
-                </div>
-                
-                <!-- 닫기 버튼 -->
-                <button id="bd-close-btn" onclick="window.closeBirthdayOverlay()">
-                    🎁 고마워요!
-                </button>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-
-        // 12초 후 자동 닫기
-        setTimeout(() => window.closeBirthdayOverlay(), 12000);
-    };
-
-    window.closeBirthdayOverlay = function() {
-        const overlay = document.getElementById('birthday-overlay');
-        if (!overlay) return;
-        overlay.classList.add('closing');
-        setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 500);
-
-        const canvas = document.getElementById('birthday-confetti-canvas');
-        if (canvas) canvas.remove();
-
-        const banner = document.getElementById('bd-banner');
-        if (banner) {
-            banner.style.animation = 'bdFadeOut 0.4s ease forwards';
-            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 400);
-        }
-    };
-
-    window.playBirthdayMusic = function() {
-        try {
-            const AC = window.AudioContext || window.webkitAudioContext;
-            const ctx = new AC();
-
-            // 🎵 Happy Birthday - C Major 음표 배열 [주파수(Hz), 박자길이(초)]
-            const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00,
-                  A4=440.00, B4=493.88, C5=523.25, D5=587.33, E5=659.25,
-                  F5=698.46, G5=783.99, A5=880.00;
-
-            const song = [
-                // "생일 축하합니다~" (x1)
-                [C4,0.22],[C4,0.22],[D4,0.45],[C4,0.45],[F4,0.45],[E4,0.9],
-                // "생일 축하합니다~" (x2)
-                [C4,0.22],[C4,0.22],[D4,0.45],[C4,0.45],[G4,0.45],[F4,0.9],
-                // "사랑하는 진금~"
-                [C4,0.22],[C4,0.22],[C5,0.45],[A4,0.45],[F4,0.45],[E4,0.45],[D4,0.9],
-                // "생일 축하합니다~" (마지막)
-                [B4,0.22],[B4,0.22],[A4,0.45],[F4,0.45],[G4,0.45],[F4,1.1],
-            ];
-
-            // 멜로디 재생 함수
-            function playNote(freq, startT, dur, vol=0.28, type='sine') {
-                const osc  = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, startT);
-                gain.gain.setValueAtTime(0, startT);
-                gain.gain.linearRampToValueAtTime(vol, startT + 0.02);
-                gain.gain.setValueAtTime(vol * 0.85, startT + dur * 0.75);
-                gain.gain.linearRampToValueAtTime(0, startT + dur);
-                osc.start(startT);
-                osc.stop(startT + dur + 0.01);
-            }
-
-            // 반주(코드) 재생
-            function playChord(freqs, startT, dur) {
-                freqs.forEach(f => playNote(f, startT, dur, 0.06, 'triangle'));
-            }
-
-            let t = ctx.currentTime + 0.15;
-            song.forEach(([freq, dur]) => {
-                playNote(freq, t, dur, 0.3, 'sine');
-                playNote(freq * 2, t, dur, 0.06, 'triangle'); // 옥타브 배음
-                t += dur;
-            });
-
-            // 🎺 노래 끝나면 팡파레!
-            const fanfareStart = t + 0.3;
-            const fanfare = [
-                [G4, 0.12], [G4, 0.12], [G4, 0.12], [E5, 0.5],
-                [D5, 0.12], [E5, 0.12], [D5, 0.12], [C5, 0.7],
-            ];
-            let ft = fanfareStart;
-            fanfare.forEach(([freq, dur]) => {
-                playNote(freq, ft, dur, 0.35, 'sawtooth');
-                playNote(freq, ft, dur, 0.18, 'sine');
-                ft += dur;
-            });
-
-            // 마지막 화음
-            playChord([C4, E4, G4, C5], ft, 1.2);
-            playNote(C5, ft, 1.2, 0.3, 'sine');
-
-        } catch(e) {
-            console.warn('생일 노래 재생 실패:', e);
-        }
-    };
-
-    window.launchConfetti = function() {
-        const existing = document.getElementById('birthday-confetti-canvas');
-        if (existing) existing.remove();
-
-        const canvas = document.createElement('canvas');
-        canvas.id = 'birthday-confetti-canvas';
-        canvas.style.position = 'fixed';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        canvas.style.width = '100vw';
-        canvas.style.height = '100vh';
-        canvas.style.pointerEvents = 'none';
-        canvas.style.zIndex = '9999999';
-        canvas.width  = window.innerWidth;
-        canvas.height = window.innerHeight;
-        document.body.appendChild(canvas);
-
-        const ctx = canvas.getContext('2d');
-        const colors = [
-            '#ff6b6b','#ffd93d','#6bcb77','#4d96ff',
-            '#c77dff','#ff6b9d','#ffffff','#ffb347',
-            '#00e5ff','#ff9ff3','#ff4757','#eccc68'
-        ];
-        const shapes = ['circle','rect','triangle','star','diamond'];
-
-        function makeParticle(overrides) {
-            return Object.assign({
-                x: Math.random() * canvas.width,
-                y: -20,
-                vx: (Math.random() - 0.5) * 4,
-                vy: 2 + Math.random() * 4,
-                size: 6 + Math.random() * 10,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                shape: shapes[Math.floor(Math.random() * shapes.length)],
-                rotation: Math.random() * Math.PI * 2,
-                rotSpeed: (Math.random() - 0.5) * 0.2,
-                opacity: 1,
-                gravity: 0.07 + Math.random() * 0.07,
-                wobble: Math.random() * Math.PI * 2,
-                wobbleSpeed: 0.03 + Math.random() * 0.05,
-                delay: 0,
-                dead: false,
-            }, overrides);
-        }
-
-        const particles = [];
-
-        // ① 위에서 내려오는 파티클 300개
-        for (let i = 0; i < 300; i++) {
-            particles.push(makeParticle({ delay: Math.floor(Math.random() * 80) }));
-        }
-
-        // ② 좌우에서 솟구치는 파티클 200개 (폭죽 효과)
-        for (let i = 0; i < 200; i++) {
-            const fromLeft = Math.random() < 0.5;
-            particles.push(makeParticle({
-                x:    fromLeft ? 0 : canvas.width,
-                y:    canvas.height * 0.5 + (Math.random() - 0.5) * canvas.height * 0.4,
-                vx:   (fromLeft ? 1 : -1) * (4 + Math.random() * 8),
-                vy:   -7 - Math.random() * 9,
-                gravity: 0.18 + Math.random() * 0.1,
-                size: 8 + Math.random() * 11,
-                delay: Math.floor(Math.random() * 30),
-            }));
-        }
-
-        // ③ 화면 하단 중앙 버스트 100개
-        for (let i = 0; i < 100; i++) {
-            const angle = -Math.PI * (0.1 + Math.random() * 0.8);
-            const speed = 5 + Math.random() * 10;
-            particles.push(makeParticle({
-                x:    canvas.width * 0.3 + Math.random() * canvas.width * 0.4,
-                y:    canvas.height + 10,
-                vx:   Math.cos(angle) * speed,
-                vy:   Math.sin(angle) * speed,
-                gravity: 0.15 + Math.random() * 0.1,
-                delay: Math.floor(Math.random() * 20),
-            }));
-        }
-
-        function drawShape(shape, size) {
-            ctx.beginPath();
-            switch(shape) {
-                case 'circle':
-                    ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
-                    break;
-                case 'rect':
-                    ctx.rect(-size / 2, -size / 4, size, size / 2);
-                    break;
-                case 'triangle':
-                    ctx.moveTo(0, -size / 2);
-                    ctx.lineTo(size / 2, size / 2);
-                    ctx.lineTo(-size / 2, size / 2);
-                    break;
-                case 'diamond':
-                    ctx.moveTo(0, -size / 2);
-                    ctx.lineTo(size / 3, 0);
-                    ctx.lineTo(0, size / 2);
-                    ctx.lineTo(-size / 3, 0);
-                    break;
-                case 'star': {
-                    const outerR = size / 2, innerR = size / 4.5;
-                    for (let i = 0; i < 10; i++) {
-                        const r = i % 2 === 0 ? outerR : innerR;
-                        const a = (i * Math.PI) / 5 - Math.PI / 2;
-                        i === 0 ? ctx.moveTo(r * Math.cos(a), r * Math.sin(a))
-                                : ctx.lineTo(r * Math.cos(a), r * Math.sin(a));
-                    }
-                    break;
-                }
-            }
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        const MARGIN = 60;
-        let frame = 0;
-        let rafId = null;
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            frame++;
-
-            let anyAlive = false;
-
-            particles.forEach(p => {
-                if (p.dead) return;
-                if (frame < p.delay) { anyAlive = true; return; } // 딜레이 대기 중도 살아있음으로 처리
-
-                p.wobble += p.wobbleSpeed;
-                p.x += p.vx + Math.sin(p.wobble) * 1.5;
-                p.y += p.vy;
-                p.vy += p.gravity;
-                p.rotation += p.rotSpeed;
-
-                // 화면 밖으로 완전히 벗어나면 dead 처리
-                if (p.y > canvas.height + MARGIN || p.x < -MARGIN || p.x > canvas.width + MARGIN) {
-                    p.dead = true;
-                    return;
-                }
-
-                // 후반부 서서히 페이드아웃
-                if (p.y > canvas.height * 0.75) {
-                    p.opacity = Math.max(0, 1 - (p.y - canvas.height * 0.75) / (canvas.height * 0.3));
-                }
-                if (p.opacity <= 0) { p.dead = true; return; }
-
-                anyAlive = true;
-
-                ctx.save();
-                ctx.globalAlpha = p.opacity;
-                ctx.fillStyle = p.color;
-                ctx.shadowColor = p.color;
-                ctx.shadowBlur = 6;
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotation);
-                drawShape(p.shape, p.size);
-                ctx.restore();
-            });
-
-            if (anyAlive) {
-                rafId = requestAnimationFrame(animate);
-            } else {
-                if (canvas.parentNode) canvas.remove();
-            }
-        }
-
-        rafId = requestAnimationFrame(animate);
-
-        // 최대 15초 후 강제 종료 안전망
-        setTimeout(() => {
-            if (rafId) cancelAnimationFrame(rafId);
-            if (canvas.parentNode) canvas.remove();
-        }, 15000);
-    };
-
-    // 🎉 다른 플레이어용 축하 팝업 (컨페티와 함께 표시)
-    window.showBirthdayCelebration = function() {
-        const existing = document.getElementById('bd-celeb-popup');
-        if (existing) existing.remove();
-
-        const popup = document.createElement('div');
-        popup.id = 'bd-celeb-popup';
-        popup.innerHTML = `
-            <span id="bd-celeb-emoji">🎂</span>
-            <div id="bd-celeb-title">생일 축하합니다!</div>
-            <div id="bd-celeb-sub">
-                🎀 진금님의 생일을 축하해 주세요! 🎀<br>
-                오늘만큼은 진금님께 살살 해주는 건 어떨까요? 💝
-            </div>
-            <button id="bd-celeb-btn" onclick="window.closeBirthdayCelebration()">🎁 축하합니다!</button>
-        `;
-        document.body.appendChild(popup);
-
-        // 10초 후 자동 닫기
-        setTimeout(() => window.closeBirthdayCelebration(), 10000);
-    };
-
-    window.closeBirthdayCelebration = function() {
-        const popup = document.getElementById('bd-celeb-popup');
-        if (!popup) return;
-        popup.classList.add('closing');
-        setTimeout(() => { if (popup.parentNode) popup.remove(); }, 450);
-    };
-
-    // 다른 유저에게 보이는 배너 (Firebase 이벤트 수신)
-    window.showBirthdayBanner = function() {
-        const existing = document.getElementById('bd-banner');
-        if (existing) return;
-        const banner = document.createElement('div');
-        banner.id = 'bd-banner';
-        banner.innerHTML = '🎂 진금님의 생일을 축하합니다! 🎉 Happy Birthday! 🎀';
-        banner.onclick = () => {
-            banner.style.animation = 'bdFadeOut 0.4s ease forwards';
-            setTimeout(() => { if (banner.parentNode) banner.remove(); }, 400);
-        };
-        document.body.appendChild(banner);
-        setTimeout(() => {
-            if (banner.parentNode) {
-                banner.style.animation = 'bdFadeOut 0.4s ease forwards';
-                setTimeout(() => { if (banner.parentNode) banner.remove(); }, 400);
-            }
-        }, 8000);
-    };
-
-    // =====================================================
-
     window.handleEntry = function(role, isAuto = false) {
-        if (!db) return setTimeout(() => window.handleEntry(role, isAuto), 100);
+ if (!db) return setTimeout(() => window.handleEntry(role, isAuto), 100); // ✅ 추가
         if (!isAuto) {
             const nickInput = document.getElementById('nick-input');
             if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
@@ -2693,13 +2114,10 @@ body[data-theme='cyber'] .active-turn-badge {
         }
         window.sessionStorage.setItem('lumi-nick', myName);
         window.sessionStorage.setItem('lumi-role', myRole);
-        db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
-        db.ref('players/' + myName + '/joined').onDisconnect().set(false);
-        document.getElementById('entry-layer').style.display = 'none';
+db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
+db.ref('players/' + myName + '/joined').onDisconnect().set(false); // 접속 상태만 해제하도록 변경
+document.getElementById('entry-layer').style.display = 'none';
         if (!isAuto) playSFX('success');
-
-        // 🎂 진금 생일 이벤트 체크!
-        window.checkAndPlayBirthday(myName);
 
         db.ref('hands/' + myName).on('value', snap => {
             myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
@@ -2709,279 +2127,318 @@ body[data-theme='cyber'] .active-turn-badge {
     };
 
     window.updatePlayerListUI = function() {
-        const listEl = document.getElementById('player-list-container');
-        if (!listEl) return;
-        listEl.innerHTML = '';
+    const listEl = document.getElementById('player-list-container');
+    if (!listEl) return;
+    listEl.innerHTML = '';
 
-        playerList.forEach(name => {
-            const badge = document.createElement('span');
-            badge.id = `badge-${name}`;
-            const pData = window.latestPlayersData[name] || {};
-            const isDanger = (pData.tileCount <= 3 && pData.tileCount > 0) ? 'danger-player' : '';
-            badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''} ${isDanger}`;
-            if (myRole === 'spectator') badge.style.cursor = 'pointer';
-            badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
-            badge.onclick = () => { if (myRole === 'spectator') window.viewPlayerHand(name); };
-            listEl.appendChild(badge);
-        });
-
-        Object.entries(window.latestPlayersData).forEach(([name, data]) => {
-            if (!data.joined || data.role !== 'spectator') return;
-            const badge = document.createElement('span');
-            badge.id = `badge-${name}`;
-            badge.className = 'player-badge';
-            badge.style.opacity = '0.6';
-            badge.style.fontStyle = 'italic';
-            badge.innerHTML = `👀 ${name}`;
-            listEl.appendChild(badge);
-        });
-
-        const isHost = (myName === currentHost);
-        document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
-        document.getElementById('btn-force-next').style.display  = isHost ? 'inline-block' : 'none';
+    playerList.forEach(name => {
+        const badge = document.createElement('span');
+        badge.id = `badge-${name}`;
         
-        const regInfoEl = document.getElementById('reg-info');
-        if (myRole === 'spectator') {
-            regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)";
-            regInfoEl.style.color = "#aaa";
-        } else {
-            const isReg = window.latestPlayersData[myName]?.registered;
-            regInfoEl.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
-            regInfoEl.style.color = "var(--accent-gold)";
-        }
-    };
+        // pData는 여기서 한 번만 선언합니다.
+        const pData = window.latestPlayersData[name] || {};
+        
+        // 위험 상태(타일 3개 이하) 체크
+        const isDanger = (pData.tileCount <= 3 && pData.tileCount > 0) ? 'danger-player' : '';
+        
+        // 클래스 부여
+        badge.className = `player-badge ${name === currentTurn ? 'active-turn-badge' : ''} ${isDanger}`;
+        
+        if (myRole === 'spectator') badge.style.cursor = 'pointer';
+
+        // 내용 삽입
+        badge.innerHTML = `${name === currentHost ? '👑 ' : ''}${name} <span class="tile-count">${pData.tileCount || 0}</span>`;
+        
+        badge.onclick = () => { if (myRole === 'spectator') window.viewPlayerHand(name); };
+        listEl.appendChild(badge);
+    });
+
+Object.entries(window.latestPlayersData).forEach(([name, data]) => {
+        if (!data.joined || data.role !== 'spectator') return;
+        const badge = document.createElement('span');
+        badge.id = `badge-${name}`;
+        badge.className = 'player-badge';
+        badge.style.opacity = '0.6';
+        badge.style.fontStyle = 'italic';
+        badge.innerHTML = `👀 ${name}`;
+        listEl.appendChild(badge);
+    });
+
+    const isHost = (myName === currentHost);
+    document.getElementById('btn-force-lobby').style.display = isHost ? 'inline-block' : 'none';
+    document.getElementById('btn-force-next').style.display  = isHost ? 'inline-block' : 'none';
+    
+    const regInfoEl = document.getElementById('reg-info');
+    if (myRole === 'spectator') {
+        regInfoEl.innerText = "👀 관전 모드 (플레이어 클릭 시 패 확인)";
+        regInfoEl.style.color = "#aaa";
+    } else {
+        const isReg = window.latestPlayersData[myName]?.registered;
+        regInfoEl.innerText = isReg ? "" : "첫 등록 필요 (30점 이상)";
+        regInfoEl.style.color = "var(--accent-gold)";
+    }
+};
 
     window.onload = function() {
-        const config = {
-            apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY",
-            authDomain: "lumi-b373e.firebaseapp.com",
-            databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/",
-            projectId: "lumi-b373e"
-        };
-
-        function initDB() {
-            if (typeof firebase === 'undefined') {
-                setTimeout(initDB, 100);
-                return;
-            }
-
-            if (!firebase.apps.length) firebase.initializeApp(config);
-            db = firebase.database();
-
-            const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
-            window.setTheme(savedTheme);
-
-            setTimeout(() => {
-                const entryLayer = document.getElementById('entry-layer');
-                if (window.sessionStorage.getItem('lumi-nick')) {
-                    window.handleEntry(null, true);
-                    if (typeof audioCtx !== 'undefined' && !audioCtx.isBGMPlaying) {
-                        window.toggleBGM();
-                    }
-                } else if (entryLayer) {
-                    entryLayer.style.display = 'flex';
-                }
-            }, 200);
-
-            db.ref('settings/status').on('value', snap => {
-                gameStatus = snap.val() || "waiting";
-                const overlay = document.getElementById('overlay-layer');
-                if (overlay) overlay.style.display = (gameStatus === "playing") ? 'none' : 'flex';
-                if (gameStatus === "waiting") window.renderLobbyUI();
-                else if (gameStatus === "finished") window.renderResultUI();
-                if (gameStatus !== "playing" && turnTimer) {
-                    clearInterval(turnTimer);
-                    document.getElementById('timer-display').innerText = "";
-                }
-            });
-
-            db.ref('settings/host').on('value', snap => {
-                currentHost = snap.val();
-                window.updatePlayerListUI();
-                if (gameStatus === "waiting") window.renderLobbyUI();
-            });
-
-            db.ref('settings/gameMode').on('value', snap => {
-                gameMode = snap.val() || 'normal';
-                if (gameStatus === "waiting") window.renderLobbyUI();
-            });
-
-            db.ref('players').on('value', snap => {
-                const players = snap.val() || {};
-                window.latestPlayersData = players;
-                if (!window.lastTileCounts) window.lastTileCounts = {}; 
-
-                Object.entries(players).forEach(([name, playerData]) => {
-                    if (playerData.joined && playerData.role === 'player' && playerData.tileCount <= 3 && playerData.tileCount > 0) {
-                        if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > playerData.tileCount) {
-                            if (window.lastTileCounts[name] > 3 || window.lastTileCounts[name] === undefined) {
-                                window.addGameLog(`⚠️ 경고! ${name}님의 남은 타일이 ${playerData.tileCount}개입니다! 조심하세요!`);
-                                playSFX('dangerAlarm');
-                            }
-                        }
-                    }
-                    window.lastTileCounts[name] = playerData.tileCount;
-                });
-
-                playerList = Object.entries(players)
-                    .filter(p => p[1].joined && p[1].role === 'player')
-                    .sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0))
-                    .map(p => p[0]);
-                if (playerList.length > 0) {
-                    let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
-                    if (currentHost !== targetHost) db.ref('settings/host').set(targetHost);
-                } else if (Object.keys(players).length === 0) {
-                    db.ref('settings/host').set("");
-                }
-                window.updatePlayerListUI();
-                if (gameStatus === "waiting") window.renderLobbyUI();
-            });
-
-            db.ref('currentTurn').on('value', snap => {
-                currentTurn = snap.val();
-                const isMy = (currentTurn === myName && myRole === 'player');
-                document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
-                ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
-                document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-                if (isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
-                window.updatePlayerListUI();
-                window.updateRegScoreUI();
-            });
-
-            db.ref('settings/turnStartTime').on('value', snap => {
-                const startTime = snap.val();
-                const timerEl = document.getElementById('timer-display');
-                if (!startTime || gameStatus !== "playing") { if (timerEl) timerEl.innerText = ""; return; }
-                if (turnTimer) clearInterval(turnTimer);
-                turnTimer = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                    timeLeft = 60 - elapsed;
-                    if (timerEl) timerEl.innerText = (timeLeft > 0 ? timeLeft : 0) + "s";
-                    if (timeLeft <= 0 && currentTurn === myName && myRole === 'player') {
-                        clearInterval(turnTimer); window.timeOutPenalty();
-                    }
-                }, 1000);
-            });
-
-            db.ref('board').on('value', snap => {
-                boardTiles = snap.val() || {};
-                window.updateRegScoreUI();
-                const bEl = document.getElementById('game-board');
-                if (!bEl) return;
-                bEl.querySelectorAll('.tile').forEach(t => t.remove());
-                Object.entries(boardTiles).forEach(([id, data]) => {
-                    if (!data || data.num === undefined) return;
-                    const div = document.createElement('div');
-                    div.className = `tile ${data.color}`;
-                    div.id = id;
-                    div.innerText = data.num;
-                    div.style.position = 'absolute';
-                    div.style.left = data.x + 'px';
-                    div.style.top  = data.y + 'px';
-                    div.draggable = (myRole === 'player');
-                    div.ondragstart = (e) => {
-                        if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
-                        let dragData = { primary: id, group: [id] };
-                        if (selectedTiles.includes(id)) {
-                            dragData.group = selectedTiles;
-                        } else {
-                            document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
-                            selectedTiles = [];
-                        }
-                        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-                        e.dataTransfer.setData("source", "board");
-                        playSFX('tilePick');
-                    };
-                    bEl.appendChild(div);
-                });
-            });
-
-            db.ref('pool').on('value', snap => {
-                document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`;
-            });
-
-            db.ref('chats').limitToLast(20).on('child_added', snap => {
-                const c = snap.val();
-                const div = document.createElement('div');
-                div.style.color = c.color || "var(--main-text)";
-                div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
-                const box = document.getElementById('chat-box');
-                if (box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
-            });
-
-            db.ref('logs').limitToLast(30).on('child_added', snap => {
-                const logMsg = snap.val();
-                const div = document.createElement('div');
-                div.style.padding = "2px 0";
-                div.style.fontSize = "0.8rem";
-                div.style.color = "var(--main-text)";
-                div.innerText = (typeof logMsg === 'object') ? `[${logMsg.time}] ${logMsg.msg}` : logMsg;
-                const logContainer = document.getElementById('game-log');
-                if (logContainer) { logContainer.appendChild(div); logContainer.scrollTop = logContainer.scrollHeight; }
-            });
-
-            db.ref('shake').on('value', snap => {
-                const data = snap.val();
-                if (!data) return;
-                if (Date.now() - data.time > 10000) return;
-                if (data.by === myName) return;
-                const container = document.getElementById('main-container');
-                container.classList.add('screen-shaking');
-                setTimeout(() => container.classList.remove('screen-shaking'), 600);
-            });
-
-            db.ref('emotes').limitToLast(10).on('child_added', snap => {
-                const data = snap.val();
-                if (Date.now() - data.time > 10000) return;
-                window.showBubble(data.name, data.emote);
-            });
-
-            // 🎂 생일 이벤트 수신 (다른 플레이어에게 컨페티 + 축하 팝업 표시)
-            db.ref('birthday_event').on('value', snap => {
-                const data = snap.val();
-                if (!data) return;
-                if (Date.now() - data.time > 30000) return; // 30초 이내만
-                if (myName === '진금') return; // 본인은 이미 오버레이로 봄
-                window.launchConfetti();
-                window.showBirthdayCelebration();
-            });
-        }
-
-        initDB();
+    const config = {
+        apiKey: "AIzaSyCgkQbHc48s68MFAy7pf2RyTSjtq0tF0bY",
+        authDomain: "lumi-b373e.firebaseapp.com",
+        databaseURL: "https://lumi-b373e-default-rtdb.firebaseio.com/",
+        projectId: "lumi-b373e"
     };
 
-    function isValidSet(tiles) {
-        if (tiles.length < 3) return false;
-        const jokers = tiles.filter(t => t.num === 'J');
-        const nonJokers = tiles.filter(t => t.num !== 'J');
-        if (nonJokers.length === 0) return true;
+    function initDB() {
+        if (typeof firebase === 'undefined') {
+            setTimeout(initDB, 100);
+            return;
+        }
 
-        const isGroup = () => {
-            const targetNum = nonJokers[0].num;
-            const colors = nonJokers.map(t => t.color);
-            return nonJokers.every(t => t.num === targetNum) && 
-                   (new Set(colors)).size === colors.length && 
-                   tiles.length <= 4;
-        };
+        if (!firebase.apps.length) firebase.initializeApp(config);
+        db = firebase.database();
 
-        const isRun = () => {
-            const targetColor = nonJokers[0].color;
-            if (!nonJokers.every(t => t.color === targetColor)) return false;
-            const nums = nonJokers.map(t => Number(t.num)).sort((a, b) => a - b);
-            if (new Set(nums).size !== nums.length) return false;
-            let gapSum = 0;
-            for (let i = 0; i < nums.length - 1; i++) {
-                gapSum += (nums[i + 1] - nums[i] - 1);
+        const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
+        window.setTheme(savedTheme);
+
+setTimeout(() => {
+            const entryLayer = document.getElementById('entry-layer');
+            if (window.sessionStorage.getItem('lumi-nick')) {
+                window.handleEntry(null, true);
+                
+                // === [4번 기능 추가] 입장 성공 시 BGM 자동 재생 시도 ===
+                if (typeof audioCtx !== 'undefined' && !audioCtx.isBGMPlaying) {
+                    window.toggleBGM();
+                }
+            } else if (entryLayer) {
+                entryLayer.style.display = 'flex';
             }
-            if (gapSum > jokers.length) return false;
-            const remainingJokers = jokers.length - gapSum;
-            const totalLength = (nums[nums.length-1] - nums[0] + 1) + remainingJokers;
-            if (totalLength !== tiles.length) return false;
-            return true; 
-        };
+        }, 200);
 
-        return isGroup() || isRun();
+        db.ref('settings/status').on('value', snap => {
+            gameStatus = snap.val() || "waiting";
+            const overlay = document.getElementById('overlay-layer');
+            if (overlay) overlay.style.display = (gameStatus === "playing") ? 'none' : 'flex';
+            if (gameStatus === "waiting") window.renderLobbyUI();
+            else if (gameStatus === "finished") window.renderResultUI();
+            if (gameStatus !== "playing" && turnTimer) {
+                clearInterval(turnTimer);
+                document.getElementById('timer-display').innerText = "";
+            }
+        });
+
+        db.ref('settings/host').on('value', snap => {
+            currentHost = snap.val();
+            window.updatePlayerListUI();
+            if (gameStatus === "waiting") window.renderLobbyUI();
+        });
+
+        db.ref('settings/gameMode').on('value', snap => {
+            gameMode = snap.val() || 'normal';
+            if (gameStatus === "waiting") window.renderLobbyUI();
+        });
+
+        db.ref('players').on('value', snap => {
+            const players = snap.val() || {};
+            window.latestPlayersData = players;
+
+            // 추가: 변수가 없으면 여기서라도 즉시 빈 객체로 만듭니다.
+            if (!window.lastTileCounts) window.lastTileCounts = {}; 
+
+            Object.entries(players).forEach(([name, playerData]) => {
+                if (playerData.joined && playerData.role === 'player' && playerData.tileCount <= 3 && playerData.tileCount > 0) {
+                    if (window.lastTileCounts[name] === undefined || window.lastTileCounts[name] > playerData.tileCount) {
+                        if (window.lastTileCounts[name] > 3 || window.lastTileCounts[name] === undefined) {
+                            window.addGameLog(`⚠️ 경고! ${name}님의 남은 타일이 ${playerData.tileCount}개입니다! 조심하세요!`);
+                            playSFX('dangerAlarm');
+                        }
+                    }
+                }
+                window.lastTileCounts[name] = playerData.tileCount;
+            });
+
+            playerList = Object.entries(players)
+                .filter(p => p[1].joined && p[1].role === 'player')
+                .sort((a, b) => (a[1].timestamp || 0) - (b[1].timestamp || 0))
+                .map(p => p[0]);
+            if (playerList.length > 0) {
+                let targetHost = playerList.includes("계헌") ? "계헌" : playerList[0];
+                if (currentHost !== targetHost) db.ref('settings/host').set(targetHost);
+            } else if (Object.keys(players).length === 0) {
+                db.ref('settings/host').set("");
+            }
+            window.updatePlayerListUI();
+            if (gameStatus === "waiting") window.renderLobbyUI();
+        });
+
+        db.ref('currentTurn').on('value', snap => {
+            currentTurn = snap.val();
+            const isMy = (currentTurn === myName && myRole === 'player');
+            document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
+            ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
+            document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
+            if (isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
+            window.updatePlayerListUI();
+            window.updateRegScoreUI();
+        });
+
+        db.ref('settings/turnStartTime').on('value', snap => {
+            const startTime = snap.val();
+            const timerEl = document.getElementById('timer-display');
+            if (!startTime || gameStatus !== "playing") { if (timerEl) timerEl.innerText = ""; return; }
+            if (turnTimer) clearInterval(turnTimer);
+            turnTimer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                timeLeft = 60 - elapsed;
+                if (timerEl) timerEl.innerText = (timeLeft > 0 ? timeLeft : 0) + "s";
+                if (timeLeft <= 0 && currentTurn === myName && myRole === 'player') {
+                    clearInterval(turnTimer); window.timeOutPenalty();
+                }
+            }, 1000);
+        });
+
+        db.ref('board').on('value', snap => {
+            boardTiles = snap.val() || {};
+            window.updateRegScoreUI();
+            const bEl = document.getElementById('game-board');
+            if (!bEl) return;
+            bEl.querySelectorAll('.tile').forEach(t => t.remove());
+            Object.entries(boardTiles).forEach(([id, data]) => {
+                if (!data || data.num === undefined) return;
+                const div = document.createElement('div');
+                div.className = `tile ${data.color}`;
+                div.id = id;
+                div.innerText = data.num;
+                div.style.position = 'absolute';
+                div.style.left = data.x + 'px';
+                div.style.top  = data.y + 'px';
+                div.draggable = (myRole === 'player');
+                div.ondragstart = (e) => {
+    if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
+
+    let dragData = { primary: id, group: [id] };
+
+    // 현재 잡은 타일이 선택 박스(selectedTiles) 안에 있다면 그룹 전체 묶기
+    if (selectedTiles.includes(id)) {
+        dragData.group = selectedTiles;
+    } else {
+        // 선택되지 않은 타일을 드래그하면 기존 다중 선택 강제 해제
+        document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
+        selectedTiles = [];
     }
+
+    // 그룹 정보를 JSON 문자열로 변환하여 전송
+    e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    e.dataTransfer.setData("source", "board");
+    playSFX('tilePick');
+};
+                bEl.appendChild(div);
+            });
+        });
+
+        db.ref('pool').on('value', snap => {
+            document.getElementById('pool-badge').innerText = `POOL: ${snap.exists() ? Object.keys(snap.val()).length : 0}`;
+        });
+
+        db.ref('chats').limitToLast(20).on('child_added', snap => {
+            const c = snap.val();
+            const div = document.createElement('div');
+            div.style.color = c.color || "var(--main-text)";
+            div.innerHTML = `<b>${c.name}:</b> ${c.msg}`;
+            const box = document.getElementById('chat-box');
+            if (box) { box.appendChild(div); box.scrollTop = box.scrollHeight; }
+        });
+
+        db.ref('logs').limitToLast(30).on('child_added', snap => {
+            const logMsg = snap.val();
+            const div = document.createElement('div');
+            div.style.padding = "2px 0";
+            div.style.fontSize = "0.8rem";
+            div.style.color = "var(--main-text)";
+            div.innerText = (typeof logMsg === 'object') ? `[${logMsg.time}] ${logMsg.msg}` : logMsg;
+            const logContainer = document.getElementById('game-log');
+            if (logContainer) { logContainer.appendChild(div); logContainer.scrollTop = logContainer.scrollHeight; }
+        });
+
+        db.ref('shake').on('value', snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    // 10초 이상 지난 이벤트는 무시 (페이지 새로고침 시 오래된 shake 방지)
+    if (Date.now() - data.time > 10000) return;
+
+    // 등록한 본인은 흔들리지 않음
+    if (data.by === myName) return;
+
+    const container = document.getElementById('main-container');
+    container.classList.add('screen-shaking');
+    setTimeout(() => container.classList.remove('screen-shaking'), 600);
+});db.ref('emotes').limitToLast(10).on('child_added', snap => {
+            const data = snap.val();
+            if (Date.now() - data.time > 10000) return;
+            window.showBubble(data.name, data.emote);
+        });
+
+    }
+
+    initDB();
+};
+
+    function isValidSet(tiles) {
+    if (tiles.length < 3) return false;
+    
+    const jokers = tiles.filter(t => t.num === 'J');
+    const nonJokers = tiles.filter(t => t.num !== 'J');
+    
+    // 모두 조커인 경우 (이론상 가능)
+    if (nonJokers.length === 0) return true;
+
+    // 1. 같은 숫자 세트 (색깔은 다르고 숫자는 동일)
+    const isGroup = () => {
+        const targetNum = nonJokers[0].num;
+        const colors = nonJokers.map(t => t.color);
+        return nonJokers.every(t => t.num === targetNum) && 
+               (new Set(colors)).size === colors.length && 
+               tiles.length <= 4;
+    };
+
+    // 2. 연속 숫자 세트 (색깔은 같고 숫자가 이어짐)
+    const isRun = () => {
+        const targetColor = nonJokers[0].color;
+        if (!nonJokers.every(t => t.color === targetColor)) return false;
+
+        const nums = nonJokers.map(t => Number(t.num)).sort((a, b) => a - b);
+        
+        // 중복 숫자 검사 (예: 1-1-J 같은 경우 방지)
+        if (new Set(nums).size !== nums.length) return false;
+
+        // 숫자 사이의 빈틈(Gap) 계산
+        let gapSum = 0;
+        for (let i = 0; i < nums.length - 1; i++) {
+            gapSum += (nums[i + 1] - nums[i] - 1);
+        }
+
+        // 필요한 조커 수가 가진 조커 수보다 많으면 실패
+        if (gapSum > jokers.length) return false;
+
+        // 남은 조커 처리 (앞이나 뒤에 붙을 수 있는지 확인)
+        const remainingJokers = jokers.length - gapSum;
+        const minNum = nums[0];
+        const maxNum = nums[nums.length - 1];
+
+        // 루미큐브 숫자는 1~13 사이여야 함
+        // 전체 길이(숫자 범위 + 남은 조커)가 타일 총 개수와 일치하는지, 
+        // 그리고 그 숫자들이 1~13 범위를 벗어나지 않는지 체크
+        const totalLength = (maxNum - minNum + 1) + remainingJokers;
+        
+        // 실제 게임 규칙상 조커를 포함한 총 길이가 타일 개수와 같아야 함
+        if (totalLength !== tiles.length) return false;
+
+        // 조커를 최대한 앞으로 당겼을 때 1보다 작아지거나, 뒤로 밀었을 때 13보다 커지면 안 됨
+        // (이 로직은 1 - 2 - J를 허용하게 됩니다)
+        return true; 
+    };
+
+    return isGroup() || isRun();
+}
 
     function validateBoard() {
         const rows = {};
@@ -3001,83 +2458,107 @@ body[data-theme='cyber'] .active-turn-badge {
     }
 
     window.handleTurnEnd = function() {
-        if (myRole !== 'player') return;
-        if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) {
-            return alert("패를 내거나 뽑으세요.");
-        }
-        if (!validateBoard()) {
-            playSFX('error');
-            return alert("보드 배치가 유효하지 않습니다!");
-        }
-        if (window.isGameEnding) return;
+    if (myRole !== 'player') return;
+    
+    // 1. 패를 냈는지 확인
+    if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) {
+        return alert("패를 내거나 뽑으세요.");
+    }
+    
+    // 2. 보드 유효성 검사
+    if (!validateBoard()) {
+        playSFX('error');
+        return alert("보드 배치가 유효하지 않습니다!");
+    }
 
-        db.ref(`players/${myName}/registered`).once('value', snap => {
-            const isReg = snap.val();
-            if (!isReg) {
-                let isPiggy = false;
-                const rows = {};
-                Object.entries(boardTiles).forEach(([id, t]) => { 
-                    t.id = id; 
-                    if(!rows[t.y]) rows[t.y]=[]; 
-                    rows[t.y].push(t); 
-                });
-                for (let y in rows) {
-                    const rowTiles = rows[y].sort((a,b) => a.x - b.x);
-                    let curr = [];
-                    for (let i = 0; i < rowTiles.length; i++) {
-                        curr.push(rowTiles[i]);
-                        if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
-                            if (curr.some(t => initialBoardState[t.id]) && curr.some(t => !initialBoardState[t.id])) {
-                                isPiggy = true;
-                            }
-                            curr = [];
+    // [중복 방지용] 이미 승리 처리가 진행 중이면 중단
+    if (window.isGameEnding) return;
+
+    db.ref(`players/${myName}/registered`).once('value', snap => {
+        const isReg = snap.val();
+        
+        // 3. 첫 등록 로직 확인
+        if (!isReg) {
+            let isPiggy = false;
+            const rows = {};
+            Object.entries(boardTiles).forEach(([id, t]) => { 
+                t.id = id; 
+                if(!rows[t.y]) rows[t.y]=[]; 
+                rows[t.y].push(t); 
+            });
+            
+            for (let y in rows) {
+                const rowTiles = rows[y].sort((a,b) => a.x - b.x);
+                let curr = [];
+                for (let i = 0; i < rowTiles.length; i++) {
+                    curr.push(rowTiles[i]);
+                    if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
+                        // 기존 바닥 패와 섞였는지 확인
+                        if (curr.some(t => initialBoardState[t.id]) && curr.some(t => !initialBoardState[t.id])) {
+                            isPiggy = true;
                         }
+                        curr = [];
                     }
                 }
-                if (isPiggy) { 
-                    playSFX('error'); 
-                    return alert("🚨 첫 등록 시에는 바닥 패에 붙일 수 없습니다."); 
-                }
-                let pts = 0;
-                Object.entries(boardTiles).forEach(([id, t]) => { 
-                    if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); 
-                });
-                if (pts < 30) { 
-                    playSFX('error'); 
-                    return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); 
-                }
-                db.ref(`players/${myName}`).update({ registered: true });
             }
+            
+            if (isPiggy) { 
+                playSFX('error'); 
+                return alert("🚨 첫 등록 시에는 바닥 패에 붙일 수 없습니다."); 
+            }
+            
+            let pts = 0;
+            Object.entries(boardTiles).forEach(([id, t]) => { 
+                if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); 
+            });
+            
+            if (pts < 30) { 
+                playSFX('error'); 
+                return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); 
+            }
+            
+            // 등록 성공 처리
+            db.ref(`players/${myName}`).update({ registered: true });
+        }
 
-            if (myHandData.length === 0) {
-                window.isGameEnding = true;
-                db.ref('hands').once('value', hSnap => {
-                    const allHands = hSnap.val();
-                    const scores = {};
-                    playerList.forEach(p => { 
-                        let s = 0; 
-                        Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); 
-                        scores[p] = s; 
-                    });
-                    window.recordWin(myName);
-                    db.ref('/').update({ 
-                        "settings/status": "finished", 
-                        "settings/gameResult": { winner: myName, scores } 
-                    }).then(() => {
-                        setTimeout(() => { window.isGameEnding = false; }, 3000);
-                    });
+        // 4. 승리 판정 및 게임 종료 처리
+        if (myHandData.length === 0) {
+            // 승리 처리 시작 (중복 실행 방지 잠금)
+            window.isGameEnding = true;
+
+            db.ref('hands').once('value', hSnap => {
+                const allHands = hSnap.val();
+                const scores = {};
+                playerList.forEach(p => { 
+                    let s = 0; 
+                    Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); 
+                    scores[p] = s; 
                 });
+
+                // 승리 기록 (stats 업데이트)
+                window.recordWin(myName);
+
+                // 서버에 게임 결과 전송 및 상태 변경
+                db.ref('/').update({ 
+                    "settings/status": "finished", 
+                    "settings/gameResult": { winner: myName, scores } 
+                }).then(() => {
+                    // 3초 후 잠금 해제 (안전장치)
+                    setTimeout(() => { window.isGameEnding = false; }, 3000);
+                });
+            });
+        } else {
+            // 5. 일반 턴 종료 처리
+            if (!isReg) {
+                window.addGameLog(`⭐ ${myName}님이 첫 등록에 성공했습니다!`);
+                db.ref('shake').set({ by: myName, time: Date.now() });
             } else {
-                if (!isReg) {
-                    window.addGameLog(`⭐ ${myName}님이 첫 등록에 성공했습니다!`);
-                    db.ref('shake').set({ by: myName, time: Date.now() });
-                } else {
-                    window.addGameLog(`🔄 ${myName}님이 턴을 마쳤습니다.`);
-                }
-                window.nextTurnAction();
+                window.addGameLog(`🔄 ${myName}님이 턴을 마쳤습니다.`);
             }
-        });
-    };
+            window.nextTurnAction();
+        }
+    });
+};
 
     window.rollbackTurn = function() {
         if (myRole !== 'player') return;
@@ -3104,156 +2585,181 @@ body[data-theme='cyber'] .active-turn-badge {
     };
 
     window.startGame = function() {
-        if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
-        const colors = ['red','blue','yellow','black'], sets = (gameMode === 'expert') ? 3 : 2;
-        let pool = [];
-        colors.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); } });
-        pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
-        if (sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
+    if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
+    
+    // 1. 타일 생성 로직 (기존과 동일)
+    const colors = ['red','blue','yellow','black'], sets = (gameMode === 'expert') ? 3 : 2;
+    let pool = [];
+    colors.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); } });
+    pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
+    if (sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
 
-        for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
+    // 2. [개선] 피셔-예이츠 셔플 (가장 완벽하게 섞는 알고리즘)
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null, 'logs': null };
+    const allHands = {};
+    playerList.forEach(p => { allHands[p] = {}; updates[`players/${p}/registered`] = false; });
+
+    // 3. [개선] 카드 딜링 방식 (한 장씩 돌아가며 배분)
+    // 14장씩 4명에게 한 장씩 돌아가며 총 56장을 나눠줍니다.
+    for (let i = 0; i < 14; i++) {
+        playerList.forEach(p => {
+            const t = pool.pop();
+            if (t) {
+                const tileId = 'tile_' + Math.random().toString(36).substr(2, 9);
+                allHands[p][tileId] = t;
+            }
+        });
+    }
+
+    updates['hands'] = allHands;
+    const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
+    updates['pool'] = poolObj;
+
+    db.ref('/').update(updates).then(() => {
+        db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
+        window.addGameLog(`📢 게임이 시작되었습니다! (공정한 패 배분 완료)`);
+    });
+};
+
+   window.dropOnBoard = function(e) {
+    e.preventDefault();
+    const rawData = e.dataTransfer.getData("text/plain");
+    if (!rawData) return;
+
+    let dragInfo;
+    try { dragInfo = JSON.parse(rawData); } 
+    catch(err) { dragInfo = { primary: rawData, group: [rawData] }; }
+
+    const primaryId = dragInfo.primary;
+    const groupIds = dragInfo.group;
+
+    const boardRect = document.getElementById('game-board').getBoundingClientRect();
+    let dropX = e.clientX - boardRect.left - 22;
+    let dropY = e.clientY - boardRect.top  - 32;
+
+    const SNAP_DIST = 40;
+    const TILE_W = 48;
+    const TILE_H = 68;
+    let snapped = false;
+
+    // 1단계: 자석 기능 (딱 붙이기)
+    Object.entries(boardTiles).forEach(([tid, t]) => {
+        if (groupIds.includes(tid) || snapped) return; 
+        const dx = dropX - t.x;
+        const dy = dropY - t.y;
+
+        if (Math.abs(dy) < SNAP_DIST) {
+            if (dx > 0 && dx < SNAP_DIST * 2)  { dropX = t.x + TILE_W; dropY = t.y; snapped = true; }
+            else if (dx < 0 && dx > -SNAP_DIST * 2) { dropX = t.x - TILE_W; dropY = t.y; snapped = true; }
         }
+        if (!snapped && Math.abs(dx) < SNAP_DIST) {
+            if (dy > 0 && dy < SNAP_DIST * 2)  { dropY = t.y + TILE_H; dropX = t.x; snapped = true; }
+            else if (dy < 0 && dy > -SNAP_DIST * 2) { dropY = t.y - TILE_H; dropX = t.x; snapped = true; }
+        }
+    });
 
-        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null, 'logs': null };
-        const allHands = {};
-        playerList.forEach(p => { allHands[p] = {}; updates[`players/${p}/registered`] = false; });
+    const updates = {};
+    
+    // 메인 타일의 이동량 계산
+    // 랙에서 온 타일은 boardTiles에 없으므로 delta를 0으로 처리
+     let primaryTileData = boardTiles[primaryId];
+    let deltaX = primaryTileData ? (dropX - primaryTileData.x) : 0;
+    let deltaY = primaryTileData ? (dropY - primaryTileData.y) : 0;
 
-        for (let i = 0; i < 14; i++) {
-            playerList.forEach(p => {
-                const t = pool.pop();
-                if (t) {
-                    const tileId = 'tile_' + Math.random().toString(36).substr(2, 9);
-                    allHands[p][tileId] = t;
-                }
+    // 2단계: 끼워넣기 밀어내기
+    let isOverlapping = false;
+    Object.entries(boardTiles).forEach(([tid, t]) => {
+        if (groupIds.includes(tid)) return; 
+        if (Math.abs(t.y - dropY) < 10 && Math.abs(t.x - dropX) < 10) isOverlapping = true;
+    });
+
+    if (isOverlapping) {
+        const pushDist = TILE_W * groupIds.length;
+        Object.entries(boardTiles).forEach(([tid, t]) => {
+            if (groupIds.includes(tid)) return;
+            if (Math.abs(t.y - dropY) < 10 && t.x >= dropX - 5) {
+                updates[`board/${tid}/x`] = t.x + pushDist;
+            }
+        });
+    }
+
+    db.ref(`hands/${myName}`).once('value', s => {
+        const handData = s.val() || {};
+        // 랙 타일인지 확인하는 함수 (Firebase 데이터 기준)
+        const isFromRack = (id) => !!handData[id];
+
+        groupIds.forEach((id, idx) => {
+            const fromRack = isFromRack(id);
+            let targetX = fromRack ? dropX + (idx * 48) : boardTiles[id].x + deltaX;
+            let targetY = fromRack ? dropY : boardTiles[id].y + deltaY;
+
+            if (fromRack) {
+                updates[`board/${id}`] = { ...handData[id], x: targetX, y: targetY };
+                updates[`hands/${myName}/${id}`] = null;
+                delete updates[`board/${id}/x`];
+                delete updates[`board/${id}/y`];
+            } else if (boardTiles[id]) {
+                updates[`board/${id}/x`] = targetX;
+                updates[`board/${id}/y`] = targetY;
+            }
+        });
+
+        // 최종 파이어베이스 전송 및 에러 캐치
+        db.ref('/').update(updates)
+            .then(() => playSFX('tileDrop'))
+            .catch(err => {
+                console.error("🔥 타일 이동 에러 발생:", err);
+                alert("통신 중 에러가 발생했습니다. 콘솔을 확인해주세요.");
             });
-        }
+        
+        // 드롭 완료 후 선택 해제
+        document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+        selectedTiles = [];
+    });
+};
 
-        updates['hands'] = allHands;
-        const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
-        updates['pool'] = poolObj;
+    // ✅ 수정 4: 수동 정렬 + JSON 에러 방어 코드 추가
+window.dropOnRack = function(e) {
+    e.preventDefault();
+    const rawData = e.dataTransfer.getData("text/plain") || e.dataTransfer.getData("text");
+    if (!rawData) return;
+
+    // JSON으로 날아온 데이터면 메인 타일 1개(primary)만 뽑아냄
+    let id = rawData;
+    try {
+        const dragInfo = JSON.parse(rawData);
+        id = dragInfo.primary; // 여러 개를 잡아서 랙에 내려도, 클릭한 1개만 내려가게 처리
+    } catch(err) {}
+
+    const updates = {};
+    db.ref(`board/${id}`).once('value', s => {
+        const rawTileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
+        if (!rawTileData) return;
+
+        // x, y 좌표 제거하고 순수 타일 데이터만 저장
+        const { x, y, ...cleanData } = rawTileData;
+        updates[`hands/${myName}/${id}`] = cleanData;
+        if (s.exists()) updates[`board/${id}`] = null;
 
         db.ref('/').update(updates).then(() => {
-            db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
-            window.addGameLog(`📢 게임이 시작되었습니다!`);
-        });
-    };
-
-    window.dropOnBoard = function(e) {
-        e.preventDefault();
-        const rawData = e.dataTransfer.getData("text/plain");
-        if (!rawData) return;
-
-        let dragInfo;
-        try { dragInfo = JSON.parse(rawData); } 
-        catch(err) { dragInfo = { primary: rawData, group: [rawData] }; }
-
-        const primaryId = dragInfo.primary;
-        const groupIds = dragInfo.group;
-
-        const boardRect = document.getElementById('game-board').getBoundingClientRect();
-        let dropX = e.clientX - boardRect.left - 22;
-        let dropY = e.clientY - boardRect.top  - 32;
-
-        const SNAP_DIST = 40;
-        const TILE_W = 48;
-        const TILE_H = 68;
-        let snapped = false;
-
-        Object.entries(boardTiles).forEach(([tid, t]) => {
-            if (groupIds.includes(tid) || snapped) return; 
-            const dx = dropX - t.x;
-            const dy = dropY - t.y;
-            if (Math.abs(dy) < SNAP_DIST) {
-                if (dx > 0 && dx < SNAP_DIST * 2)  { dropX = t.x + TILE_W; dropY = t.y; snapped = true; }
-                else if (dx < 0 && dx > -SNAP_DIST * 2) { dropX = t.x - TILE_W; dropY = t.y; snapped = true; }
-            }
-            if (!snapped && Math.abs(dx) < SNAP_DIST) {
-                if (dy > 0 && dy < SNAP_DIST * 2)  { dropY = t.y + TILE_H; dropX = t.x; snapped = true; }
-                else if (dy < 0 && dy > -SNAP_DIST * 2) { dropY = t.y - TILE_H; dropX = t.x; snapped = true; }
-            }
-        });
-
-        const updates = {};
-        let primaryTileData = boardTiles[primaryId];
-        let deltaX = primaryTileData ? (dropX - primaryTileData.x) : 0;
-        let deltaY = primaryTileData ? (dropY - primaryTileData.y) : 0;
-
-        let isOverlapping = false;
-        Object.entries(boardTiles).forEach(([tid, t]) => {
-            if (groupIds.includes(tid)) return; 
-            if (Math.abs(t.y - dropY) < 10 && Math.abs(t.x - dropX) < 10) isOverlapping = true;
-        });
-
-        if (isOverlapping) {
-            const pushDist = TILE_W * groupIds.length;
-            Object.entries(boardTiles).forEach(([tid, t]) => {
-                if (groupIds.includes(tid)) return;
-                if (Math.abs(t.y - dropY) < 10 && t.x >= dropX - 5) {
-                    updates[`board/${tid}/x`] = t.x + pushDist;
-                }
-            });
-        }
-
-        db.ref(`hands/${myName}`).once('value', s => {
-            const handData = s.val() || {};
-            const isFromRack = (id) => !!handData[id];
-
-            groupIds.forEach((id, idx) => {
-                const fromRack = isFromRack(id);
-                let targetX = fromRack ? dropX + (idx * 48) : boardTiles[id].x + deltaX;
-                let targetY = fromRack ? dropY : boardTiles[id].y + deltaY;
-
-                if (fromRack) {
-                    updates[`board/${id}`] = { ...handData[id], x: targetX, y: targetY };
-                    updates[`hands/${myName}/${id}`] = null;
-                } else if (boardTiles[id]) {
-                    updates[`board/${id}/x`] = targetX;
-                    updates[`board/${id}/y`] = targetY;
-                }
-            });
-
-            db.ref('/').update(updates)
-                .then(() => playSFX('tileDrop'))
-                .catch(err => console.error("타일 이동 에러:", err));
+            playSFX('tilePick');
+            if (!manualOrder.includes(id)) manualOrder.push(id);
+            sortMode = 'manual';
+            window.applyAutoSort();
             
+            // 랙으로 회수하면 선택 박스 해제
             document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
             selectedTiles = [];
         });
-    };
+    });
+};
 
-    window.dropOnRack = function(e) {
-        e.preventDefault();
-        const rawData = e.dataTransfer.getData("text/plain") || e.dataTransfer.getData("text");
-        if (!rawData) return;
-
-        let id = rawData;
-        try {
-            const dragInfo = JSON.parse(rawData);
-            id = dragInfo.primary;
-        } catch(err) {}
-
-        const updates = {};
-        db.ref(`board/${id}`).once('value', s => {
-            const rawTileData = s.exists() ? s.val() : myHandData.find(t => t.id === id);
-            if (!rawTileData) return;
-
-            const { x, y, ...cleanData } = rawTileData;
-            updates[`hands/${myName}/${id}`] = cleanData;
-            if (s.exists()) updates[`board/${id}`] = null;
-
-            db.ref('/').update(updates).then(() => {
-                playSFX('tilePick');
-                if (!manualOrder.includes(id)) manualOrder.push(id);
-                sortMode = 'manual';
-                window.applyAutoSort();
-                document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
-                selectedTiles = [];
-            });
-        });
-    };
-
+    // ✅ 수정 5: applyAutoSort - 수동 정렬도 index 기반으로 통일
     window.applyAutoSort = function() {
         const rEl = document.getElementById('my-rack');
         if (!rEl) return;
@@ -3285,23 +2791,31 @@ body[data-theme='cyber'] .active-turn-badge {
             div.innerText = t.num;
             div.draggable = (myRole === 'player');
             div.style.position = 'absolute';
+            // 수동/자동 구분 없이 index 기반 위치로 통일 → 겹침 없음
             div.style.left = (index * 48 + 10) + 'px';
             div.style.top  = '45px';
             div.style.margin = '0';
 
-            div.ondragstart = (e) => {
-                if (myRole !== 'player') return e.preventDefault();
-                let dragData = { primary: t.id, group: [t.id] };
-                if (selectedTiles.includes(t.id)) {
-                    dragData.group = selectedTiles;
-                } else {
-                    document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
-                    selectedTiles = [];
-                }
-                e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
-                e.dataTransfer.setData("source", "rack");
-                playSFX('tilePick');
-            };
+            // ✅ 내 랙(Rack) 타일 드래그 - id를 t.id로 수정!
+div.ondragstart = (e) => {
+    if (myRole !== 'player') return e.preventDefault();
+    
+    // 랙에서는 타일 변수가 t 이므로 t.id 를 사용해야 합니다.
+    let dragData = { primary: t.id, group: [t.id] };
+    
+    if (selectedTiles.includes(t.id)) {
+        dragData.group = selectedTiles; // 선택된 그룹 전체 묶기
+    } else {
+        // 선택되지 않은 타일을 드래그하면 기존 다중 선택 강제 해제
+        document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
+        selectedTiles = [];
+    }
+    
+    // 배열 데이터를 문자열(JSON)로 변환해서 전송
+    e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    e.dataTransfer.setData("source", "rack"); // 랙에서 출발했다는 표시 유지
+    playSFX('tilePick');
+};
             div.ondragover = (e) => e.preventDefault();
             div.ondrop = (e) => {
                 e.preventDefault(); e.stopPropagation();
@@ -3388,6 +2902,7 @@ body[data-theme='cyber'] .active-turn-badge {
 
     window.forceNextTurn = () => { if (confirm("다음 차례로 넘길까요?")) window.nextTurnAction(); };
 
+    // ✅ 수정 6: sendChat - chat-color-input 없어도 오류 안 나게
     window.sendChat = () => {
         const input = document.getElementById('chat-input');
         if (!input || !input.value.trim()) return;
@@ -3398,26 +2913,29 @@ body[data-theme='cyber'] .active-turn-badge {
     };
 
     window.toggleBGM = () => {
-        const btn = document.getElementById('bgm-toggle-btn');
-        const icon = document.getElementById('bgm-icon');
-        if (audioCtx.isBGMPlaying) {
-            audioCtx.bgm.pause();
-            audioCtx.isBGMPlaying = false;
-            btn.classList.remove('playing');
-            icon.innerText = '🔇';
-            window.addGameLog("🎵 배경음악을 껐습니다.");
-        } else {
-            audioCtx.bgm.play().then(() => {
-                audioCtx.isBGMPlaying = true;
-                btn.classList.add('playing');
-                icon.innerText = '🔊';
-                window.addGameLog("🎵 배경음악을 켰습니다.");
-            }).catch(err => {
-                console.error("BGM 재생 실패:", err);
-                alert("브라우저 설정에 의해 차단되었습니다. 화면을 한 번 클릭 후 다시 눌러주세요!");
-            });
-        }
-    };
+    const btn = document.getElementById('bgm-toggle-btn');
+    const icon = document.getElementById('bgm-icon');
+
+    if (audioCtx.isBGMPlaying) {
+        // 멈춤 처리
+        audioCtx.bgm.pause();
+        audioCtx.isBGMPlaying = false;
+        btn.classList.remove('playing');
+        icon.innerText = '🔇';
+        window.addGameLog("🎵 배경음악을 껐습니다.");
+    } else {
+        // 재생 처리
+        audioCtx.bgm.play().then(() => {
+            audioCtx.isBGMPlaying = true;
+            btn.classList.add('playing');
+            icon.innerText = '🔊';
+            window.addGameLog("🎵 배경음악을 켰습니다.");
+        }).catch(err => {
+            console.error("BGM 재생 실패:", err);
+            alert("브라우저 설정에 의해 차단되었습니다. 화면을 한 번 클릭 후 다시 눌러주세요!");
+        });
+    }
+};
 
     window.viewPlayerHand = function(targetName) {
         if (myRole !== 'spectator') return;
@@ -3468,13 +2986,25 @@ body[data-theme='cyber'] .active-turn-badge {
 
     window.recordWin = function(winnerName) {
         if (!winnerName) return;
+
+        // [중복 방지 핵심] 마지막 기록 시간과 현재 시간을 비교합니다.
         const now = Date.now();
+        
+        // 3초(3000ms) 이내에 다시 호출되면 무시합니다.
         if (window.lastWinRecordedTime && (now - window.lastWinRecordedTime < 3000)) {
             console.log("⚠️ 중복 승리 기록 시도 차단됨");
             return;
         }
+        
+        // 현재 기록 시간을 저장합니다.
         window.lastWinRecordedTime = now;
-        db.ref(`stats/${winnerName}/wins`).transaction(curr => (curr || 0) + 1);
+
+        // Firebase에 승리 횟수 추가
+        db.ref(`stats/${winnerName}/wins`).transaction(curr => {
+            return (curr || 0) + 1;
+        });
+        
+        console.log(`🏆 ${winnerName}님의 승리가 정상 기록되었습니다.`);
     };
 
     window.getRankHtml = function() {
@@ -3535,7 +3065,7 @@ body[data-theme='cyber'] .active-turn-badge {
         if (isSelecting) { isSelecting = false; document.getElementById('selection-box').style.display = 'none'; }
     });
 
-    // === 이모트 ===
+   // === 이모트 ===
     const EMOTE_SETS = [
         { e: '😋', t: '이게 되네?' },
         { e: '🔥', t: '가능한.' },
@@ -3545,20 +3075,25 @@ body[data-theme='cyber'] .active-turn-badge {
         { e: '😨', t: '안 돼 안 돼 안 돼' },
         { e: '💀', t: '실화임?' },
         { e: '😱', t: '등록하지마' }
-    ];
+    ]; // <-- 세미콜론과 대괄호 확인
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
         if (!picker) return;
+
         const isVisible = picker.style.display === 'flex';
         picker.style.display = isVisible ? 'none' : 'flex';
+        
         if (!isVisible) {
             picker.innerHTML = ''; 
             EMOTE_SETS.forEach(item => {
                 const btn = document.createElement('button');
                 btn.className = 'emote-btn';
+                // 백틱(`) 사용에 주의하세요
                 btn.innerHTML = `<span>${item.e}</span> <span style="font-size:0.8rem; font-weight:normal;">${item.t}</span>`;
-                btn.onclick = () => { window.sendEmote(`${item.e} ${item.t}`); };
+                btn.onclick = () => {
+                    window.sendEmote(`${item.e} ${item.t}`);
+                };
                 picker.appendChild(btn);
             });
         }
@@ -3573,6 +3108,8 @@ body[data-theme='cyber'] .active-turn-badge {
 
     window.showBubble = function(playerName, emote) {
         let badge = document.getElementById(`badge-${playerName}`);
+        
+        // 플레이어 뱃지가 없으면 관전자용 등으로 임시 생성
         if (!badge) {
             const listEl = document.getElementById('player-list-container');
             if (!listEl) return;
@@ -3583,12 +3120,16 @@ body[data-theme='cyber'] .active-turn-badge {
             badge.innerHTML = `👀 ${playerName}`;
             listEl.appendChild(badge);
         }
+
         const existing = badge.querySelector('.emoji-bubble');
         if (existing) existing.remove();
+
         const bubble = document.createElement('div');
         bubble.className = 'emoji-bubble';
         bubble.innerText = emote;
         badge.appendChild(bubble);
+
+        // 2.5초 후 제거
         setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
     };
 </script>
