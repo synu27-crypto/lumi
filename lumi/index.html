@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.5</title>
+    <title>루미큐브 : Ver. 60.51</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -111,27 +111,45 @@ body[data-theme='pink'] #game-board {
 /* === 채팅 및 로그 === */
 #chat-wrapper {
     position: fixed;
-    bottom: 270px !important;
-    right: 20px;
+    top: 100px; /* 초기 위치 */
+    right: 20px; /* 초기 위치 */
     width: 500px;
     z-index: 20000;
-    display: flex; flex-direction: column; gap: 5px;
-    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    pointer-events: none; /* 하위 요소만 클릭 가능하게 함 */
+}
+
+/* 드래그를 위한 손잡이 스타일 */
+#chat-drag-handle {
+    display: none; /* toggleChat 함수에서 제어함 */
+    height: 30px; /* 높이를 조금 더 키움 */
+    background: #9d50bb; /* 보라색 고정 (변수 대신 직관적인 색상) */
+    border-radius: 12px 12px 0 0;
+    cursor: move;
+    display: flex; /* 내부 텍스트 정렬용 */
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    color: white;
+    font-weight: bold;
+    pointer-events: auto;
+    z-index: 20001; /* 컨테이너보다 위에 위치 */
 }
 
 #chat-log-container {
-    display: none;
-    gap: 5px;
-    height: 280px; min-height: 100px; min-width: 250px;
+    display: none; /* 초기 상태 */
+    flex-direction: column; /* 추가 */
+    gap: 0; /* 핸들과 밀착 */
+    height: 280px;
     background: var(--chat-bg);
-    color: var(--main-text);
     backdrop-filter: blur(10px);
-    border-radius: 12px;
+    border-radius: 0 0 12px 12px; /* 상단은 깎지 않음 */
     border: 1px solid rgba(128,128,128,0.2);
     box-shadow: 0 8px 32px rgba(0,0,0,0.3);
     pointer-events: auto;
-    resize: both; overflow: hidden;
-    transition: background 0.3s;
+    overflow: hidden;
 }
 
 #game-log { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.8rem; border-right: 1px solid rgba(0,0,0,0.1); }
@@ -1914,16 +1932,19 @@ body[data-theme='cyber'] .active-turn-badge {
     </div>
 
     <div id="chat-wrapper">
-        <div id="chat-log-container">
-            <div id="game-log"></div>
-            <div id="chat-box"></div>
-        </div>
-        <div id="chat-input-container">
-            <button onclick="window.toggleEmotePicker()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; padding:0 5px;">😀</button>
-            <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
-            <div id="emote-picker"></div>
-        </div>
+    <div id="chat-drag-handle" style="display:none;">↕ 이동하려면 여기를 드래그하세요</div>
+    
+    <div id="chat-log-container">
+        <div id="game-log"></div>
+        <div id="chat-box"></div>
     </div>
+    
+    <div id="chat-input-container">
+        <button onclick="window.toggleEmotePicker()" style="background:none; border:none; font-size:1.3rem; cursor:pointer; padding:0 5px;">😀</button>
+        <input type="text" id="chat-input" placeholder="메시지..." onkeypress="if(event.keyCode==13) window.sendChat()">
+        <div id="emote-picker"></div>
+    </div>
+</div>
 
     <button onclick="window.toggleChat()" style="position:fixed; bottom:220px; right:20px; z-index:20001; background:var(--accent-purple); color:white; border-radius:20px; padding:10px 20px; font-weight:bold; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.3);">📜 로그/채팅</button>
 
@@ -2965,12 +2986,15 @@ div.ondragstart = (e) => {
     };
 
     window.toggleChat = () => {
-        const c = document.getElementById('chat-log-container');
-        const i = document.getElementById('chat-input-container');
-        const isVisible = c.style.display === 'flex';
-        c.style.display = isVisible ? 'none' : 'flex';
-        i.style.display = isVisible ? 'none' : 'flex';
-    };
+    const c = document.getElementById('chat-log-container');
+    const i = document.getElementById('chat-input-container');
+    const h = document.getElementById('chat-drag-handle'); // 핸들 추가
+    const isVisible = c.style.display === 'flex';
+    
+    c.style.display = isVisible ? 'none' : 'flex';
+    i.style.display = isVisible ? 'none' : 'flex';
+    h.style.display = isVisible ? 'none' : 'flex'; // 핸들도 켜고 끄기
+};
 
     window.updateRegScoreUI = function() {
         const scoreBadge = document.getElementById('reg-score-badge');
@@ -3132,6 +3156,40 @@ div.ondragstart = (e) => {
         // 2.5초 후 제거
         setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
     };
+
+// === 채팅창 드래그 이동 기능 ===
+const chatWrapper = document.getElementById('chat-wrapper');
+const chatHandle = document.getElementById('chat-drag-handle');
+
+let isDraggingChat = false;
+let chatOffsetX, chatOffsetY;
+
+chatHandle.addEventListener('mousedown', (e) => {
+    isDraggingChat = true;
+    // 현재 창 위치와 마우스 클릭 지점의 차이 계산
+    chatOffsetX = e.clientX - chatWrapper.offsetLeft;
+    chatOffsetY = e.clientY - chatWrapper.offsetTop;
+    chatHandle.style.opacity = "1";
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (!isDraggingChat) return;
+    
+    // 화면 밖으로 나가지 않게 계산하며 이동
+    let newX = e.clientX - chatOffsetX;
+    let newY = e.clientY - chatOffsetY;
+    
+    chatWrapper.style.left = newX + 'px';
+    chatWrapper.style.top = newY + 'px';
+    chatWrapper.style.right = 'auto'; // 기존 고정값 해제
+    chatWrapper.style.bottom = 'auto'; // 기존 고정값 해제
+});
+
+document.addEventListener('mouseup', () => {
+    isDraggingChat = false;
+    chatHandle.style.opacity = "0.8";
+});
+
 </script>
 </body>
 </html>
