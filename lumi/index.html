@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.3</title>
+    <title>루미큐브 : Ver. 60.35</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2380,28 +2380,53 @@ setTimeout(() => {
 };
 
     function isValidSet(tiles) {
-        if (tiles.length < 3) return false;
-        const nonJokers = tiles.filter(t => t.num !== 'J');
-        if (nonJokers.length === 0) return true;
-        const isGroup = () => {
-            const num = nonJokers[0].num;
-            const colors = nonJokers.map(t => t.color);
-            return nonJokers.every(t => t.num === num) && (new Set(colors)).size === colors.length && tiles.length <= 4;
-        };
-        const isRun = () => {
-            const color = nonJokers[0].color;
-            if (!nonJokers.every(t => t.color === color)) return false;
-            let lastNum = -1;
-            for (let t of tiles) {
-                if (t.num !== 'J') {
-                    if (lastNum !== -1 && Number(t.num) <= lastNum) return false;
-                    lastNum = Number(t.num);
-                }
-            }
-            return true;
-        };
-        return isGroup() || isRun();
-    }
+    if (tiles.length < 3) return false;
+    
+    // 조커와 일반 타일 분리
+    const jokers = tiles.filter(t => t.num === 'J');
+    const nonJokers = tiles.filter(t => t.num !== 'J');
+    
+    // 전부 조커면 (이론상) 통과
+    if (nonJokers.length === 0) return true;
+
+    // 1. 같은 숫자 세트 (Group: 색깔은 다르고 숫자는 같은 경우)
+    const isGroup = () => {
+        const targetNum = nonJokers[0].num;
+        const colors = nonJokers.map(t => t.color);
+        // 숫자가 모두 같고, 색깔이 중복되지 않으며, 전체 개수가 4개 이하인 경우
+        return nonJokers.every(t => t.num === targetNum) && 
+               (new Set(colors)).size === colors.length && 
+               tiles.length <= 4;
+    };
+
+    // 2. 연속된 숫자 세트 (Run: 색깔은 같고 숫자가 이어지는 경우)
+    const isRun = () => {
+        const targetColor = nonJokers[0].color;
+        // 색깔이 다르면 탈락
+        if (!nonJokers.every(t => t.color === targetColor)) return false;
+
+        // 숫자 순서대로 정렬
+        const nums = nonJokers.map(t => Number(t.num)).sort((a, b) => a - b);
+        
+        // 중복 숫자가 있으면 탈락
+        if (new Set(nums).size !== nums.length) return false;
+
+        // 핵심: 숫자 사이의 빈 공간(Gap) 합계 계산
+        let requiredJokers = 0;
+        for (let i = 0; i < nums.length - 1; i++) {
+            // 예: 9와 12 사이면 (12 - 9 - 1) = 2개의 조커가 필요함
+            requiredJokers += (nums[i + 1] - nums[i] - 1);
+        }
+
+        // 가진 조커가 부족하면 탈락, 숫자가 1~13 범위를 벗어나도 탈락
+        const totalSpan = nums[nums.length - 1] - nums[0] + 1;
+        // (조커 포함 전체 길이)가 실제 타일 개수와 맞지 않으면 탈락
+        // 즉, 9-J-12-13은 requiredJokers가 2인데 실제 조커는 1개뿐이므로 여기서 걸러짐
+        return requiredJokers <= jokers.length && (nums[0] - (jokers.length - requiredJokers) >= 1) && (nums[nums.length-1] <= 13);
+    };
+
+    return isGroup() || isRun();
+}
 
     function validateBoard() {
         const rows = {};
