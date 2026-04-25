@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.51</title>
+    <title>루미큐브 : Ver. 60.52</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2344,7 +2344,15 @@ setTimeout(() => {
             document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
             ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
             document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-            if (isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
+            
+            if (isMy) { 
+                playSFX('turnAlarm'); 
+                // 🔥 치명적 버그 픽스: 턴 시작 시 서버에서 직접 최신 바닥 상태를 가져와서 저장합니다.
+                db.ref('board').once('value', bSnap => {
+                    initialBoardState = bSnap.val() || {};
+                });
+            }
+            
             window.updatePlayerListUI();
             window.updateRegScoreUI();
         });
