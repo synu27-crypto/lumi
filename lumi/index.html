@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.2</title>
+    <title>루미큐브 : Ver. 60.3</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2421,53 +2421,107 @@ setTimeout(() => {
     }
 
     window.handleTurnEnd = function() {
-        if (myRole !== 'player') return;
-        if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) return alert("패를 내거나 뽑으세요.");
-        if (!validateBoard()) { playSFX('error'); return alert("보드 배치가 유효하지 않습니다!"); }
+    if (myRole !== 'player') return;
+    
+    // 1. 패를 냈는지 확인
+    if (Object.keys(boardTiles).length === Object.keys(initialBoardState).length) {
+        return alert("패를 내거나 뽑으세요.");
+    }
+    
+    // 2. 보드 유효성 검사
+    if (!validateBoard()) {
+        playSFX('error');
+        return alert("보드 배치가 유효하지 않습니다!");
+    }
 
-        db.ref(`players/${myName}/registered`).once('value', snap => {
-            const isReg = snap.val();
-            if (!isReg) {
-                let isPiggy = false;
-                const rows = {};
-                Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
-                for (let y in rows) {
-                    const rowTiles = rows[y].sort((a,b) => a.x - b.x);
-                    let curr = [];
-                    for (let i = 0; i < rowTiles.length; i++) {
-                        curr.push(rowTiles[i]);
-                        if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
-                            if (curr.some(t => initialBoardState[t.id]) && curr.some(t => !initialBoardState[t.id])) isPiggy = true;
-                            curr = [];
+    // [중복 방지용] 이미 승리 처리가 진행 중이면 중단
+    if (window.isGameEnding) return;
+
+    db.ref(`players/${myName}/registered`).once('value', snap => {
+        const isReg = snap.val();
+        
+        // 3. 첫 등록 로직 확인
+        if (!isReg) {
+            let isPiggy = false;
+            const rows = {};
+            Object.entries(boardTiles).forEach(([id, t]) => { 
+                t.id = id; 
+                if(!rows[t.y]) rows[t.y]=[]; 
+                rows[t.y].push(t); 
+            });
+            
+            for (let y in rows) {
+                const rowTiles = rows[y].sort((a,b) => a.x - b.x);
+                let curr = [];
+                for (let i = 0; i < rowTiles.length; i++) {
+                    curr.push(rowTiles[i]);
+                    if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
+                        // 기존 바닥 패와 섞였는지 확인
+                        if (curr.some(t => initialBoardState[t.id]) && curr.some(t => !initialBoardState[t.id])) {
+                            isPiggy = true;
                         }
+                        curr = [];
                     }
                 }
-                if (isPiggy) { playSFX('error'); return alert("🚨 첫 등록 시에는 바닥 패에 붙일 수 없습니다."); }
-                let pts = 0;
-                Object.entries(boardTiles).forEach(([id, t]) => { if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); });
-                if (pts < 30) { playSFX('error'); return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); }
-                db.ref(`players/${myName}`).update({ registered: true });
             }
+            
+            if (isPiggy) { 
+                playSFX('error'); 
+                return alert("🚨 첫 등록 시에는 바닥 패에 붙일 수 없습니다."); 
+            }
+            
+            let pts = 0;
+            Object.entries(boardTiles).forEach(([id, t]) => { 
+                if (!initialBoardState[id]) pts += (t.num === 'J' ? 30 : Number(t.num)); 
+            });
+            
+            if (pts < 30) { 
+                playSFX('error'); 
+                return alert(`등록 실패 (${pts}점)! 30점 이상 내야 합니다.`); 
+            }
+            
+            // 등록 성공 처리
+            db.ref(`players/${myName}`).update({ registered: true });
+        }
 
-            if (myHandData.length === 0) {
-                db.ref('hands').once('value', hSnap => {
-                    const allHands = hSnap.val(), scores = {};
-                    playerList.forEach(p => { let s = 0; Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); scores[p] = s; });
-                    window.recordWin(myName);
-                    db.ref('/').update({ "settings/status": "finished", "settings/gameResult": { winner: myName, scores } });
+        // 4. 승리 판정 및 게임 종료 처리
+        if (myHandData.length === 0) {
+            // 승리 처리 시작 (중복 실행 방지 잠금)
+            window.isGameEnding = true;
+
+            db.ref('hands').once('value', hSnap => {
+                const allHands = hSnap.val();
+                const scores = {};
+                playerList.forEach(p => { 
+                    let s = 0; 
+                    Object.values(allHands[p] || {}).forEach(t => s += (t.num === 'J' ? 50 : Number(t.num))); 
+                    scores[p] = s; 
                 });
+
+                // 승리 기록 (stats 업데이트)
+                window.recordWin(myName);
+
+                // 서버에 게임 결과 전송 및 상태 변경
+                db.ref('/').update({ 
+                    "settings/status": "finished", 
+                    "settings/gameResult": { winner: myName, scores } 
+                }).then(() => {
+                    // 3초 후 잠금 해제 (안전장치)
+                    setTimeout(() => { window.isGameEnding = false; }, 3000);
+                });
+            });
+        } else {
+            // 5. 일반 턴 종료 처리
+            if (!isReg) {
+                window.addGameLog(`⭐ ${myName}님이 첫 등록에 성공했습니다!`);
+                db.ref('shake').set({ by: myName, time: Date.now() });
             } else {
-                if (!isReg) {
-    window.addGameLog(`⭐ ${myName}님이 첫 등록에 성공했습니다!`);
-    // ✅ 등록 성공 시 shake 이벤트 전송
-    db.ref('shake').set({ by: myName, time: Date.now() });
-} else {
-    window.addGameLog(`🔄 ${myName}님이 턴을 마쳤습니다.`);
-}
-window.nextTurnAction();
+                window.addGameLog(`🔄 ${myName}님이 턴을 마쳤습니다.`);
             }
-        });
-    };
+            window.nextTurnAction();
+        }
+    });
+};
 
     window.rollbackTurn = function() {
         if (myRole !== 'player') return;
@@ -2877,7 +2931,26 @@ div.ondragstart = (e) => {
     };
 
     window.recordWin = function(winnerName) {
-        db.ref(`stats/${winnerName}/wins`).transaction(curr => (curr || 0) + 1);
+        if (!winnerName) return;
+
+        // [중복 방지 핵심] 마지막 기록 시간과 현재 시간을 비교합니다.
+        const now = Date.now();
+        
+        // 3초(3000ms) 이내에 다시 호출되면 무시합니다.
+        if (window.lastWinRecordedTime && (now - window.lastWinRecordedTime < 3000)) {
+            console.log("⚠️ 중복 승리 기록 시도 차단됨");
+            return;
+        }
+        
+        // 현재 기록 시간을 저장합니다.
+        window.lastWinRecordedTime = now;
+
+        // Firebase에 승리 횟수 추가
+        db.ref(`stats/${winnerName}/wins`).transaction(curr => {
+            return (curr || 0) + 1;
+        });
+        
+        console.log(`🏆 ${winnerName}님의 승리가 정상 기록되었습니다.`);
     };
 
     window.getRankHtml = function() {
