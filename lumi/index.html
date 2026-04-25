@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.45</title>
+    <title>루미큐브 : Ver. 60.5</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2585,29 +2585,46 @@ setTimeout(() => {
     };
 
     window.startGame = function() {
-        if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
-        const colors = ['red','blue','yellow','black'], sets = (gameMode === 'expert') ? 3 : 2;
-        let pool = [];
-        colors.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); } });
-        pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
-        if (sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
-        pool.sort(() => Math.random() - 0.5);
+    if (playerList.length < 2) return alert("최소 2명이 필요합니다.");
+    
+    // 1. 타일 생성 로직 (기존과 동일)
+    const colors = ['red','blue','yellow','black'], sets = (gameMode === 'expert') ? 3 : 2;
+    let pool = [];
+    colors.forEach(c => { for(let i=1; i<=13; i++) { for(let j=0; j<sets; j++) pool.push({ num: i, color: c }); } });
+    pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
+    if (sets === 3) pool.push({ num: 'J', color: 'joker' }, { num: 'J', color: 'joker' });
 
-        const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null, 'logs': null };
-        const allHands = {};
+    // 2. [개선] 피셔-예이츠 셔플 (가장 완벽하게 섞는 알고리즘)
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+
+    const updates = { 'board': null, 'currentTurn': playerList[0], 'settings/status': "playing", 'chats': null, 'logs': null };
+    const allHands = {};
+    playerList.forEach(p => { allHands[p] = {}; updates[`players/${p}/registered`] = false; });
+
+    // 3. [개선] 카드 딜링 방식 (한 장씩 돌아가며 배분)
+    // 14장씩 4명에게 한 장씩 돌아가며 총 56장을 나눠줍니다.
+    for (let i = 0; i < 14; i++) {
         playerList.forEach(p => {
-            const hand = {};
-            for (let i=0; i<14; i++) { const t = pool.pop(); if(t) hand['tile_' + Math.random().toString(36).substr(2,9)] = t; }
-            allHands[p] = hand; updates[`players/${p}/registered`] = false;
+            const t = pool.pop();
+            if (t) {
+                const tileId = 'tile_' + Math.random().toString(36).substr(2, 9);
+                allHands[p][tileId] = t;
+            }
         });
-        updates['hands'] = allHands;
-        const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
-        updates['pool'] = poolObj;
-        db.ref('/').update(updates).then(() => {
-            db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
-            window.addGameLog(`📢 게임이 시작되었습니다!`);
-        });
-    };
+    }
+
+    updates['hands'] = allHands;
+    const poolObj = {}; pool.forEach((t, idx) => { poolObj[`p_${idx}`] = t; });
+    updates['pool'] = poolObj;
+
+    db.ref('/').update(updates).then(() => {
+        db.ref('settings/turnStartTime').set(firebase.database.ServerValue.TIMESTAMP);
+        window.addGameLog(`📢 게임이 시작되었습니다! (공정한 패 배분 완료)`);
+    });
+};
 
    window.dropOnBoard = function(e) {
     e.preventDefault();
