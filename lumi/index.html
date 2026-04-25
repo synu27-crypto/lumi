@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.1</title>
+    <title>루미큐브 : Ver. 60.2</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1840,6 +1840,25 @@ body[data-theme='cyber'] .active-turn-badge {
     50% { opacity: 1; filter: brightness(1.2); }
 }
 
+/* BGM 버튼 전용 스타일 */
+.bgm-btn {
+    font-size: 1rem;
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: var(--btn-bg);
+    border: 1px solid rgba(128,128,128,0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.bgm-btn.playing {
+    border-color: var(--accent-purple);
+    color: var(--accent-purple);
+    box-shadow: 0 0 10px rgba(157, 80, 187, 0.3);
+}
+
     </style>
 </head>
 
@@ -1866,6 +1885,9 @@ body[data-theme='cyber'] .active-turn-badge {
                 <button class="theme-btn pochacco" onclick="window.setTheme('pochacco')" title="포챠코">🐾</button>
                 <button class="theme-btn navy"     onclick="window.setTheme('navy')"     title="딥 네이비">🌊</button>
                 <button class="theme-btn cyber" onclick="window.setTheme('cyber')" title="네온">⚡</button>
+                <button id="bgm-toggle-btn" class="bgm-btn" onclick="window.toggleBGM()" title="배경음악 ON/OFF">
+    <span id="bgm-icon">🔇</span> <span style="font-size: 0.75rem;">BGM</span>
+</button>
             </div>
 
             <span id="reg-score-badge"></span>
@@ -2174,10 +2196,15 @@ Object.entries(window.latestPlayersData).forEach(([name, data]) => {
         const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
         window.setTheme(savedTheme);
 
-        setTimeout(() => {
+setTimeout(() => {
             const entryLayer = document.getElementById('entry-layer');
             if (window.sessionStorage.getItem('lumi-nick')) {
                 window.handleEntry(null, true);
+                
+                // === [4번 기능 추가] 입장 성공 시 BGM 자동 재생 시도 ===
+                if (typeof audioCtx !== 'undefined' && !audioCtx.isBGMPlaying) {
+                    window.toggleBGM();
+                }
             } else if (entryLayer) {
                 entryLayer.style.display = 'flex';
             }
@@ -2778,10 +2805,29 @@ div.ondragstart = (e) => {
     };
 
     window.toggleBGM = () => {
-        if (audioCtx.isBGMPlaying) audioCtx.bgm.pause();
-        else audioCtx.bgm.play().catch(() => {});
-        audioCtx.isBGMPlaying = !audioCtx.isBGMPlaying;
-    };
+    const btn = document.getElementById('bgm-toggle-btn');
+    const icon = document.getElementById('bgm-icon');
+
+    if (audioCtx.isBGMPlaying) {
+        // 멈춤 처리
+        audioCtx.bgm.pause();
+        audioCtx.isBGMPlaying = false;
+        btn.classList.remove('playing');
+        icon.innerText = '🔇';
+        window.addGameLog("🎵 배경음악을 껐습니다.");
+    } else {
+        // 재생 처리
+        audioCtx.bgm.play().then(() => {
+            audioCtx.isBGMPlaying = true;
+            btn.classList.add('playing');
+            icon.innerText = '🔊';
+            window.addGameLog("🎵 배경음악을 켰습니다.");
+        }).catch(err => {
+            console.error("BGM 재생 실패:", err);
+            alert("브라우저 설정에 의해 차단되었습니다. 화면을 한 번 클릭 후 다시 눌러주세요!");
+        });
+    }
+};
 
     window.viewPlayerHand = function(targetName) {
         if (myRole !== 'spectator') return;
