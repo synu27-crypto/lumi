@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 61.1</title>
+    <title>루미큐브 : Ver. 60.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -1766,6 +1766,80 @@ body[data-theme='navy'] .theme-btn.active {
     box-shadow: 0 0 8px rgba(91,141,238,0.5) !important;
 }
 
+/* ⚡ 네온 사이버펑크 테마 */
+body[data-theme='cyber'] {
+    --bg-color:    #050505 !important;
+    --panel-bg:    #0a0a0f !important;
+    --board-bg:    #08080a !important;
+    --rack-bg:     #050505 !important;
+    --modal-bg:    #0f0f15 !important;
+    --main-text:   #00ffcc !important; /* 형광 민트 */
+    --turn-blue:   #bc13fe !important; /* 네온 퍼플 */
+    --accent-gold: #f5ed00 !important; /* 네온 옐로우 */
+    --accent-green:#00ff00 !important;
+    --btn-bg:      rgba(188, 19, 254, 0.1) !important;
+
+    background-image: 
+        linear-gradient(rgba(188, 19, 254, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(188, 19, 254, 0.05) 1px, transparent 1px) !important;
+    background-size: 50px 50px !important;
+    cursor: crosshair !important;
+}
+
+/* 보드판 - 사이버 그리드 */
+body[data-theme='cyber'] #game-board {
+    background-color: #08080a !important;
+    background-image: 
+        linear-gradient(rgba(0, 255, 204, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 204, 0.1) 1px, transparent 1px) !important;
+    background-size: 45px 45px !important;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.2)) !important;
+}
+
+/* 타일 - 유리 질감에 네온 테두리 */
+body[data-theme='cyber'] .tile,
+body[data-theme='cyber'] #main-container .tile {
+    background: rgba(20, 20, 30, 0.95) !important;
+    color: #ffffff !important;
+    border: 1px solid #bc13fe !important;
+    box-shadow: 0 0 10px rgba(188, 19, 254, 0.5), inset 0 0 5px rgba(188, 19, 254, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+body[data-theme='cyber'] .tile:hover {
+    transform: translateY(-5px) scale(1.05) !important;
+    box-shadow: 0 0 20px rgba(188, 19, 254, 0.8) !important;
+    border-color: #00ffcc !important;
+}
+
+/* 버튼 - 홀로그램 느낌 */
+body[data-theme='cyber'] button {
+    background: transparent !important;
+    color: #00ffcc !important;
+    border: 1px solid #00ffcc !important;
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.4) !important;
+    text-transform: uppercase;
+}
+
+body[data-theme='cyber'] button:hover {
+    background: #00ffcc !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px #00ffcc !important;
+}
+
+/* 뱃지 - 활성화된 턴 강조 */
+body[data-theme='cyber'] .active-turn-badge {
+    background: rgba(188, 19, 254, 0.2) !important;
+    border-color: #bc13fe !important;
+    box-shadow: 0 0 15px #bc13fe !important;
+    animation: cyber-pulse 1.5s infinite !important;
+}
+
+@keyframes cyber-pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; filter: brightness(1.2); }
+}
+
     </style>
 </head>
 
@@ -1791,6 +1865,7 @@ body[data-theme='navy'] .theme-btn.active {
                 <button class="theme-btn cinnamoroll" onclick="window.setTheme('cinnamoroll')" title="시나모롤">☁️</button>
                 <button class="theme-btn pochacco" onclick="window.setTheme('pochacco')" title="포챠코">🐾</button>
                 <button class="theme-btn navy"     onclick="window.setTheme('navy')"     title="딥 네이비">🌊</button>
+                <button class="theme-btn cyber" onclick="window.setTheme('cyber')" title="네온">⚡</button>
             </div>
 
             <span id="reg-score-badge"></span>
