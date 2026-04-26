@@ -3173,34 +3173,16 @@ div.ondragstart = (e) => {
         }
     };
 
-    window.sendEmote = function(emote) {
+window.sendEmote = function(emote) {
     if (!myName || !db) return;
     db.ref('emotes').push({ name: myName, emote, time: Date.now() });
     const picker = document.getElementById('emote-picker');
     if (picker) picker.style.display = 'none';
 };
 
-function speakText(text) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'ko-KR';
-    utter.pitch = 2.0;
-    utter.rate = 1.5;
-    utter.volume = 1.0;
-
-    // 한국어 목소리 중 첫 번째로 찾은 걸 사용
-    const voices = window.speechSynthesis.getVoices();
-    const koreanVoice = voices.find(v => v.lang === 'ko-KR');
-    if (koreanVoice) utter.voice = koreanVoice;
-
-    window.speechSynthesis.speak(utter);
-}
-
 async function speakText(text) {
     const API_KEY = "sk_2a9d545eb8c56ac02e744e867a00b3311fd51197a2023d40";
-    const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel 목소리
-
+    const VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
     try {
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
             method: "POST",
@@ -3219,14 +3201,11 @@ async function speakText(text) {
                 }
             })
         });
-
         const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audio.play();
-
     } catch (err) {
-        // 실패 시 기본 TTS로 대체
         const utter = new SpeechSynthesisUtterance(text);
         utter.lang = 'ko-KR';
         utter.pitch = 2.0;
@@ -3258,7 +3237,6 @@ window.showBubble = function(playerName, emote) {
     badge.appendChild(bubble);
     setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
 };
-
 // 채팅창 드래그 이동
 (function() {
     const wrapper = document.getElementById('chat-wrapper');
