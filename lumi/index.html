@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.6</title>
+    <title>루미큐브 : Ver. 60.7</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2868,10 +2868,18 @@ div.ondragstart = (e) => {
             div.ondragover = (e) => e.preventDefault();
             div.ondrop = (e) => {
                 e.preventDefault(); e.stopPropagation();
-                const dId = e.dataTransfer.getData("text"), src = e.dataTransfer.getData("source");
-                if (src === "rack") window.moveTileInRack(dId, t.id);
-                else window.dropOnRack(e);
-            };
+    const rawData = e.dataTransfer.getData("text/plain");
+    const src = e.dataTransfer.getData("source");
+
+    let dId = rawData;
+    try {
+        const parsed = JSON.parse(rawData);
+        dId = parsed.primary; // JSON이면 primary ID만 추출
+    } catch(err) {}
+
+    if (src === "rack") window.moveTileInRack(dId, t.id);
+    else window.dropOnRack(e);
+};
             rEl.appendChild(div);
         });
     };
