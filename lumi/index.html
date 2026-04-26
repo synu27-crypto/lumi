@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.52</title>
+    <title>루미큐브 : Ver. 60.6</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -111,12 +111,15 @@ body[data-theme='pink'] #game-board {
 /* === 채팅 및 로그 === */
 #chat-wrapper {
     position: fixed;
-    bottom: 270px !important;
+    bottom: 270px;
     right: 20px;
     width: 500px;
     z-index: 20000;
-    display: flex; flex-direction: column; gap: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
     pointer-events: none;
+    cursor: move; /* 추가 */
 }
 
 #chat-log-container {
@@ -2963,19 +2966,17 @@ div.ondragstart = (e) => {
     const icon = document.getElementById('bgm-icon');
 
     if (audioCtx.isBGMPlaying) {
-        // 멈춤 처리
         audioCtx.bgm.pause();
         audioCtx.isBGMPlaying = false;
         btn.classList.remove('playing');
         icon.innerText = '🔇';
-        window.addGameLog("🎵 배경음악을 껐습니다.");
+        // window.addGameLog("🎵 배경음악을 껐습니다."); ← 이 줄 삭제
     } else {
-        // 재생 처리
         audioCtx.bgm.play().then(() => {
             audioCtx.isBGMPlaying = true;
             btn.classList.add('playing');
             icon.innerText = '🔊';
-            window.addGameLog("🎵 배경음악을 켰습니다.");
+            // window.addGameLog("🎵 배경음악을 켰습니다."); ← 이 줄 삭제
         }).catch(err => {
             console.error("BGM 재생 실패:", err);
             alert("브라우저 설정에 의해 차단되었습니다. 화면을 한 번 클릭 후 다시 눌러주세요!");
@@ -3178,6 +3179,33 @@ div.ondragstart = (e) => {
         // 2.5초 후 제거
         setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
     };
+
+// 채팅창 드래그 이동
+(function() {
+    const wrapper = document.getElementById('chat-wrapper');
+    let isDragging = false, offsetX, offsetY;
+
+    wrapper.addEventListener('mousedown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+        isDragging = true;
+        offsetX = e.clientX - wrapper.getBoundingClientRect().left;
+        offsetY = e.clientY - wrapper.getBoundingClientRect().top;
+        wrapper.style.right = 'auto';
+        wrapper.style.bottom = 'auto';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        wrapper.style.left = (e.clientX - offsetX) + 'px';
+        wrapper.style.top  = (e.clientY - offsetY) + 'px';
+    });
+
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
+})();
+
 </script>
 </body>
 </html>
