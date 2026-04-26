@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.7</title>
+    <title>루미큐브 : Ver. 60.8</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2957,7 +2957,7 @@ div.ondragstart = (e) => {
             updates[`players/${name}/timestamp`] = idx * 1000 + Math.floor(Math.random() * 999);
         });
 
-        db.ref('/').update(updates).then(() => {
+         db.ref('/').update(updates).then(() => {
             window.addGameLog("🔀 다음 판 플레이어 순서가 랜덤으로 섞였습니다.");
         });
     }
@@ -3140,15 +3140,16 @@ div.ondragstart = (e) => {
 
    // === 이모트 ===
     const EMOTE_SETS = [
-        { e: '😋', t: '이게 되네?' },
-        { e: '🔥', t: '가능한.' },
-        { e: '👀', t: '빤히...빤히...' },
-        { e: '😭', t: '아 진짜 왜 이래' },
-        { e: '😘', t: '고마워~' },
-        { e: '😨', t: '안 돼 안 돼 안 돼' },
-        { e: '💀', t: '실화임?' },
-        { e: '😱', t: '등록하지마' }
-    ]; // <-- 세미콜론과 대괄호 확인
+    { e: '😋', t: '이게 되네?' },
+    { e: '🔥', t: '가능한.' },
+    { e: '👀', t: '빤히...빤히...' },
+    { e: '😭', t: '아 진짜 왜 이래' },
+    { e: '😘', t: '고마워~' },
+    { e: '😨', t: '안 돼 안 돼 안 돼' },
+    { e: '💀', t: '실화임?' },
+    { e: '😱', t: '등록하지마' },
+    { e: '🐱', t: '냐냐냥!!!' }, // ← 추가
+];
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
@@ -3173,38 +3174,46 @@ div.ondragstart = (e) => {
     };
 
     window.sendEmote = function(emote) {
-        if (!myName || !db) return;
-        db.ref('emotes').push({ name: myName, emote, time: Date.now() });
-        const picker = document.getElementById('emote-picker');
-        if (picker) picker.style.display = 'none';
-    };
+    if (!myName || !db) return;
+    db.ref('emotes').push({ name: myName, emote, time: Date.now() });
+    const picker = document.getElementById('emote-picker');
+    if (picker) picker.style.display = 'none';
+};
 
-    window.showBubble = function(playerName, emote) {
-        let badge = document.getElementById(`badge-${playerName}`);
-        
-        // 플레이어 뱃지가 없으면 관전자용 등으로 임시 생성
-        if (!badge) {
-            const listEl = document.getElementById('player-list-container');
-            if (!listEl) return;
-            badge = document.createElement('span');
-            badge.id = `badge-${playerName}`;
-            badge.className = 'player-badge';
-            badge.style.opacity = '0.6';
-            badge.innerHTML = `👀 ${playerName}`;
-            listEl.appendChild(badge);
-        }
+function speakText(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ko-KR';
+    utter.pitch = 1.8;
+    utter.rate = 1.2;
+    utter.volume = 1.0;
+    window.speechSynthesis.speak(utter);
+}
 
-        const existing = badge.querySelector('.emoji-bubble');
-        if (existing) existing.remove();
-
-        const bubble = document.createElement('div');
-        bubble.className = 'emoji-bubble';
-        bubble.innerText = emote;
-        badge.appendChild(bubble);
-
-        // 2.5초 후 제거
-        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
-    };
+window.showBubble = function(playerName, emote) {
+    if (emote.includes('냐냐냥')) {
+        speakText('냐냐냥!!!');
+    }
+    let badge = document.getElementById(`badge-${playerName}`);
+    if (!badge) {
+        const listEl = document.getElementById('player-list-container');
+        if (!listEl) return;
+        badge = document.createElement('span');
+        badge.id = `badge-${playerName}`;
+        badge.className = 'player-badge';
+        badge.style.opacity = '0.6';
+        badge.innerHTML = `👀 ${playerName}`;
+        listEl.appendChild(badge);
+    }
+    const existing = badge.querySelector('.emoji-bubble');
+    if (existing) existing.remove();
+    const bubble = document.createElement('div');
+    bubble.className = 'emoji-bubble';
+    bubble.innerText = emote;
+    badge.appendChild(bubble);
+    setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
+};
 
 // 채팅창 드래그 이동
 (function() {
@@ -3231,6 +3240,8 @@ div.ondragstart = (e) => {
         isDragging = false;
     });
 })();
+
+
 
 </script>
 </body>
