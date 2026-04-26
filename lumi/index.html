@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 60.87</title>
+    <title>루미큐브 : Ver. 60.9</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -2152,28 +2152,33 @@ body[data-theme='cyber'] .tile.black  { color: #ffffff !important; text-shadow: 
     };
 
     window.handleEntry = function(role, isAuto = false) {
- if (!db) return setTimeout(() => window.handleEntry(role, isAuto), 100); // ✅ 추가
-        if (!isAuto) {
-            const nickInput = document.getElementById('nick-input');
-            if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
-            myName = nickInput.value.trim(); myRole = role;
-        } else {
-            myName = window.sessionStorage.getItem('lumi-nick');
-            myRole = window.sessionStorage.getItem('lumi-role') || "player";
-        }
-        window.sessionStorage.setItem('lumi-nick', myName);
-        window.sessionStorage.setItem('lumi-role', myRole);
-db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
-db.ref('players/' + myName + '/joined').onDisconnect().set(false); // 접속 상태만 해제하도록 변경
-document.getElementById('entry-layer').style.display = 'none';
-        if (!isAuto) playSFX('success');
+    if (!db) return setTimeout(() => window.handleEntry(role, isAuto), 100);
+    if (!isAuto) {
+        const nickInput = document.getElementById('nick-input');
+        if (!nickInput.value.trim()) return alert("닉네임을 입력하세요!");
+        myName = nickInput.value.trim(); myRole = role;
+    } else {
+        myName = window.sessionStorage.getItem('lumi-nick');
+        myRole = window.sessionStorage.getItem('lumi-role') || "player";
+    }
+    window.sessionStorage.setItem('lumi-nick', myName);
+    window.sessionStorage.setItem('lumi-role', myRole);
+    db.ref('players/' + myName).update({ joined: true, timestamp: Date.now(), role: myRole });
+    db.ref('players/' + myName + '/joined').onDisconnect().set(false);
+    document.getElementById('entry-layer').style.display = 'none';
+    if (!isAuto) playSFX('success');
 
-        db.ref('hands/' + myName).on('value', snap => {
-            myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
-            db.ref('players/' + myName).update({ tileCount: myHandData.length });
-            window.applyAutoSort();
-        });
-    };
+    // ← 재입장 시 현재 보드 상태를 initialBoardState로 동기화
+    db.ref('board').once('value', snap => {
+        initialBoardState = snap.val() || {};
+    });
+
+    db.ref('hands/' + myName).on('value', snap => {
+        myHandData = Object.entries(snap.val() || {}).map(([id, val]) => ({ id, ...val }));
+        db.ref('players/' + myName).update({ tileCount: myHandData.length });
+        window.applyAutoSort();
+    });
+};
 
     window.updatePlayerListUI = function() {
     const listEl = document.getElementById('player-list-container');
