@@ -1675,7 +1675,8 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     { e: '💀', t: '실화임?' },
     { e: '😱', t: '등록하지마' },
     { e: '🐱', t: '냐냐냥!!!' },
-    { e: '🐶', t: '앙!' }, // <-- 새로 추가된 이모트
+    { e: '🐶', t: '앙!' },
+    { e: '👑', t: '퀸의 등장.' },
 ];
 
     window.toggleEmotePicker = function() {
@@ -1721,6 +1722,7 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     window.showBubble = function(playerName, emote) {
         if (emote.includes('냐냐냥')) speakText('냐냐냥!!!');
         if (emote.includes('앙!')) speakText('앙!');
+        if (emote.includes('퀸의 등장')) speakText('퀸의 등장.');
         let badge = document.getElementById(`badge-${playerName}`);
         if (!badge) {
             const listEl = document.getElementById('player-list-container');
