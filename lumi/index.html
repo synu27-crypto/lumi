@@ -1699,8 +1699,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     window.sendEmote = function(emote) {
         if (!myName || !db) return;
         db.ref('emotes').push({ name: myName, emote, time: Date.now() });
-        const picker = document.getElementById('emote-picker');
-        if (picker) picker.style.display = 'none';
     };
 
     async function speakText(text) {
@@ -1759,6 +1757,17 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         });
         document.addEventListener('mouseup', function() { isDragging = false; });
     })();
+
+document.addEventListener('mousedown', function(e) {
+    const picker = document.getElementById('emote-picker');
+    const emoteBtn = e.target.closest('button'); // 클릭한 요소가 버튼인지 확인
+    
+    // 피커가 열려있고, 클릭한 곳이 피커 내부가 아니며, 😀 버튼을 누른 것도 아닐 때 닫음
+    if (picker.style.display === 'flex' && !picker.contains(e.target) && (!emoteBtn || !emoteBtn.outerHTML.includes('toggleEmotePicker'))) {
+        picker.style.display = 'none';
+    }
+});
+
 </script>
 </body>
 </html>
