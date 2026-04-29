@@ -1769,17 +1769,23 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     };
 
     // === 이모트 ===
+
     const EMOTE_SETS = [
-        { e: '😋', t: '이게 되네?' },
-        { e: '🔥', t: '가능한.' },
-        { e: '👀', t: '빤히...빤히...' },
-        { e: '😭', t: '아 진짜 왜 이래' },
-        { e: '😘', t: '고마워~' },
-        { e: '😨', t: '안 돼 안 돼 안 돼' },
-        { e: '💀', t: '실화임?' },
-        { e: '😱', t: '등록하지마' },
-        { e: '🐱', t: '냐냐냥!!!' },
-    ];
+    { e: '😋', t: '이게 되네?' },
+    { e: '🔥', t: '가능한.' },
+    { e: '👀', t: '빤히...빤히...' },
+    { e: '😭', t: '아 진짜 왜 이래' },
+    { e: '😘', t: '고마워~' },
+    { e: '😨', t: '안 돼 안 돼 안 돼' },
+    { e: '💀', t: '실화임?' },
+    { e: '😱', t: '등록하지마' },
+    { e: '🐱', t: '냐냐냥!!!' },
+    { e: '🐶', t: '앙!' },
+    { e: '👑', t: '퀸의 등장.' },
+    { e: '😏', t: '워씽씌' },
+    { e: '🔊', t: '하이얏!!!' },
+    { e: '🍡', t: '쫀득쫀득' },
+];
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
@@ -1801,44 +1807,72 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     window.sendEmote = function(emote) {
         if (!myName || !db) return;
         db.ref('emotes').push({ name: myName, emote, time: Date.now() });
-        const picker = document.getElementById('emote-picker');
-        if (picker) picker.style.display = 'none';
     };
 
-    async function speakText(text) {
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        const waitForVoices = () => new Promise(resolve => {
-            const voices = window.speechSynthesis.getVoices();
-            if (voices.length) return resolve(voices);
-            window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
-        });
-        const voices = await waitForVoices();
-        const koreanVoice = voices.find(v => v.lang === 'ko-KR' && v.name.includes('female')) || voices.find(v => v.lang === 'ko-KR') || voices.find(v => v.lang.startsWith('ko'));
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = 'ko-KR'; utter.pitch = 2.0; utter.rate = 1.3; utter.volume = 1.0;
-        if (koreanVoice) utter.voice = koreanVoice;
-        window.speechSynthesis.speak(utter);
-    }
+    async function speakText(text, customPitch = 2.0, customRate = 1.3) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    
+    const waitForVoices = () => new Promise(resolve => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length) return resolve(voices);
+        window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
+    });
+    
+    const voices = await waitForVoices();
+    const koreanVoice = voices.find(v => v.lang === 'ko-KR' && v.name.includes('female')) || 
+                       voices.find(v => v.lang === 'ko-KR') || 
+                       voices.find(v => v.lang.startsWith('ko'));
+    
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ko-KR'; 
+    
+    // 이 부분이 핵심입니다! 전달받은 값을 적용합니다.
+    utter.pitch = customPitch; 
+    utter.rate = customRate;   
+    utter.volume = 1.0;
+    
+    if (koreanVoice) utter.voice = koreanVoice;
+    window.speechSynthesis.speak(utter);
+}
 
     window.showBubble = function(playerName, emote) {
-        if (emote.includes('냐냐냥')) speakText('냐냐냥!!!');
-        let badge = document.getElementById(`badge-${playerName}`);
-        if (!badge) {
-            const listEl = document.getElementById('player-list-container');
-            if (!listEl) return;
-            badge = document.createElement('span');
-            badge.id = `badge-${playerName}`; badge.className = 'player-badge';
-            badge.style.opacity = '0.6'; badge.innerHTML = `👀 ${playerName}`;
-            listEl.appendChild(badge);
-        }
-        const existing = badge.querySelector('.emoji-bubble');
-        if (existing) existing.remove();
-        const bubble = document.createElement('div');
-        bubble.className = 'emoji-bubble'; bubble.innerText = emote;
-        badge.appendChild(bubble);
-        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
-    };
+    // 1. 음성 출력 로직 (문구별로 피치와 속도를 다르게 전달)
+    if (emote.includes('냐냐냥')) {
+        speakText('냐냐냥!!!', 2.0, 1.3); // 기본 귀여운 톤
+    } 
+    else if (emote.includes('앙!')) {
+        speakText('ANG!', 1.8, 1.5);    // 짧고 강하게
+    } 
+    else if (emote.includes('퀸의 등장')) {
+        speakText('퀸의 등장.', 0.8, 0.9); // 피치를 0.8로 확 낮춰서 깔보는 앙칼진 톤
+    }
+    else if (emote.includes('워씽씌')) {
+        speakText('워씽씌?', 2.0, 0.7);   // 피치는 높게, 속도는 아주 느리게 (킹받는 포인트)
+    }
+    else if (emote.includes('하이얏!!!')) {
+        speakText('하아아아아이이야앗!', 2.0, 0.8);
+    }
+    else if (emote.includes('쫀득쫀득')) {
+        speakText('쫜.득.쫜.득.', 1.0, 0.6); // 속도를 0.6까지 낮춰서 씹어 읽기
+    }
+
+    let badge = document.getElementById(`badge-${playerName}`);
+    if (!badge) {
+        const listEl = document.getElementById('player-list-container');
+        if (!listEl) return;
+        badge = document.createElement('span');
+        badge.id = `badge-${playerName}`; badge.className = 'player-badge';
+        badge.style.opacity = '0.6'; badge.innerHTML = `👀 ${playerName}`;
+        listEl.appendChild(badge);
+    }
+    const existing = badge.querySelector('.emoji-bubble');
+    if (existing) existing.remove();
+    const bubble = document.createElement('div');
+    bubble.className = 'emoji-bubble'; bubble.innerText = emote;
+    badge.appendChild(bubble);
+    setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
+};
 
     // 채팅창 드래그 이동
     (function() {
