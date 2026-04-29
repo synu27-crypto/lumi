@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 61</title>
+    <title>루미큐브 : Ver. 61.1</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -65,9 +65,6 @@ body {
     flex-shrink: 0;
 }
 
-/* =============================================
-   보드판: overflow hidden, 패닝용 cursor
-   ============================================= */
 #game-board {
     flex: 1;
     background: var(--board-bg);
@@ -78,8 +75,9 @@ body {
 }
 #game-board.not-my-turn { opacity: 0.7; filter: brightness(0.8); }
 #game-board.panning { cursor: grabbing !important; }
+/* Ctrl 누를 때 커서 변경 */
+#game-board.ctrl-mode { cursor: crosshair !important; }
 
-/* 내부 캔버스: 타일들이 여기에 붙음 */
 #board-canvas {
     position: absolute;
     top: 0; left: 0;
@@ -90,7 +88,6 @@ body {
     background-size: 50px 75px;
 }
 
-/* 줌 표시 배지 */
 #zoom-badge {
     position: absolute;
     bottom: 8px; left: 50%;
@@ -107,6 +104,25 @@ body {
     transition: opacity 0.3s;
 }
 #zoom-badge.visible { opacity: 1; }
+
+/* Ctrl 힌트 배지 */
+#ctrl-hint {
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(52,152,219,0.9);
+    color: #fff;
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+#ctrl-hint.visible { opacity: 1; }
 
 body[data-theme='pink'] #board-canvas {
     background-color: #ffe8f3 !important;
@@ -283,7 +299,7 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .rank-table td { padding: 8px; border-bottom: 1px solid rgba(128,128,128,0.1); }
 
 /* === 선택 박스 === */
-#selection-box { position: absolute; border: 1px solid rgba(52,152,219,0.8); background: rgba(52,152,219,0.2); pointer-events: none; display: none; z-index: 9999; }
+#selection-box { position: absolute; border: 2px dashed rgba(52,152,219,0.9); background: rgba(52,152,219,0.12); pointer-events: none; display: none; z-index: 9999; border-radius: 4px; }
 
 .emoji-bubble {
     position: absolute; 
@@ -408,7 +424,7 @@ body[data-theme='pink'] .modal-card { background: linear-gradient(145deg, #fff0f
 body[data-theme='pink'] .lobby-player-tag { background: linear-gradient(135deg, #ff69b4, #ff3385) !important; }
 body[data-theme='pink'] .lobby-player-tag.spec-tag { background: rgba(255,182,210,0.3) !important; border: 1px dashed #ff85a1 !important; color: #b5005b !important; }
 body[data-theme='pink'] #emote-picker { background: linear-gradient(145deg, #fff0f7, #ffd6e8) !important; border: 1.5px solid #ff85a1 !important; }
-body[data-theme='pink'] #selection-box { border: 1.5px solid rgba(255,51,133,0.8) !important; background: rgba(255,105,180,0.15) !important; }
+body[data-theme='pink'] #selection-box { border: 2px dashed rgba(255,51,133,0.9) !important; background: rgba(255,105,180,0.12) !important; }
 body[data-theme='pink'] .theme-btn.active { border-color: #ff3385 !important; box-shadow: 0 0 8px #ff3385 !important; }
 
 /* === 빈티지 키티 === */
@@ -635,6 +651,8 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             <div id="selection-box"></div>
         </div>
         <div id="zoom-badge">100%</div>
+        <!-- Ctrl 모드 힌트 -->
+        <div id="ctrl-hint">🖱️ Ctrl+드래그로 영역 선택 · Ctrl+클릭으로 타일 추가 선택</div>
     </div>
 
     <div id="chat-wrapper">
@@ -694,6 +712,34 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     let zoomBadgeTimeout = null;
     const MIN_SCALE = 0.3, MAX_SCALE = 2.0, CANVAS_SIZE = 4000;
 
+    // =============================================
+    // Ctrl 키 상태 추적 + 힌트 표시
+    // =============================================
+    let isCtrlDown = false;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Control' || e.key === 'Meta') {
+            isCtrlDown = true;
+            const board = document.getElementById('game-board');
+            if (board) board.classList.add('ctrl-mode');
+            const hint = document.getElementById('ctrl-hint');
+            if (hint) hint.classList.add('visible');
+        }
+        // Escape: 선택 해제
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+            selectedTiles = [];
+        }
+    });
+    document.addEventListener('keyup', function(e) {
+        if (e.key === 'Control' || e.key === 'Meta') {
+            isCtrlDown = false;
+            const board = document.getElementById('game-board');
+            if (board) board.classList.remove('ctrl-mode');
+            const hint = document.getElementById('ctrl-hint');
+            if (hint) hint.classList.remove('visible');
+        }
+    });
+
     function applyTransform() {
         const c = document.getElementById('board-canvas');
         if (c) c.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
@@ -747,18 +793,51 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         return { x: (sx - rect.left - panX) / scale, y: (sy - rect.top - panY) / scale };
     }
 
-    // 보드판 mousedown: 타일이면 무시, 빈 곳이면 패닝
+    // =============================================
+    // 보드판 mousedown 처리
+    // - Ctrl 없음 + 빈 곳 클릭 → 패닝
+    // - Ctrl 없음 + 타일 클릭 → 드래그 시작 허용 (선택 초기화 없이)
+    // - Ctrl + 빈 곳 클릭 → 영역 선택 시작
+    // - Ctrl + 타일 클릭 → 타일 선택 토글 (아래 타일 ondragstart에서 처리)
+    // =============================================
     window.boardMouseDown = function(e) {
         const isTile = e.target.classList.contains('tile');
+        const ctrlHeld = e.ctrlKey || e.metaKey;
+
+        if (ctrlHeld && isTile) {
+            // Ctrl+클릭: 타일 다중 선택 토글
+            if (myRole !== 'player' || currentTurn !== myName) return;
+            const tileId = e.target.id;
+            if (selectedTiles.includes(tileId)) {
+                selectedTiles = selectedTiles.filter(id => id !== tileId);
+                e.target.classList.remove('selected-tile');
+            } else {
+                selectedTiles.push(tileId);
+                e.target.classList.add('selected-tile');
+            }
+            e.preventDefault();
+            return;
+        }
+
+        if (ctrlHeld && !isTile) {
+            // Ctrl+빈곳: 영역 선택 시작
+            window.startSelection(e);
+            return;
+        }
+
         if (!isTile) {
+            // 빈 곳 클릭: 선택 해제 + 패닝 시작
+            if (selectedTiles.length > 0) {
+                document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+                selectedTiles = [];
+            }
             isPanning = true;
             panStartX = e.clientX; panStartY = e.clientY;
             panStartPX = panX; panStartPY = panY;
             document.getElementById('game-board').classList.add('panning');
             e.preventDefault();
-        } else {
-            window.startSelection(e);
         }
+        // 타일 클릭(Ctrl 없음): 브라우저 기본 드래그 이벤트가 처리
     };
 
     window.boardDragOver = function(e) { e.preventDefault(); };
@@ -903,7 +982,7 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             const rows = {};
             Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
             for (let y in rows) {
-                const rowTiles = rows[y].sort((a,b) => a.x - b.x);
+                const rowTiles = rows[y].sort((a, b) => a.x - b.x);
                 let currentBoardSet = [];
                 for (let i = 0; i < rowTiles.length; i++) {
                     currentBoardSet.push(rowTiles[i]);
@@ -1107,7 +1186,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             db.ref('currentTurn').on('value', snap => {
                 currentTurn = snap.val();
                 const isMy = (currentTurn === myName && myRole === 'player');
-                // not-my-turn: 타일 드래그만 막고 패닝은 항상 가능
                 document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
                 ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
                 document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
@@ -1147,19 +1225,38 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
                     div.style.left = data.x + 'px';
                     div.style.top  = data.y + 'px';
                     div.draggable = (myRole === 'player');
+
+                    // =============================================
+                    // 보드 타일 드래그 시작
+                    // - 내 턴에 드래그 가능
+                    // - selectedTiles에 포함된 경우 그룹 드래그
+                    // - 포함 안 된 경우 단일 드래그 (기존 선택 유지하되 이 타일만)
+                    // =============================================
                     div.ondragstart = (e) => {
-                        if (currentTurn !== myName || myRole !== 'player') return e.preventDefault();
-                        let dragData = { primary: id, group: [id] };
-                        if (selectedTiles.includes(id)) {
-                            dragData.group = selectedTiles;
+                        if (currentTurn !== myName || myRole !== 'player') {
+                            e.preventDefault();
+                            return;
+                        }
+                        let dragGroup;
+                        if (selectedTiles.length > 0 && selectedTiles.includes(id)) {
+                            // 선택된 그룹 드래그
+                            dragGroup = [...selectedTiles];
                         } else {
+                            // 단일 타일 드래그: 기존 선택 해제
                             document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
                             selectedTiles = [];
+                            dragGroup = [id];
                         }
-                        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+                        e.dataTransfer.setData("text/plain", JSON.stringify({ primary: id, group: dragGroup }));
                         e.dataTransfer.setData("source", "board");
                         playSFX('tilePick');
                     };
+
+                    // Ctrl+클릭으로 선택된 상태 복원 (board 재렌더링 후)
+                    if (selectedTiles.includes(id)) {
+                        div.classList.add('selected-tile');
+                    }
+
                     canvas.appendChild(div);
                 });
             });
@@ -1303,6 +1400,9 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             up['board'] = initialBoardState;
             db.ref('/').update(up);
             playSFX('tilePick');
+            // 선택 초기화
+            document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+            selectedTiles = [];
         }
     };
 
@@ -1379,7 +1479,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             }
         });
 
-        // 캔버스 범위 클램프
         dropX = Math.max(0, Math.min(CANVAS_SIZE - 44, dropX));
         dropY = Math.max(0, Math.min(CANVAS_SIZE - 64, dropY));
 
@@ -1648,12 +1747,14 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             db.ref('stats').remove().then(() => window.renderLobbyUI());
     };
 
-    // === 드래그 선택 ===
+    // =============================================
+    // 드래그 선택 상태
+    // =============================================
     let isSelecting = false, startX, startY, selectedTiles = [];
 
+    // Ctrl+빈곳 드래그로 영역 선택
     window.startSelection = function(e) {
         if (myRole !== 'player' || currentTurn !== myName) return;
-        if (e.target.classList.contains('tile')) return;
         isSelecting = true;
         const canvas = document.getElementById('board-canvas');
         const cRect = canvas.getBoundingClientRect();
@@ -1661,28 +1762,24 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         startY = (e.clientY - cRect.top)  / scale;
         const selBox = document.getElementById('selection-box');
         selBox.style.cssText = `left:${startX}px; top:${startY}px; width:0; height:0; display:block;`;
-        selectedTiles = [];
+        // Ctrl+드래그는 기존 선택 유지하지 않고 새로 선택
         document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
+        selectedTiles = [];
+        e.preventDefault();
     };
 
     // === 이모트 ===
-
     const EMOTE_SETS = [
-    { e: '😋', t: '이게 되네?' },
-    { e: '🔥', t: '가능한.' },
-    { e: '👀', t: '빤히...빤히...' },
-    { e: '😭', t: '아 진짜 왜 이래' },
-    { e: '😘', t: '고마워~' },
-    { e: '😨', t: '안 돼 안 돼 안 돼' },
-    { e: '💀', t: '실화임?' },
-    { e: '😱', t: '등록하지마' },
-    { e: '🐱', t: '냐냐냥!!!' },
-    { e: '🐶', t: '앙!' },
-    { e: '👑', t: '퀸의 등장.' },
-    { e: '😏', t: '워씽씌' },     // 추가
-    { e: '🔊', t: '하이얏!!!' },     // 추가
-    { e: '🍡', t: '쫀득쫀득' },   // 추가
-];
+        { e: '😋', t: '이게 되네?' },
+        { e: '🔥', t: '가능한.' },
+        { e: '👀', t: '빤히...빤히...' },
+        { e: '😭', t: '아 진짜 왜 이래' },
+        { e: '😘', t: '고마워~' },
+        { e: '😨', t: '안 돼 안 돼 안 돼' },
+        { e: '💀', t: '실화임?' },
+        { e: '😱', t: '등록하지마' },
+        { e: '🐱', t: '냐냐냥!!!' },
+    ];
 
     window.toggleEmotePicker = function() {
         const picker = document.getElementById('emote-picker');
@@ -1704,72 +1801,44 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     window.sendEmote = function(emote) {
         if (!myName || !db) return;
         db.ref('emotes').push({ name: myName, emote, time: Date.now() });
+        const picker = document.getElementById('emote-picker');
+        if (picker) picker.style.display = 'none';
     };
 
-    async function speakText(text, customPitch = 2.0, customRate = 1.3) {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    
-    const waitForVoices = () => new Promise(resolve => {
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length) return resolve(voices);
-        window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
-    });
-    
-    const voices = await waitForVoices();
-    const koreanVoice = voices.find(v => v.lang === 'ko-KR' && v.name.includes('female')) || 
-                       voices.find(v => v.lang === 'ko-KR') || 
-                       voices.find(v => v.lang.startsWith('ko'));
-    
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'ko-KR'; 
-    
-    // 이 부분이 핵심입니다! 전달받은 값을 적용합니다.
-    utter.pitch = customPitch; 
-    utter.rate = customRate;   
-    utter.volume = 1.0;
-    
-    if (koreanVoice) utter.voice = koreanVoice;
-    window.speechSynthesis.speak(utter);
-}
+    async function speakText(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const waitForVoices = () => new Promise(resolve => {
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length) return resolve(voices);
+            window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
+        });
+        const voices = await waitForVoices();
+        const koreanVoice = voices.find(v => v.lang === 'ko-KR' && v.name.includes('female')) || voices.find(v => v.lang === 'ko-KR') || voices.find(v => v.lang.startsWith('ko'));
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'ko-KR'; utter.pitch = 2.0; utter.rate = 1.3; utter.volume = 1.0;
+        if (koreanVoice) utter.voice = koreanVoice;
+        window.speechSynthesis.speak(utter);
+    }
 
     window.showBubble = function(playerName, emote) {
-    // 1. 음성 출력 로직 (문구별로 피치와 속도를 다르게 전달)
-    if (emote.includes('냐냐냥')) {
-        speakText('냐냐냥!!!', 2.0, 1.3); // 기본 귀여운 톤
-    } 
-    else if (emote.includes('앙!')) {
-        speakText('ANG!', 1.8, 1.5);    // 짧고 강하게
-    } 
-    else if (emote.includes('퀸의 등장')) {
-        speakText('퀸의 등장.', 0.8, 0.9); // 피치를 0.8로 확 낮춰서 깔보는 앙칼진 톤
-    }
-    else if (emote.includes('워씽씌')) {
-        speakText('워씽씌?', 2.0, 0.7);   // 피치는 높게, 속도는 아주 느리게 (킹받는 포인트)
-    }
-    else if (emote.includes('하이얏!!!')) {
-        speakText('하아아아아이이야앗!', 2.0, 0.8);
-    }
-    else if (emote.includes('쫀득쫀득')) {
-        speakText('쫜.득.쫜.득.', 1.0, 0.6); // 속도를 0.6까지 낮춰서 씹어 읽기
-    }
-
-    let badge = document.getElementById(`badge-${playerName}`);
-    if (!badge) {
-        const listEl = document.getElementById('player-list-container');
-        if (!listEl) return;
-        badge = document.createElement('span');
-        badge.id = `badge-${playerName}`; badge.className = 'player-badge';
-        badge.style.opacity = '0.6'; badge.innerHTML = `👀 ${playerName}`;
-        listEl.appendChild(badge);
-    }
-    const existing = badge.querySelector('.emoji-bubble');
-    if (existing) existing.remove();
-    const bubble = document.createElement('div');
-    bubble.className = 'emoji-bubble'; bubble.innerText = emote;
-    badge.appendChild(bubble);
-    setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
-};
+        if (emote.includes('냐냐냥')) speakText('냐냐냥!!!');
+        let badge = document.getElementById(`badge-${playerName}`);
+        if (!badge) {
+            const listEl = document.getElementById('player-list-container');
+            if (!listEl) return;
+            badge = document.createElement('span');
+            badge.id = `badge-${playerName}`; badge.className = 'player-badge';
+            badge.style.opacity = '0.6'; badge.innerHTML = `👀 ${playerName}`;
+            listEl.appendChild(badge);
+        }
+        const existing = badge.querySelector('.emoji-bubble');
+        if (existing) existing.remove();
+        const bubble = document.createElement('div');
+        bubble.className = 'emoji-bubble'; bubble.innerText = emote;
+        badge.appendChild(bubble);
+        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
+    };
 
     // 채팅창 드래그 이동
     (function() {
@@ -1790,17 +1859,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         });
         document.addEventListener('mouseup', function() { isDragging = false; });
     })();
-
-document.addEventListener('mousedown', function(e) {
-    const picker = document.getElementById('emote-picker');
-    const emoteBtn = e.target.closest('button'); // 클릭한 요소가 버튼인지 확인
-    
-    // 피커가 열려있고, 클릭한 곳이 피커 내부가 아니며, 😀 버튼을 누른 것도 아닐 때 닫음
-    if (picker.style.display === 'flex' && !picker.contains(e.target) && (!emoteBtn || !emoteBtn.outerHTML.includes('toggleEmotePicker'))) {
-        picker.style.display = 'none';
-    }
-});
-
 </script>
 </body>
 </html>
