@@ -1785,6 +1785,8 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     { e: '😏', t: '워씽씌' },
     { e: '🔊', t: '하이얏!!!' },
     { e: '🍡', t: '쫀득쫀득' },
+    { e: '🌙', t: '밤이 늦엇네' },
+    { e: '💤', t: '깊이 잠들렴.' }
 ];
 
     window.toggleEmotePicker = function() {
@@ -1851,10 +1853,16 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         speakText('워씽씌?', 2.0, 0.7);   // 피치는 높게, 속도는 아주 느리게 (킹받는 포인트)
     }
     else if (emote.includes('하이얏!!!')) {
-        speakText('하아아아아이이야앗!', 2.0, 0.8);
+        speakText('하야앗!', 2.0, 0.8);
     }
     else if (emote.includes('쫀득쫀득')) {
         speakText('쫜.득.쫜.득.', 1.0, 0.6); // 속도를 0.6까지 낮춰서 씹어 읽기
+    }
+    else if (emote.includes('밤이 늦엇네.')) {
+        speakText('밤이 늦엇네.', 0.7, 0.8);
+    }
+    else if (emote.includes('깊이 잠들렴.')) {
+        speakText('깊이 잠 들렴.', 0.6, 0.7);
     }
 
     let badge = document.getElementById(`badge-${playerName}`);
