@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 61.1</title>
+    <title>루미큐브 : Ver. 61.2</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -75,7 +75,6 @@ body {
 }
 #game-board.not-my-turn { opacity: 0.7; filter: brightness(0.8); }
 #game-board.panning { cursor: grabbing !important; }
-/* Ctrl 누를 때 커서 변경 */
 #game-board.ctrl-mode { cursor: crosshair !important; }
 
 #board-canvas {
@@ -105,7 +104,6 @@ body {
 }
 #zoom-badge.visible { opacity: 1; }
 
-/* Ctrl 힌트 배지 */
 #ctrl-hint {
     position: absolute;
     top: 10px; left: 50%;
@@ -129,7 +127,6 @@ body[data-theme='pink'] #board-canvas {
     background-image: radial-gradient(circle, rgba(255, 102, 163, 0.2) 1px, transparent 1px) !important;
 }
 
-/* === 타일 === */
 .tile { 
     width: 44px; height: 64px; 
     background: var(--tile-bg) !important; 
@@ -153,7 +150,6 @@ body[data-theme='pink'] #board-canvas {
     z-index: 50 !important;
 }
 
-/* === 채팅 및 로그 === */
 #chat-wrapper {
     position: fixed;
     bottom: 270px;
@@ -199,7 +195,6 @@ body[data-theme='pink'] #board-canvas {
 }
 #chat-input { flex: 1; background: transparent; border: none; padding: 8px; color: var(--main-text); outline: none; }
 
-/* === 하단 랙 === */
 #my-rack { 
     height: 150px; 
     background: var(--rack-bg); 
@@ -224,7 +219,6 @@ body[data-theme='pink'] #board-canvas {
     background: transparent !important;
 }
 
-/* === 버튼 === */
 button { 
     padding: 8px 16px; font-weight: 700; cursor: pointer; 
     border-radius: 8px; border: 1px solid rgba(128,128,128,0.2); 
@@ -233,7 +227,6 @@ button {
 }
 button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-/* === 플레이어 뱃지 === */
 .player-badge {
     background: rgba(128,128,128,0.1); color: var(--main-text);
     padding: 5px 12px; border-radius: 15px;
@@ -244,7 +237,6 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .active-turn-badge { border-color: var(--turn-blue) !important; background: rgba(52,152,219,0.2) !important; }
 .tile-count { background: var(--main-text); color: var(--bg-color); padding: 1px 6px; border-radius: 5px; font-weight: 900; }
 
-/* === 모달/오버레이 === */
 #overlay-layer, #entry-layer { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
     background: rgba(0,0,0,0.85); 
@@ -268,7 +260,6 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     font-weight: 800; font-size: 0.8rem; margin-right: 10px; display: none;
 }
 
-/* === 테마 버튼 === */
 .theme-selector { display: flex; gap: 5px; }
 .theme-btn {
     width: 28px; height: 28px; padding: 0;
@@ -282,7 +273,6 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .theme-btn:hover { transform: scale(1.1); }
 .theme-btn.active { border-color: var(--accent-purple) !important; box-shadow: 0 0 8px var(--accent-purple); }
 
-/* === 힌트 === */
 @keyframes hint-glow {
     0%   { box-shadow: 0 0 5px var(--accent-gold); transform: scale(1); }
     50%  { box-shadow: 0 0 20px var(--accent-gold); transform: scale(1.05); }
@@ -290,7 +280,6 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 }
 .hint-target { animation: hint-glow 1s infinite; border: 2px solid var(--accent-gold) !important; z-index: 1000 !important; }
 
-/* === 로비 === */
 .lobby-player-tag { display: inline-flex; align-items: center; background: var(--turn-blue); color: #fff; padding: 8px 16px; border-radius: 20px; margin: 4px; font-weight: 800; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 .lobby-player-tag.spec-tag { background: rgba(128,128,128,0.2); color: var(--main-text); border: 1px dashed rgba(128,128,128,0.5); box-shadow: none; }
 
@@ -298,7 +287,6 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .rank-table th { border-bottom: 1px solid rgba(128,128,128,0.2); padding: 8px; color: var(--accent-gold); }
 .rank-table td { padding: 8px; border-bottom: 1px solid rgba(128,128,128,0.1); }
 
-/* === 선택 박스 === */
 #selection-box { position: absolute; border: 2px dashed rgba(52,152,219,0.9); background: rgba(52,152,219,0.12); pointer-events: none; display: none; z-index: 9999; border-radius: 4px; }
 
 .emoji-bubble {
@@ -383,7 +371,6 @@ button:hover { filter: brightness(1.1); transform: translateY(-1px); }
     background: rgba(255,255,255,0.15); 
 }
 
-/* === 핑크 테마 === */
 body[data-theme='pink'] {
     --bg-color:    #fff0f7 !important;
     --panel-bg:    #ffd6e8 !important;
@@ -427,7 +414,6 @@ body[data-theme='pink'] #emote-picker { background: linear-gradient(145deg, #fff
 body[data-theme='pink'] #selection-box { border: 2px dashed rgba(255,51,133,0.9) !important; background: rgba(255,105,180,0.12) !important; }
 body[data-theme='pink'] .theme-btn.active { border-color: #ff3385 !important; box-shadow: 0 0 8px #ff3385 !important; }
 
-/* === 빈티지 키티 === */
 body[data-theme='vintage'] { --bg-color:#f5ede0!important; --panel-bg:#e8d5bc!important; --board-bg:#ede0cc!important; --rack-bg:#d9c4a8!important; --modal-bg:#f5ede0!important; --main-text:#6b3a2a!important; --turn-blue:#c08060!important; --accent-gold:#b8860b!important; --accent-green:#8b6914!important; --btn-bg:rgba(192,128,96,0.2)!important; cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🌸</text></svg>") 12 12, auto !important; }
 body[data-theme='vintage'] #board-canvas { background-color:#ede0cc!important; background-image:radial-gradient(circle,rgba(176,112,80,0.2) 1px,transparent 1px),radial-gradient(circle,rgba(192,128,96,0.1) 1px,transparent 1px)!important; background-size:40px 40px,20px 20px!important; background-position:0 0,10px 10px!important; }
 body[data-theme='vintage'] #ui-layer { background:linear-gradient(135deg,#e8d5bc 0%,#d9c4a8 50%,#e8d5bc 100%)!important; border-bottom:3px solid #c08060!important; }
@@ -449,7 +435,6 @@ body[data-theme='vintage'] .modal-card { background:linear-gradient(145deg,#f5ed
 body[data-theme='vintage'] .lobby-player-tag { background:linear-gradient(135deg,#c08060,#a07050)!important; color:#fdf6ec!important; }
 body[data-theme='vintage'] .lobby-player-tag.spec-tag { background:rgba(192,128,96,0.2)!important; border:1px dashed #c08060!important; color:#6b3a2a!important; }
 
-/* === 고전 키티 === */
 body[data-theme='kitty'] { --bg-color:#ffffff!important; --panel-bg:#fff0f0!important; --board-bg:#fff5f5!important; --rack-bg:#ffe0e0!important; --modal-bg:#ffffff!important; --main-text:#cc0000!important; --turn-blue:#cc0000!important; --accent-gold:#cc0000!important; --accent-green:#cc0000!important; --btn-bg:rgba(255,220,220,0.5)!important; cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🎀</text></svg>") 12 12, auto !important; }
 body[data-theme='kitty'] #board-canvas { background-color:#fff5f5!important; background-image:radial-gradient(circle,rgba(204,0,0,0.18) 1.5px,transparent 1.5px),radial-gradient(circle,rgba(204,0,0,0.07) 1px,transparent 1px)!important; background-size:40px 40px,20px 20px!important; }
 body[data-theme='kitty'] #ui-layer { background:#ffffff!important; border-bottom:3px solid #cc0000!important; }
@@ -471,7 +456,6 @@ body[data-theme='kitty'] .modal-card { background:#ffffff!important; border:2px 
 body[data-theme='kitty'] .lobby-player-tag { background:#cc0000!important; color:#ffffff!important; }
 body[data-theme='kitty'] .lobby-player-tag.spec-tag { background:#fff0f0!important; border:1px dashed #ffaaaa!important; color:#cc0000!important; }
 
-/* === 시나모롤 === */
 body[data-theme='cinnamoroll'] { --bg-color:#f2f8ff!important; --panel-bg:#e1eefb!important; --board-bg:#eaf3fc!important; --rack-bg:#d3e3f2!important; --modal-bg:#f8fbff!important; --main-text:#5b7a99!important; --turn-blue:#89accf!important; --accent-gold:#b3c7de!important; --accent-green:#a4bad1!important; --btn-bg:rgba(137,172,207,0.2)!important; cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>☁️</text></svg>") 12 12, auto !important; }
 body[data-theme='cinnamoroll'] #board-canvas { background-color:#eaf3fc!important; background-image:radial-gradient(circle,rgba(137,172,207,0.1) 1.5px,transparent 1.5px),radial-gradient(circle,rgba(137,172,207,0.05) 1px,transparent 1px)!important; background-size:40px 40px,20px 20px!important; }
 body[data-theme='cinnamoroll'] #ui-layer { background:linear-gradient(135deg,#e1eefb 0%,#d3e3f2 100%)!important; border-bottom:2px solid #bdcedf!important; }
@@ -493,7 +477,6 @@ body[data-theme='cinnamoroll'] .modal-card { background:linear-gradient(145deg,#
 body[data-theme='cinnamoroll'] .lobby-player-tag { background:#89accf!important; color:white!important; }
 body[data-theme='cinnamoroll'] .lobby-player-tag.spec-tag { background:rgba(189,206,223,0.2)!important; border:1px dashed #bdcedf!important; color:#5b7a99!important; }
 
-/* === 포챠코 === */
 body[data-theme='pochacco'] { --bg-color:#f0f0f8!important; --panel-bg:#dcdcf0!important; --board-bg:#e8e8f5!important; --rack-bg:#c8c8e8!important; --modal-bg:#f5f5fb!important; --main-text:#2a2a5a!important; --turn-blue:#5a5aaa!important; --accent-gold:#8888cc!important; --accent-green:#5a5aaa!important; --btn-bg:rgba(200,200,232,0.4)!important; cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🐾</text></svg>") 12 12, auto !important; }
 body[data-theme='pochacco'] #board-canvas { background-color:#e8e8f5!important; background-image:radial-gradient(circle,rgba(90,90,170,0.18) 1.5px,transparent 1.5px),radial-gradient(circle,rgba(160,160,210,0.1) 1px,transparent 1px)!important; background-size:40px 40px,20px 20px!important; }
 body[data-theme='pochacco'] #ui-layer { background:linear-gradient(135deg,#dcdcf0 0%,#c8c8e8 50%,#dcdcf0 100%)!important; border-bottom:3px solid #8888cc!important; }
@@ -515,7 +498,6 @@ body[data-theme='pochacco'] .modal-card { background:linear-gradient(145deg,#f5f
 body[data-theme='pochacco'] .lobby-player-tag { background:linear-gradient(135deg,#5a5aaa,#3a3a8a)!important; color:white!important; }
 body[data-theme='pochacco'] .lobby-player-tag.spec-tag { background:rgba(200,200,232,0.3)!important; border:1px dashed #8888cc!important; color:#2a2a5a!important; }
 
-/* === 다크 === */
 body[data-theme='dark'] { --bg-color:#0d0d0f!important; --panel-bg:#17181c!important; --board-bg:#111215!important; --rack-bg:#0d0d0f!important; --modal-bg:#1c1d22!important; --main-text:#e8e8f0!important; --tile-bg:#d8d8e0!important; --tile-text-black:#0d0d0f!important; --turn-blue:#5b8dee!important; --accent-gold:#e8b84b!important; --accent-green:#3dd68c!important; --accent-red:#f05c5c!important; --accent-purple:#a56eff!important; --chat-bg:rgba(17,18,21,0.97)!important; --btn-bg:rgba(255,255,255,0.06)!important; cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🖤</text></svg>") 12 12, auto !important; }
 body[data-theme='dark'] #board-canvas { background-color:#111215!important; background-image:radial-gradient(circle,rgba(255,255,255,0.07) 1px,transparent 1px),radial-gradient(circle,rgba(255,255,255,0.03) 1px,transparent 1px)!important; background-size:40px 40px,20px 20px!important; }
 body[data-theme='dark'] #ui-layer { background:linear-gradient(135deg,#1c1d22 0%,#17181c 100%)!important; border-bottom:1px solid rgba(255,255,255,0.06)!important; }
@@ -537,7 +519,6 @@ body[data-theme='dark'] .modal-card { background:linear-gradient(145deg,#1c1d22,
 body[data-theme='dark'] .lobby-player-tag { background:linear-gradient(135deg,#5b8dee,#3a6ccc)!important; color:white!important; }
 body[data-theme='dark'] .lobby-player-tag.spec-tag { background:rgba(255,255,255,0.05)!important; border:1px dashed rgba(255,255,255,0.2)!important; color:#a0a0b8!important; }
 
-/* === 딥 네이비 === */
 body[data-theme='navy'] { --bg-color:#0d1422!important; --panel-bg:#162038!important; --board-bg:#0f1828!important; --rack-bg:#0d1422!important; --modal-bg:#1b2a47!important; --main-text:#eef0f8!important; --tile-bg:#e8eaf8!important; --tile-text-black:#1a1e36!important; --turn-blue:#5b8dee!important; --accent-gold:#f0c060!important; --accent-green:#4de8a0!important; --accent-red:#ff6b6b!important; --accent-purple:#b899ff!important; --chat-bg:rgba(8,12,20,0.96)!important; --btn-bg:rgba(107,147,201,0.08)!important; cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>🌟</text></svg>") 12 12, auto !important; }
 body[data-theme='navy'] #board-canvas { background-color:#0f1828!important; background-image:linear-gradient(rgba(107,147,201,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(107,147,201,0.07) 1px,transparent 1px)!important; background-size:42px 42px!important; }
 body[data-theme='navy'] #ui-layer { background:linear-gradient(135deg,#1b2a47 0%,#162038 100%)!important; border-bottom:1px solid rgba(107,147,201,0.18)!important; }
@@ -563,7 +544,6 @@ body[data-theme='navy'] .modal-card { background:linear-gradient(145deg,#1b2a47,
 body[data-theme='navy'] .lobby-player-tag { background:linear-gradient(135deg,#3a5a8c,#213355)!important; color:#c8ddf8!important; }
 body[data-theme='navy'] .lobby-player-tag.spec-tag { background:rgba(107,147,201,0.07)!important; border:1px dashed rgba(107,147,201,0.3)!important; color:#7a90b0!important; }
 
-/* === 사이버펑크 === */
 body[data-theme='cyber'] { --bg-color:#050505!important; --panel-bg:#0a0a0f!important; --board-bg:#08080a!important; --rack-bg:#050505!important; --modal-bg:#0f0f15!important; --main-text:#00ffcc!important; --turn-blue:#bc13fe!important; --accent-gold:#f5ed00!important; --accent-green:#00ff00!important; --btn-bg:rgba(188,19,254,0.1)!important; cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><text y='20' font-size='20'>⚡</text></svg>") 12 12, auto !important; }
 body[data-theme='cyber'] #board-canvas { background-color:#08080a!important; background-image:linear-gradient(rgba(0,255,204,0.1) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,204,0.1) 1px,transparent 1px)!important; background-size:45px 45px!important; }
 body[data-theme='cyber'] #ui-layer { background:#0a0a0f!important; border-bottom:1px solid rgba(0,255,204,0.2)!important; }
@@ -578,7 +558,6 @@ body[data-theme='cyber'] button:hover { background:#00ffcc!important; color:#000
 body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!important; border-color:#bc13fe!important; box-shadow:0 0 15px #bc13fe!important; animation:cyber-pulse 1.5s infinite!important; }
 @keyframes cyber-pulse { 0%,100%{opacity:0.8;}50%{opacity:1;filter:brightness(1.2);} }
 
-/* === 화면 흔들기 === */
 @keyframes screen-shake {
     0%   { transform: translate(0, 0) rotate(0deg); }
     10%  { transform: translate(-4px, -3px) rotate(-0.5deg); }
@@ -594,7 +573,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
 }
 .screen-shaking { animation: screen-shake 0.6s ease-in-out; }
 
-/* BGM 버튼 */
 .bgm-btn { font-size:1rem; padding:6px 10px; border-radius:12px; background:var(--btn-bg); border:1px solid rgba(128,128,128,0.3); cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:5px; }
 .bgm-btn.playing { border-color:var(--accent-purple); color:var(--accent-purple); box-shadow:0 0 10px rgba(157,80,187,0.3); }
     </style>
@@ -642,7 +620,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         </div>
     </div>
 
-    <!-- 보드판: 내부에 board-canvas -->
     <div id="game-board"
          ondragover="window.boardDragOver(event)"
          ondrop="window.dropOnBoard(event)"
@@ -651,7 +628,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             <div id="selection-box"></div>
         </div>
         <div id="zoom-badge">100%</div>
-        <!-- Ctrl 모드 힌트 -->
         <div id="ctrl-hint">🖱️ Ctrl+드래그로 영역 선택 · Ctrl+클릭으로 타일 추가 선택</div>
     </div>
 
@@ -704,17 +680,11 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     window.latestPlayersData = {};
     window.lastTileCounts = {};
 
-    // =============================================
-    // 패닝 / 줌 상태
-    // =============================================
     let panX = 0, panY = 0, scale = 1;
     let isPanning = false, panStartX = 0, panStartY = 0, panStartPX = 0, panStartPY = 0;
     let zoomBadgeTimeout = null;
     const MIN_SCALE = 0.3, MAX_SCALE = 2.0, CANVAS_SIZE = 4000;
 
-    // =============================================
-    // Ctrl 키 상태 추적 + 힌트 표시
-    // =============================================
     let isCtrlDown = false;
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Control' || e.key === 'Meta') {
@@ -724,7 +694,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             const hint = document.getElementById('ctrl-hint');
             if (hint) hint.classList.add('visible');
         }
-        // Escape: 선택 해제
         if (e.key === 'Escape') {
             document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
             selectedTiles = [];
@@ -762,7 +731,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         zoomBadgeTimeout = setTimeout(() => badge.classList.remove('visible'), 1500);
     }
 
-    // 화면에 타일이 꽉 차도록 자동 맞춤
     window.fitBoard = function() {
         const board = document.getElementById('game-board');
         if (!board) return;
@@ -786,26 +754,17 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         applyTransform(); showZoomBadge();
     };
 
-    // 화면 좌표 → 캔버스 로컬 좌표
     function screenToCanvas(sx, sy) {
         const board = document.getElementById('game-board');
         const rect = board.getBoundingClientRect();
         return { x: (sx - rect.left - panX) / scale, y: (sy - rect.top - panY) / scale };
     }
 
-    // =============================================
-    // 보드판 mousedown 처리
-    // - Ctrl 없음 + 빈 곳 클릭 → 패닝
-    // - Ctrl 없음 + 타일 클릭 → 드래그 시작 허용 (선택 초기화 없이)
-    // - Ctrl + 빈 곳 클릭 → 영역 선택 시작
-    // - Ctrl + 타일 클릭 → 타일 선택 토글 (아래 타일 ondragstart에서 처리)
-    // =============================================
     window.boardMouseDown = function(e) {
         const isTile = e.target.classList.contains('tile');
         const ctrlHeld = e.ctrlKey || e.metaKey;
 
         if (ctrlHeld && isTile) {
-            // Ctrl+클릭: 타일 다중 선택 토글
             if (myRole !== 'player' || currentTurn !== myName) return;
             const tileId = e.target.id;
             if (selectedTiles.includes(tileId)) {
@@ -820,13 +779,11 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         }
 
         if (ctrlHeld && !isTile) {
-            // Ctrl+빈곳: 영역 선택 시작
             window.startSelection(e);
             return;
         }
 
         if (!isTile) {
-            // 빈 곳 클릭: 선택 해제 + 패닝 시작
             if (selectedTiles.length > 0) {
                 document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
                 selectedTiles = [];
@@ -837,14 +794,10 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             document.getElementById('game-board').classList.add('panning');
             e.preventDefault();
         }
-        // 타일 클릭(Ctrl 없음): 브라우저 기본 드래그 이벤트가 처리
     };
 
     window.boardDragOver = function(e) { e.preventDefault(); };
 
-    // =============================================
-    // mousemove: 패닝 or 드래그 선택
-    // =============================================
     document.addEventListener('mousemove', function(e) {
         if (isPanning) {
             panX = panStartPX + (e.clientX - panStartX);
@@ -885,9 +838,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         }
     });
 
-    // =============================================
-    // 사운드
-    // =============================================
     const SOUND_ASSETS = {
         bgm:         "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         tilePick:    "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3",
@@ -1105,7 +1055,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             const savedTheme = localStorage.getItem('lumi-theme') || 'classic';
             window.setTheme(savedTheme);
 
-            // 휠 줌 등록
             const boardEl = document.getElementById('game-board');
             if (boardEl) {
                 boardEl.addEventListener('wheel', function(e) {
@@ -1189,7 +1138,11 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
                 document.getElementById('game-board').classList.toggle('not-my-turn', !isMy);
                 ['btn-draw', 'btn-end', 'btn-rollback'].forEach(id => document.getElementById(id).disabled = !isMy);
                 document.getElementById('turn-info').innerText = isMy ? "내 차례!" : `차례: ${currentTurn}`;
-                if (isMy) { playSFX('turnAlarm'); initialBoardState = JSON.parse(JSON.stringify(boardTiles)); }
+                if (isMy) {
+                    playSFX('turnAlarm');
+                    // 내 턴이 시작될 때 현재 보드 상태를 정확히 스냅샷
+                    initialBoardState = JSON.parse(JSON.stringify(boardTiles));
+                }
                 window.updatePlayerListUI();
                 window.updateRegScoreUI();
             });
@@ -1209,8 +1162,18 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
                 }, 1000);
             });
 
+            // =============================================
+            // [버그수정] board 리스너:
+            // 내 턴이 아닐 때는 initialBoardState를 항상 최신 보드로 동기화.
+            // 이렇게 해야 내 턴이 시작될 때 currentTurn 리스너에서
+            // 올바른 initialBoardState를 스냅샷할 수 있음.
+            // (상대방이 낸 타일이 내 initialBoardState에 자동 반영됨)
+            // =============================================
             db.ref('board').on('value', snap => {
                 boardTiles = snap.val() || {};
+                if (currentTurn !== myName || myRole !== 'player') {
+                    initialBoardState = JSON.parse(JSON.stringify(boardTiles));
+                }
                 window.updateRegScoreUI();
                 const canvas = document.getElementById('board-canvas');
                 if (!canvas) return;
@@ -1226,12 +1189,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
                     div.style.top  = data.y + 'px';
                     div.draggable = (myRole === 'player');
 
-                    // =============================================
-                    // 보드 타일 드래그 시작
-                    // - 내 턴에 드래그 가능
-                    // - selectedTiles에 포함된 경우 그룹 드래그
-                    // - 포함 안 된 경우 단일 드래그 (기존 선택 유지하되 이 타일만)
-                    // =============================================
                     div.ondragstart = (e) => {
                         if (currentTurn !== myName || myRole !== 'player') {
                             e.preventDefault();
@@ -1239,10 +1196,8 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
                         }
                         let dragGroup;
                         if (selectedTiles.length > 0 && selectedTiles.includes(id)) {
-                            // 선택된 그룹 드래그
                             dragGroup = [...selectedTiles];
                         } else {
-                            // 단일 타일 드래그: 기존 선택 해제
                             document.querySelectorAll('.selected-tile').forEach(el => el.classList.remove('selected-tile'));
                             selectedTiles = [];
                             dragGroup = [id];
@@ -1252,7 +1207,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
                         playSFX('tilePick');
                     };
 
-                    // Ctrl+클릭으로 선택된 상태 복원 (board 재렌더링 후)
                     if (selectedTiles.includes(id)) {
                         div.classList.add('selected-tile');
                     }
@@ -1400,7 +1354,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             up['board'] = initialBoardState;
             db.ref('/').update(up);
             playSFX('tilePick');
-            // 선택 초기화
             document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
             selectedTiles = [];
         }
@@ -1448,10 +1401,13 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     };
 
     // =============================================
-    // 드롭: 화면 좌표 → 캔버스 로컬 좌표 변환
+    // [버그수정 1] dropOnBoard: 자기 차례가 아니면 드롭 무시
+    // ondragstart에서 막더라도 dataTransfer 타이밍 등으로
+    // 우회될 수 있으므로 DB 쓰기 직전에 반드시 재검증
     // =============================================
     window.dropOnBoard = function(e) {
         e.preventDefault();
+        if (myRole !== 'player' || currentTurn !== myName) return;
         const rawData = e.dataTransfer.getData("text/plain");
         if (!rawData) return;
         let dragInfo;
@@ -1460,7 +1416,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         const primaryId = dragInfo.primary;
         const groupIds = dragInfo.group;
 
-        // 캔버스 좌표로 변환
         const pos = screenToCanvas(e.clientX, e.clientY);
         let dropX = pos.x - 22, dropY = pos.y - 32;
 
@@ -1521,8 +1476,12 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         });
     };
 
+    // =============================================
+    // [버그수정 2] dropOnRack: 자기 차례가 아니면 드롭 무시
+    // =============================================
     window.dropOnRack = function(e) {
         e.preventDefault();
+        if (myRole !== 'player' || currentTurn !== myName) return;
         const rawData = e.dataTransfer.getData("text/plain") || e.dataTransfer.getData("text");
         if (!rawData) return;
         let id = rawData;
@@ -1747,12 +1706,8 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             db.ref('stats').remove().then(() => window.renderLobbyUI());
     };
 
-    // =============================================
-    // 드래그 선택 상태
-    // =============================================
     let isSelecting = false, startX, startY, selectedTiles = [];
 
-    // Ctrl+빈곳 드래그로 영역 선택
     window.startSelection = function(e) {
         if (myRole !== 'player' || currentTurn !== myName) return;
         isSelecting = true;
@@ -1762,13 +1717,10 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         startY = (e.clientY - cRect.top)  / scale;
         const selBox = document.getElementById('selection-box');
         selBox.style.cssText = `left:${startX}px; top:${startY}px; width:0; height:0; display:block;`;
-        // Ctrl+드래그는 기존 선택 유지하지 않고 새로 선택
         document.querySelectorAll('.selected-tile').forEach(t => t.classList.remove('selected-tile'));
         selectedTiles = [];
         e.preventDefault();
     };
-
-    // === 이모트 ===
 
     const EMOTE_SETS = [
     { e: '😋', t: '이게 되네?' },
@@ -1828,8 +1780,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'ko-KR'; 
-    
-    // 이 부분이 핵심입니다! 전달받은 값을 적용합니다.
     utter.pitch = customPitch; 
     utter.rate = customRate;   
     utter.volume = 1.0;
@@ -1839,24 +1789,23 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
 }
 
     window.showBubble = function(playerName, emote) {
-    // 1. 음성 출력 로직 (문구별로 피치와 속도를 다르게 전달)
     if (emote.includes('냐냐냥')) {
-        speakText('냐냐냥!!!', 2.0, 1.3); // 기본 귀여운 톤
+        speakText('냐냐냥!!!', 2.0, 1.3);
     } 
     else if (emote.includes('앙!')) {
-        speakText('ANG!', 1.8, 1.5);    // 짧고 강하게
+        speakText('ANG!', 1.8, 1.5);
     } 
     else if (emote.includes('퀸의 등장')) {
-        speakText('퀸의 등장.', 0.8, 0.9); // 피치를 0.8로 확 낮춰서 깔보는 앙칼진 톤
+        speakText('퀸의 등장.', 0.8, 0.9);
     }
     else if (emote.includes('워씽씌')) {
-        speakText('워씽씌?', 2.0, 0.7);   // 피치는 높게, 속도는 아주 느리게 (킹받는 포인트)
+        speakText('워씽씌?', 2.0, 0.7);
     }
     else if (emote.includes('하이얏!!!')) {
         speakText('하야앗!', 2.0, 0.8);
     }
     else if (emote.includes('쫀득쫀득')) {
-        speakText('쫜.득.쫜.득.', 1.0, 0.6); // 속도를 0.6까지 낮춰서 씹어 읽기
+        speakText('쫜.득.쫜.득.', 1.0, 0.6);
     }
     else if (emote.includes('밤이 늦엇네.')) {
         speakText('밤이 늦엇네.', 0.7, 0.8);
@@ -1882,7 +1831,6 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 2500);
 };
 
-    // 채팅창 드래그 이동
     (function() {
         const wrapper = document.getElementById('chat-wrapper');
         let isDragging = false, offsetX, offsetY;
