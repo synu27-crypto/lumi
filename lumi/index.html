@@ -671,7 +671,15 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
 </div>
 
 <script type="module">
-    // 1. import는 무조건 맨 위 한 번만!
+<script type="importmap">
+{
+  "imports": {
+    "@google/generative-ai": "https://esm.run/@google/generative-ai"
+  }
+}
+</script>
+
+<script type="module">
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
     // 2. 변수 및 API 설정 (중복 제거)
