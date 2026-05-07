@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 61.3</title>
+    <title>루미큐브 : Ver. 61.4</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -179,7 +179,7 @@ body[data-theme='pink'] #board-canvas {
 }
 
 #game-log { flex: 1; padding: 10px; overflow-y: auto; font-size: 0.8rem; border-right: 1px solid rgba(0,0,0,0.1); }
-#chat-box { flex: 1.2; padding: 10px; overflow-y: auto; font-size: 0.85rem; }
+#chat-box { flex: 1.2; padding: 10px; overflow-y: auto; font-size: 0.85rem; user-select: text;}
 #chat-box div { margin-bottom: 4px; word-break: break-all; overflow-wrap: break-word; }
 
 #chat-input-container {
@@ -682,7 +682,7 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     import { GoogleGenerativeAI } from "@google/generative-ai";
 
     // 2. 변수 및 API 설정 (중복 제거)
-    const API_KEY = "AIzaSyBVlC0bZnw4SO97m8DTbacw4pcAcwkIgpk"; 
+    const API_KEY = "AIzaSyCQuvvaxZiGWamvjJqCY_9EJKiMrsdb4n8"; 
     const genAI = new GoogleGenerativeAI(API_KEY);
     const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
