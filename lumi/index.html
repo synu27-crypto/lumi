@@ -679,10 +679,11 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
 </script>
 
 <script type="module">
-    import { GoogleGenerativeAI } from "@google/generative-ai";
+    // 2. 별명(importmap) 없이, 직접 인터넷 주소(CDN)에서 모듈을 끌어옵니다.
+    import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-    // 2. 변수 및 API 설정 (중복 제거)
-    const API_KEY = "AIzaSyCQuvvaxZiGWamvjJqCY_9EJKiMrsdb4n8"; 
+    // 3. API 키와 모델 설정 (flash 모델 사용)
+    const API_KEY = "여기에_새로_발급받은_API_키를_넣으세요"; 
     const genAI = new GoogleGenerativeAI(API_KEY);
     const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
