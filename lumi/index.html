@@ -684,7 +684,7 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     // 2. 변수 및 API 설정 (중복 제거)
     const API_KEY = "AIzaSyBVlC0bZnw4SO97m8DTbacw4pcAcwkIgpk"; 
     const genAI = new GoogleGenerativeAI(API_KEY);
-    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     let db; 
     let myName = "", myRole = "player", currentHost = "";
@@ -710,7 +710,8 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
             return result.response.text();
         } catch (e) {
             console.error("AI 에러:", e);
-            return "AI 코치가 잠시 자리를 비웠어요.";
+            // 에러 내용을 바로 채팅창에 띄워서 원인을 파악합니다.
+            return `앗! API 에러가 발생했어요: ${e.message}`;
         }
     }
 
