@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>루미큐브 : Ver. 61.2</title>
+    <title>루미큐브 : Ver. 61.3</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -670,7 +670,15 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
 
 </div>
 
-<script>
+<script type="module">
+    // 1. import는 무조건 맨 위 한 번만!
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
+    // 2. 변수 및 API 설정 (중복 제거)
+    const API_KEY = "AIzaSyBVlC0bZnw4SO97m8DTbacw4pcAcwkIgpk"; 
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
     let db; 
     let myName = "", myRole = "player", currentHost = "";
     let turnTimer = null, timeLeft = 60;
@@ -684,6 +692,20 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
     let isPanning = false, panStartX = 0, panStartY = 0, panStartPX = 0, panStartPY = 0;
     let zoomBadgeTimeout = null;
     const MIN_SCALE = 0.3, MAX_SCALE = 2.0, CANVAS_SIZE = 4000;
+
+    // 3. Gemini 조언 함수
+    async function getAIAdvice(boardData, handData) {
+        const prompt = `너는 루미큐브 고수야. 현재 보드 상황: ${JSON.stringify(boardData)} / 내 패: ${JSON.stringify(handData)}. 
+        어떤 타일을 조합해서 내는 게 가장 전략적으로 좋을지 2문장 이내로 짧게 조언해주고, 가능하다면 구체적인 숫자 조합을 알려줘. 답변은 한국어로 해줘.`;
+        
+        try {
+            const result = await aiModel.generateContent(prompt);
+            return result.response.text();
+        } catch (e) {
+            console.error("AI 에러:", e);
+            return "AI 코치가 잠시 자리를 비웠어요.";
+        }
+    }
 
     let isCtrlDown = false;
     document.addEventListener('keydown', function(e) {
@@ -895,85 +917,27 @@ body[data-theme='cyber'] .active-turn-badge { background:rgba(188,19,254,0.2)!im
         });
     };
 
-    window.showHint = function() {
-        if (myRole !== 'player' || currentTurn !== myName) return alert("내 차례에만 사용할 수 있습니다.");
-        document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target'));
-        const sets = [];
-        const hand = [...myHandData];
-        const isReg = window.latestPlayersData[myName]?.registered;
+    window.showHint = async function() {
+    if (myRole !== 'player' || currentTurn !== myName) return alert("내 차례에만 사용할 수 있습니다.");
+    
+    // 1. 현재 데이터 정리
+    const boardBrief = Object.values(boardTiles).map(t => ({c: t.color, n: t.num}));
+    const handBrief = myHandData.map(t => ({c: t.color, n: t.num}));
 
-        const numMap = {};
-        hand.forEach(t => {
-            if (t.num === 'J') return;
-            if (!numMap[t.num]) numMap[t.num] = [];
-            if (!numMap[t.num].find(it => it.color === t.color)) numMap[t.num].push(t);
-        });
-        Object.values(numMap).forEach(group => { 
-            if (group.length >= 3) sets.push(group.map(t => ({ type: 'rack', id: t.id }))); 
-        });
+    // 2. 채팅창에 알림 표시
+    const box = document.getElementById('chat-box');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.innerHTML = `<b>🤖 AI 코치:</b> 생각 중...`;
+    box.appendChild(loadingDiv);
 
-        const colorMap = { 'red': [], 'blue': [], 'yellow': [], 'black': [] };
-        hand.forEach(t => { if (t.num !== 'J') colorMap[t.color].push(t); });
-        Object.values(colorMap).forEach(tiles => {
-            tiles.sort((a, b) => Number(a.num) - Number(b.num));
-            let currentRun = [];
-            for (let i = 0; i < tiles.length; i++) {
-                if (currentRun.length === 0 || Number(tiles[i].num) === Number(currentRun[currentRun.length-1].num) + 1) {
-                    currentRun.push(tiles[i]);
-                } else if (Number(tiles[i].num) !== Number(currentRun[currentRun.length-1].num)) {
-                    if (currentRun.length >= 3) sets.push(currentRun.map(t => ({ type: 'rack', id: t.id })));
-                    currentRun = [tiles[i]];
-                }
-            }
-            if (currentRun.length >= 3) sets.push(currentRun.map(t => ({ type: 'rack', id: t.id })));
-        });
-
-        if (isReg) {
-            const rows = {};
-            Object.entries(boardTiles).forEach(([id, t]) => { t.id = id; if(!rows[t.y]) rows[t.y]=[]; rows[t.y].push(t); });
-            for (let y in rows) {
-                const rowTiles = rows[y].sort((a, b) => a.x - b.x);
-                let currentBoardSet = [];
-                for (let i = 0; i < rowTiles.length; i++) {
-                    currentBoardSet.push(rowTiles[i]);
-                    if (!rowTiles[i+1] || rowTiles[i+1].x - rowTiles[i].x > 55) {
-                        if (currentBoardSet.length >= 3) {
-                            const nonJokers = currentBoardSet.filter(t => t.num !== 'J');
-                            if (nonJokers.length > 0) {
-                                const isGroup = nonJokers.every(t => t.num === nonJokers[0].num);
-                                hand.forEach(handTile => {
-                                    if (handTile.num === 'J') return;
-                                    if (isGroup && currentBoardSet.length < 4) {
-                                        const boardColors = currentBoardSet.map(t => t.color);
-                                        if (handTile.num === nonJokers[0].num && !boardColors.includes(handTile.color)) {
-                                            sets.push([{ type:'rack', id:handTile.id }, ...currentBoardSet.map(t => ({ type:'board', id:t.id }))]);
-                                        }
-                                    } else if (!isGroup) {
-                                        const color = nonJokers[0].color;
-                                        const firstRealIdx = currentBoardSet.findIndex(t => t.num !== 'J');
-                                        const firstRealNum = Number(currentBoardSet[firstRealIdx].num);
-                                        const firstNum = firstRealNum - firstRealIdx;
-                                        const lastNum = firstNum + currentBoardSet.length - 1;
-                                        const hn = Number(handTile.num);
-                                        if (handTile.color === color && ((hn === firstNum-1 && hn >= 1) || (hn === lastNum+1 && hn <= 13))) {
-                                            sets.push([{ type:'rack', id:handTile.id }, ...currentBoardSet.map(t => ({ type:'board', id:t.id }))]);
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                        currentBoardSet = [];
-                    }
-                }
-            }
-        }
-
-        if (sets.length === 0) return alert("현재 낼 수 있는 타일이 없습니다.");
-        const allTargetIds = new Set();
-        sets.forEach(setInfo => setInfo.forEach(item => allTargetIds.add(item.type === 'board' ? item.id : "rack-" + item.id)));
-        allTargetIds.forEach(domId => { const el = document.getElementById(domId); if (el) el.classList.add('hint-target'); });
-        setTimeout(() => document.querySelectorAll('.hint-target').forEach(t => t.classList.remove('hint-target')), 5000);
-    };
+    // 3. API 호출 및 결과 출력
+    const advice = await getAIAdvice(boardBrief, handBrief);
+    loadingDiv.innerHTML = `<b>🤖 AI 코치:</b> ${advice}`;
+    box.scrollTop = box.scrollHeight;
+    
+    // 추가로 음성 읽어주기 (기존 speakText 활용)
+    speakText(advice, 1.2, 1.1); 
+};
 
     window.handleEntry = function(role, isAuto = false) {
         if (!db) return setTimeout(() => window.handleEntry(role, isAuto), 100);
